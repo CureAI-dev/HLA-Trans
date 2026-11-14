@@ -1,4 +1,5 @@
 import type { Sex } from "./options"
+import { parseIsoDate } from "./dates"
 import { MCS_REQUIRES_EXPLANT } from "./options"
 import type { Criteria, Donor, PairInputs, Patient } from "./schema"
 
@@ -19,10 +20,11 @@ export const round = (n: number, digits = 2): number => {
 
 /** Whole years between an ISO date of birth and `on` (default now). */
 export function ageInYears(dateOfBirth: string, on: Date = new Date()): number | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null
-  const [y, m, d] = dateOfBirth.split("-").map(Number) as [number, number, number]
-  const dob = new Date(Date.UTC(y, m - 1, d))
-  if (Number.isNaN(dob.getTime()) || dob.getTime() > on.getTime()) return null
+  const dob = parseIsoDate(dateOfBirth)
+  if (!dob || !Number.isFinite(on.getTime()) || dob.getTime() > on.getTime()) return null
+  const y = dob.getUTCFullYear()
+  const m = dob.getUTCMonth() + 1
+  const d = dob.getUTCDate()
   let age = on.getUTCFullYear() - y
   const beforeBirthday =
     on.getUTCMonth() < m - 1 || (on.getUTCMonth() === m - 1 && on.getUTCDate() < d)
@@ -32,8 +34,8 @@ export function ageInYears(dateOfBirth: string, on: Date = new Date()): number |
 
 /** Fractional years (for PHM's age term, which must be > 0). */
 export function ageInYearsExact(dateOfBirth: string, on: Date = new Date()): number | null {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) return null
-  const dob = new Date(`${dateOfBirth}T00:00:00Z`)
+  const dob = parseIsoDate(dateOfBirth)
+  if (!dob) return null
   const ms = on.getTime() - dob.getTime()
   if (Number.isNaN(ms) || ms <= 0) return null
   return ms / (365.2425 * 24 * 3600 * 1000)
@@ -223,7 +225,8 @@ export function donorPhm(d: Donor): PhmBreakdown | null {
 }
 
 export function formatMinutes(total: number): string {
-  const h = Math.floor(total / 60)
-  const m = Math.round(total % 60)
+  const roundedMinutes = Math.round(total)
+  const h = Math.floor(roundedMinutes / 60)
+  const m = roundedMinutes % 60
   return h > 0 ? `${h} h ${m.toString().padStart(2, "0")} min` : `${m} min`
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import * as c from "../calc"
-import { defaultPairInputs, emptyPatient } from "../factories"
+import { defaultPairInputs, emptyDonor, emptyPatient } from "../factories"
 import type { Criteria, Patient } from "../schema"
 
 const logistics: Criteria["logistics"] = {
@@ -57,6 +57,26 @@ describe("BSA and BMI", () => {
 })
 
 describe("age", () => {
+  test.each(["2025-02-29", "2026-02-30", "2026-04-31", "2026-13-01"])("rejects impossible DOB %s", (dob) => {
+    const on = new Date("2026-12-31T00:00:00Z")
+    expect.soft(c.ageInYears(dob, on)).toBeNull()
+    expect.soft(c.ageInYearsExact(dob, on)).toBeNull()
+  })
+  test("invalid reference date returns null", () => {
+    expect(c.ageInYears("1980-06-15", new Date(NaN))).toBeNull()
+    expect(c.ageInYearsExact("1980-06-15", new Date(NaN))).toBeNull()
+  })
+  test("leap birthday uses UTC calendar and exact elapsed years", () => {
+    expect(c.ageInYears("2000-02-29", new Date("2025-02-28T23:59:59Z"))).toBe(24)
+    expect(c.ageInYears("2000-02-29", new Date("2025-03-01T00:00:00Z"))).toBe(25)
+    expect(c.ageInYearsExact("2000-02-29", new Date("2001-02-28T00:00:00Z"))).toBeCloseTo(365 / 365.2425, 10)
+  })
+  test("exact age rejects future and zero elapsed DOB", () => {
+    const on = new Date("2026-01-01T00:00:00Z")
+    expect(c.ageInYearsExact("2030-01-01", on)).toBeNull()
+    expect(c.ageInYearsExact("2026-01-01", on)).toBeNull()
+    expect(c.ageInYears("2026-01-01", on)).toBe(0)
+  })
   test("birthday not yet reached", () =>
     expect(c.ageInYears("1980-06-15", new Date("2026-06-14T12:00:00Z"))).toBe(45))
   test("on birthday", () =>
@@ -143,6 +163,15 @@ describe("ischemia estimate", () => {
     expect(r.coldMinutes).toBe(10)
   })
 
+  test("combined redo and LVAD estimate is 315 total and 115 cold with OCS", () => {
+    const p = emptyPatient()
+    p.history.priorSternotomies = 1
+    p.support.device = "lvad_durable"
+    const r = c.estimateIschemia({ ...pair, preservation: "ocs_normothermic", perfusionMinutes: 200 }, p, logistics)!
+    expect(r.totalMinutes).toBe(315)
+    expect(r.coldMinutes).toBe(115)
+  })
+
   test("perfusion minutes are ignored without normothermic preservation", () => {
     const p = emptyPatient()
     p.history.priorSternotomies = 0
@@ -161,8 +190,41 @@ describe("ischemia estimate", () => {
 })
 
 describe("formatting", () => {
+  test("round supports default, integer, and requested precision", () => {
+    expect(c.round(12.3456)).toBe(12.35)
+    expect(c.round(12.3456, 3)).toBe(12.346)
+    expect(c.round(12.6, 0)).toBe(13)
+  })
+  test("rounded minutes carry into hours", () => {
+    expect(c.formatMinutes(119.6)).toBe("2 h 00 min")
+    expect(c.formatMinutes(59.6)).toBe("1 h 00 min")
+  })
   test("formatMinutes", () => {
     expect(c.formatMinutes(45)).toBe("45 min")
     expect(c.formatMinutes(245)).toBe("4 h 05 min")
+  })
+})
+
+describe("PHM convenience wrappers", () => {
+  test("patient PHM uses fractional DOB age and propagates invalid DOB", () => {
+    const p = emptyPatient()
+    p.identity.sex = "male"
+    p.identity.dateOfBirth = "1971-01-01"
+    p.body = { ...p.body, heightCm: 175, weightKg: 80 }
+    const on = new Date("2026-07-02T12:00:00Z")
+    const result = c.patientPhm(p, on)!
+    expect(result.lv).toBeCloseTo(161.65, 1)
+    expect(result.rv).toBeCloseTo(23.3505217, 6)
+    p.identity.dateOfBirth = "1971-02-30"
+    expect(c.patientPhm(p, on)).toBeNull()
+  })
+  test("donor PHM uses donor age and propagates missing dimensions", () => {
+    const d = emptyDonor()
+    d.identity.sex = "female"
+    d.identity.ageYears = 55
+    d.body = { ...d.body, heightCm: 175, weightKg: 80 }
+    expect(c.donorPhm(d)!.total).toBeCloseTo(155.68, 1)
+    d.body.heightCm = null
+    expect(c.donorPhm(d)).toBeNull()
   })
 })
