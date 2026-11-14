@@ -138,7 +138,10 @@ describe("hemodynamics", () => {
     ).toBe(2.1)
     expect(
       c.effectivePvr(withHemo({ ...base, vasodilatorChallengeDone: true, pvrAfterChallenge: null }))
-    ).toBe(5)
+    ).toBeNull()
+    expect(
+      c.effectivePvr(withHemo({ ...base, vasodilatorChallengeDone: true, pvrAfterChallenge: 0 }))
+    ).toBe(0)
   })
 })
 
@@ -161,6 +164,16 @@ describe("ischemia estimate", () => {
     const r = c.estimateIschemia({ ...pair, preservation: "ocs_normothermic", perfusionMinutes: 200 }, p, logistics)!
     expect(r.totalMinutes).toBe(210)
     expect(r.coldMinutes).toBe(10)
+  })
+
+  test("normothermic preservation requires recorded perfusion time, including zero", () => {
+    const p = emptyPatient()
+    p.history.priorSternotomies = 0
+    expect(c.estimateIschemia({ ...pair, preservation: "ocs_normothermic", perfusionMinutes: null }, p, logistics)).toBeNull()
+    const r = c.estimateIschemia({ ...pair, preservation: "ocs_normothermic", perfusionMinutes: 0 }, p, logistics)!
+    expect(r.totalMinutes).toBe(210)
+    expect(r.coldMinutes).toBe(210)
+    expect(c.estimateIschemia({ ...pair, perfusionMinutes: null }, p, logistics)!.coldMinutes).toBe(210)
   })
 
   test("combined redo and LVAD estimate is 315 total and 115 cold with OCS", () => {

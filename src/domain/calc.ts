@@ -152,8 +152,8 @@ export function patientHemodynamics(p: Patient): DerivedHemodynamics {
 
 /** PVR that should drive size decisions: post-challenge value if done. */
 export function effectivePvr(p: Patient): number | null {
-  if (p.hemodynamics.vasodilatorChallengeDone && ok(p.hemodynamics.pvrAfterChallenge)) {
-    return p.hemodynamics.pvrAfterChallenge
+  if (p.hemodynamics.vasodilatorChallengeDone) {
+    return ok(p.hemodynamics.pvrAfterChallenge) ? p.hemodynamics.pvrAfterChallenge : null
   }
   return patientHemodynamics(p).pvr
 }
@@ -177,6 +177,7 @@ export function estimateIschemia(
 ): IschemiaEstimate | null {
   const { procurementMinutes, transportMinutes, implantMinutes } = pair
   if (!ok(procurementMinutes) || !ok(transportMinutes) || !ok(implantMinutes)) return null
+  if (pair.preservation === "ocs_normothermic" && !ok(pair.perfusionMinutes)) return null
 
   const parts: IschemiaEstimate["parts"] = [
     { label: "Procurement and packaging", minutes: procurementMinutes },
