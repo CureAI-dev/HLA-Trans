@@ -718,3 +718,32 @@ describe("donor heart editable thresholds", () => {
     }
   })
 })
+
+describe("diabetes coronary screening", () => {
+  it.each(["0-5", "6-10", ">10", "yes_unknown"] as const)(
+    "requires missing angiography review for diabetes duration %s",
+    (duration) => {
+      const ctx = context()
+      ctx.donor.history.diabetes = duration
+      const result = evaluateDonorHeart(ctx)
+      expect(result.status).toBe("review")
+      expect(result.findings).toContainEqual(
+        expect.objectContaining({
+          code: "donorHeart.angiographyIndicated",
+          status: "review",
+          missing: true,
+        })
+      )
+    }
+  )
+  it("does not request missing angiography when a diabetic donor has normal angiography", () => {
+    const ctx = context()
+    ctx.donor.history.diabetes = "0-5"
+    ctx.donor.coronary.angiography = "normal"
+    const result = evaluateDonorHeart(ctx)
+    expect(result.status).toBe("pass")
+    expect(
+      result.findings.some((f) => f.code === "donorHeart.angiographyIndicated")
+    ).toBe(false)
+  })
+})

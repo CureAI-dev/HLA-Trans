@@ -1,3 +1,4 @@
+import { hasHistory } from "../options"
 import { ageInYears } from "../calc"
 import type { Finding, RuleResult } from "../schema"
 import type { RuleContext } from "./context"
@@ -166,7 +167,6 @@ export function evaluateDonorHeart(ctx: RuleContext): RuleResult {
     tri(key, title, d.history[key])
   const screeningRisks = [
     d.history.cocaine,
-    d.history.diabetes,
     d.history.cigarettesOver20PackYears,
   ]
   for (const [key, title] of [
@@ -179,7 +179,8 @@ export function evaluateDonorHeart(ctx: RuleContext): RuleResult {
   const angioIndicated =
     (age !== null &&
       age > (d.identity.sex === "male" ? c.angioAgeMale : c.angioAgeFemale)) ||
-    screeningRisks.includes("yes")
+    screeningRisks.includes("yes") ||
+    hasHistory(d.history.diabetes) === true
   if (d.coronary.angiography === "not_done" && angioIndicated)
     missing("angiographyIndicated", "Coronary angiography indicated")
   if (d.coronary.angiography === "abnormal") {
