@@ -16,6 +16,15 @@ export default [
     },
   },
   {
-    ignores: ["eslint.config.js", ".prettierrc"],
+    // shadcn-generated code is vendored, not linted
+    ignores: [
+      "eslint.config.js",
+      ".prettierrc",
+      "src/components/ui/**",
+      "src/hooks/use-highlighted-code.ts",
+      "src/hooks/use-mobile.ts",
+      "src/lib/highlighter.tsx",
+      "src/routeTree.gen.ts",
+    ],
   },
 ]
