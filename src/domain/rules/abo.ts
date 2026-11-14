@@ -89,6 +89,7 @@ export function evaluateAbo(ctx: RuleContext) {
     ageDate === null
       ? null
       : ageInYears(ctx.patient.identity.dateOfBirth, ageDate)
+  const currentAge = ageInYears(ctx.patient.identity.dateOfBirth, ctx.now)
   if (!ctx.criteria.abo.allowPediatricIncompatible || !p.acceptsIncompatible) {
     add(
       "incompatible",
@@ -97,7 +98,7 @@ export function evaluateAbo(ctx: RuleContext) {
       "The intended pediatric incompatible pathway is disabled or the recipient has not opted in.",
       `${d.abo} → ${p.abo}`
     )
-  } else if (age === null) {
+  } else if (age === null || currentAge === null) {
     findings.push(
       missingFinding(
         "abo.age",
@@ -114,7 +115,7 @@ export function evaluateAbo(ctx: RuleContext) {
       "The recipient is not eligible for the pediatric incompatible pathway.",
       `${d.abo} → ${p.abo}; age ${age}`
     )
-  } else if (age < 1) {
+  } else if (currentAge < 1) {
     add(
       "infant",
       "review",
@@ -175,7 +176,7 @@ export function evaluateAbo(ctx: RuleContext) {
       "review",
       "Intended incompatible transplant",
       "Pediatric incompatible transplantation requires specialist review.",
-      `${d.abo} → ${p.abo}; age ${age}`
+      `${d.abo} → ${p.abo}; current age ${currentAge}; age at eligibility ${age}`
     )
   }
   return ruleResult("abo", findings)

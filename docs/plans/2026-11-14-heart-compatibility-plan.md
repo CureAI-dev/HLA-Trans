@@ -23,15 +23,15 @@
 
 ## Progress (2026-11-14)
 
-Tasks 1?21 are implemented. The initial audit found tasks 1?3 already committed, task 4 drafted with failing tests/lint errors, and task 5 drafted without tests. Tasks 1?5 were completed, reviewed, merged and pushed to `master` at `a1d0f28`. Tasks 6?21 were implemented with parallel workers and separate reviews on `feat/heart-compatibility-remaining`.
+Tasks 1-21 are implemented. The initial audit found tasks 1-3 already committed, task 4 drafted with failing tests/lint errors, and task 5 drafted without tests. Tasks 1-5 were completed, reviewed, merged and pushed to `master` at `a1d0f28`. Tasks 6-21 were implemented with parallel workers and separate reviews on `feat/heart-compatibility-remaining`.
 
-- Tasks 6?11: all six compatibility rules, finding helpers, logistics, aggregate engine and candidate screening.
-- Tasks 12?13: validated browser database, immutable evaluation snapshots, decision guards, audit trail, and fictional sample records (6 patients, 5 donors, 13 expected-outcome pairs).
-- Tasks 14?15: responsive app shell, light/dark theme, status components and clinical form kit.
-- Tasks 16?20: complete patient/donor/evaluation workflows, versioned criteria, dashboard, audit and data management.
+- Tasks 6-11: all six compatibility rules, finding helpers, logistics, aggregate engine and candidate screening.
+- Tasks 12-13: validated browser database, immutable evaluation snapshots, decision guards, audit trail, and fictional sample records (6 patients, 5 donors, 13 expected-outcome pairs).
+- Tasks 14-15: responsive app shell, light/dark theme, status components and clinical form kit.
+- Tasks 16-20: complete patient/donor/evaluation workflows, versioned criteria, dashboard, audit and data management.
 - Task 21: README and browser QA. Independent task reviews are clean; final whole-branch review is pending.
 
-Fresh verification: `bun run typecheck`, `bun run lint`, `bun run test` (19 files, 418 tests), and `bun run build` all pass. Browser QA passed 60 screen/theme/width combinations (15 screens ? light/dark ? 375/1440 px), keyboard flows, decision finality, snapshot preservation, and export ? typed reset ? import restoration. No browser console/page errors or horizontal document overflow were found.
+Fresh verification: `bun run typecheck`, `bun run lint`, `bun run test` (19 files, 418 tests), and `bun run build` all pass. Browser QA passed 60 screen/theme/width combinations (15 screens by light/dark by 375/1440 px), keyboard flows, decision finality, snapshot preservation, and export then typed reset then import restoration. No browser console/page errors or horizontal document overflow were found.
 
 Implementation decisions and tradeoffs:
 

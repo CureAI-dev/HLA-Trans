@@ -1,5 +1,10 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { flushSync } from "react-dom"
+import {
+  createFileRoute,
+  useBlocker,
+  useNavigate,
+} from "@tanstack/react-router"
 import { z } from "zod"
 import { actions, latestCriteria, useDb } from "@/lib/storage/db"
 import { defaultPairInputs } from "@/domain/factories"
@@ -27,6 +32,19 @@ function NewEvaluation() {
     [donorId, setDonorId] = useState(search.donorId ?? "")
   const [pair, setPair] = useState(defaultPairInputs),
     [error, setError] = useState("")
+  const [isSaved, setSaved] = useState(false)
+  const dirty =
+    !isSaved &&
+    Boolean(
+      patientId ||
+      donorId ||
+      JSON.stringify(pair) !== JSON.stringify(defaultPairInputs())
+    )
+  useBlocker({
+    shouldBlockFn: () =>
+      dirty && !window.confirm("Discard unsaved evaluation changes?"),
+    enableBeforeUnload: dirty,
+  })
   const patient = db.patients.find((p) => p.id === patientId),
     donor = db.donors.find((d) => d.id === donorId),
     criteria = latestCriteria(db)
@@ -106,6 +124,7 @@ function NewEvaluation() {
               donorId,
               parsedPair.data
             )
+            flushSync(() => setSaved(true))
             void navigate({
               to: "/evaluations/$evaluationId",
               params: { evaluationId: saved.id },

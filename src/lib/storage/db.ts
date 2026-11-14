@@ -4,7 +4,6 @@ import { evaluate } from "../../domain/engine"
 import { SAMPLE_DONORS, SAMPLE_PATIENTS } from "../../domain/sample-data"
 import {
   criteriaSchema,
-  dbSchema,
   decisionSchema,
   donorSchema,
   pairInputsSchema,
@@ -22,6 +21,7 @@ import type {
   Patient,
 } from "../../domain/schema"
 import { createLocalStore, StorageWriteError } from "./local-store"
+import { validatedDbSchema } from "./validated-db-schema"
 
 export const DB_KEY = "hla-trans.db.v1"
 export class DbActionError extends Error {
@@ -54,7 +54,7 @@ export function initialDb(): Db {
 }
 export const dbStore = createLocalStore({
   key: DB_KEY,
-  schema: dbSchema,
+  schema: validatedDbSchema,
   initial: initialDb,
 })
 function current(): Db {
@@ -288,7 +288,7 @@ export const actions = {
     evaluations: number
   } {
     return domain(() => {
-      const parsed = dbSchema.parse(raw)
+      const parsed = validatedDbSchema.parse(raw)
       parsed.audit.push({
         id: id(),
         at: now(),

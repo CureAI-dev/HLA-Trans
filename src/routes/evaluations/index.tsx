@@ -4,6 +4,7 @@ import { useDb } from "@/lib/storage/db"
 import { PageHeader } from "@/components/app/page-header"
 import { StatusBadge } from "@/components/app/status"
 import { DateField, SelectField } from "@/components/form"
+import { localCalendarDate } from "@/domain/dates"
 
 export const Route = createFileRoute("/evaluations/")({ component: History })
 function History() {
@@ -18,8 +19,8 @@ function History() {
         (verdict === "all" || e.result.overall === verdict) &&
         (decision === "all" ||
           (decision === "pending" ? !e.decision : !!e.decision)) &&
-        (!from || e.createdAt.slice(0, 10) >= from) &&
-        (!to || e.createdAt.slice(0, 10) <= to)
+        (!from || localCalendarDate(e.createdAt) >= from) &&
+        (!to || localCalendarDate(e.createdAt) <= to)
     )
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   return (

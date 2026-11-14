@@ -159,6 +159,90 @@ test("criteria version, invalid import and quota failures preserve cache", async
   )
   expect(dbStore.get()).toBe(before)
 })
+test("inverted MFI imports are rejected atomically", async () => {
+  const { actions, dbStore, DB_KEY } = await import("../db")
+  const { validatedDbSchema } = await import("../validated-db-schema")
+  actions.loadSampleData()
+  const before = dbStore.get()
+  const raw = storage.getItem(DB_KEY)
+  const invalid = JSON.parse(actions.exportDb())
+  invalid.criteriaVersions[0].criteria.immunology.mfiReviewMin = 10000
+  const preview = validatedDbSchema.safeParse(invalid)
+  expect(preview.success).toBe(false)
+  if (!preview.success)
+    expect(preview.error.issues[0].path).toEqual([
+      "criteriaVersions",
+      0,
+      "criteria",
+      "immunology",
+      "mfiFailMin",
+    ])
+  expect(() => actions.importDb(invalid)).toThrow(/MFI fail level/)
+  expect(() => dbStore.set(invalid)).toThrow(/MFI fail level/)
+  expect(dbStore.get()).toBe(before)
+  expect(storage.getItem(DB_KEY)).toBe(raw)
+})
+test("valid imports preserve frozen evaluation snapshots and results verbatim", async () => {
+  const { actions, dbStore } = await import("../db")
+  actions.loadSampleData()
+  const db = dbStore.get()!
+  const saved = actions.createEvaluation(
+    db.patients[0].id,
+    db.donors[0].id,
+    defaultPairInputs()
+  )
+  const criteria = structuredClone(DEFAULT_CRITERIA)
+  criteria.immunology.mfiReviewMin = 3000
+  actions.publishCriteria(criteria, "Future evaluations only")
+  actions.importDb(JSON.parse(actions.exportDb()))
+  expect(dbStore.get()!.evaluations[0]).toEqual(saved)
+})
+test.each([false, true])(
+  "semantically corrupt persisted criteria recover safely (backup failure %s)",
+  async (backupFails) => {
+    const { initialDb, DB_KEY, dbStore, actions } = await import("../db")
+    const invalid = initialDb()
+    invalid.criteriaVersions[0].criteria.immunology.mfiReviewMin = 10000
+    const raw = JSON.stringify(invalid)
+    storage.data.set(DB_KEY, raw)
+    storage.fail = backupFails
+    expect(
+      dbStore.get()!.criteriaVersions[0].criteria.immunology.mfiReviewMin
+    ).toBe(DEFAULT_CRITERIA.immunology.mfiReviewMin)
+    expect(dbStore.recoveryNotice()).toBeTruthy()
+    expect(storage.getItem(DB_KEY)).toBe(raw)
+    storage.fail = false
+    if (backupFails)
+      expect(() => actions.setClinician("Changed")).toThrow(/blocked/)
+    else
+      expect(
+        [...storage.data.entries()].some(
+          ([key, value]) =>
+            key.startsWith(`${DB_KEY}.corrupt.`) && value === raw
+        )
+      ).toBe(true)
+  }
+)
+test("max-length invalid HLA remains REVIEW and saves with full raw snapshot", async () => {
+  const { actions, dbStore } = await import("../db")
+  actions.loadSampleData()
+  const db = dbStore.get()!
+  const donor = structuredClone(db.donors[0])
+  donor.hla.A[0] = "Q".repeat(200)
+  actions.saveDonor(donor)
+  const saved = actions.createEvaluation(
+    db.patients[0].id,
+    donor.id,
+    defaultPairInputs()
+  )
+  expect(saved.donorSnapshot.hla.A[0]).toBe("Q".repeat(200))
+  const invalid = saved.result.rules
+    .flatMap((r) => r.findings)
+    .find((f) => f.code === "immunology.invalid.donor.0")!
+  expect(invalid.status).toBe("review")
+  expect(invalid.evidence.length).toBeLessThanOrEqual(200)
+  expect(`${invalid.detail} ${invalid.evidence}`).toContain("Q".repeat(200))
+})
 test("all record actions audit, sample merge is idempotent, imports and reset audit", async () => {
   const { actions, dbStore } = await import("../db")
   actions.setClinician("Dr Test")

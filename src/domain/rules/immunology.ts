@@ -40,8 +40,8 @@ export function evaluateImmunology(ctx: RuleContext): RuleResult {
         `invalid.${owner}.${i}`,
         "review",
         `Invalid ${owner} HLA entry`,
-        entry.error,
-        `${entry.locus}: ${entry.value}`
+        `${entry.error} Locus ${entry.locus}; raw entry: ${entry.value}`,
+        entry.value
       )
     )
   }

@@ -1,4 +1,6 @@
 import { useState } from "react"
+import { flushSync } from "react-dom"
+import { useBlocker } from "@tanstack/react-router"
 import type { Decision, Evaluation } from "@/domain/schema"
 import { DECISION_VERDICT, DECLINE_REASON } from "@/domain/options"
 import { TextField, SelectField } from "@/components/form"
@@ -20,6 +22,15 @@ export function DecisionForm({
     acknowledgedFindings: false,
   })
   const [error, setError] = useState("")
+  const [baseline] = useState(() => JSON.stringify(draft))
+  const [saved, setSaved] = useState(false)
+  const dirty =
+    !evaluation.decision && !saved && JSON.stringify(draft) !== baseline
+  useBlocker({
+    shouldBlockFn: () =>
+      dirty && !window.confirm("Discard unsaved decision changes?"),
+    enableBeforeUnload: dirty,
+  })
   const requiresAck =
     evaluation.result.overall !== "pass" ||
     [
@@ -69,6 +80,7 @@ export function DecisionForm({
         }
         try {
           actions.decide(evaluation.id, draft)
+          flushSync(() => setSaved(true))
         } catch (e) {
           setError(e instanceof Error ? e.message : "Unable to save decision")
         }

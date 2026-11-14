@@ -75,6 +75,48 @@ describe("ABO", () => {
   })
   it("reviews an eligible five year old", () =>
     expect(evaluateAbo(child()).status).toBe("review"))
+  it("keeps the current-infant exemption despite high or absent titers and therapy", () => {
+    const ctx = child()
+    ctx.patient.identity.dateOfBirth = "2026-05-14"
+    ctx.patient.listing.listingDate = "2026-06-01"
+    ctx.patient.blood.titerDate = ""
+    ctx.patient.blood.titerLoweringTherapyWithin30Days = true
+    for (const titer of [128, null]) {
+      ctx.patient.blood.antiATiter = titer
+      expect(evaluateAbo(ctx).findings).toEqual([
+        expect.objectContaining({
+          code: "abo.infant",
+          status: "review",
+          missing: false,
+        }),
+      ])
+    }
+  })
+  it("checks titers and therapy after an infant-listed child crosses the first birthday", () => {
+    const ctx = child()
+    ctx.patient.identity.dateOfBirth = "2024-01-01"
+    ctx.patient.listing.listingDate = "2024-06-01"
+    ctx.patient.blood.antiATiter = 128
+    ctx.patient.blood.titerLoweringTherapyWithin30Days = true
+    const result = evaluateAbo(ctx)
+    expect(result.status).toBe("fail")
+    expect(result.findings.map((f) => f.code)).toEqual(
+      expect.arrayContaining(["abo.anti-A.high", "abo.therapy"])
+    )
+    expect(result.findings.some((f) => f.code === "abo.infant")).toBe(false)
+  })
+  it("requires absent titers and dates after an infant-listed child crosses the first birthday", () => {
+    const ctx = child()
+    ctx.patient.identity.dateOfBirth = "2024-01-01"
+    ctx.patient.listing.listingDate = "2024-06-01"
+    ctx.patient.blood.antiATiter = null
+    ctx.patient.blood.titerDate = ""
+    expect(
+      evaluateAbo(ctx)
+        .findings.filter((f) => f.missing)
+        .map((f) => f.code)
+    ).toEqual(["abo.anti-A.missing", "abo.titerDate"])
+  })
   it("fails high titers", () => {
     const ctx = child()
     ctx.patient.blood.antiATiter = 32

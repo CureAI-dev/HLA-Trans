@@ -4,7 +4,7 @@ import { Download, Upload, Database, Trash2 } from "lucide-react"
 import { PageHeader } from "@/components/app/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { dbSchema } from "@/domain/schema"
+import { validatedDbSchema } from "@/lib/storage/validated-db-schema"
 import type { Db } from "@/domain/schema"
 import { actions, useDb } from "@/lib/storage/db"
 
@@ -43,7 +43,7 @@ function DataPage() {
     setReading(true)
     try {
       const parsed: unknown = JSON.parse(await file.text())
-      const result = dbSchema.safeParse(parsed)
+      const result = validatedDbSchema.safeParse(parsed)
       if (!result.success)
         throw new Error(
           `Invalid backup: ${result.error.issues[0]?.message ?? "database schema mismatch"}`

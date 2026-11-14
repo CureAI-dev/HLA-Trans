@@ -41,16 +41,22 @@ export function CriteriaForm({
   const [draft, setDraft] = useState<Draft>(() =>
     structuredClone(current.criteria)
   )
-  const [baseline, setBaseline] = useState(() =>
-    JSON.stringify(current.criteria)
-  )
+  const [source, setSource] = useState(current)
   const [note, setNote] = useState("")
   const [attempted, setAttempted] = useState(false)
   const [pending, setPending] = useState<Criteria | null>(null)
   const [message, setMessage] = useState("")
   const [failure, setFailure] = useState("")
   const [section, setSection] = useState<string>("abo")
-  const dirty = JSON.stringify(draft) !== baseline || note.length > 0
+  const dirty =
+    JSON.stringify(draft) !== JSON.stringify(source.criteria) || note.length > 0
+  const conflict = current.id !== source.id
+  if (conflict && !dirty) {
+    setSource(current)
+    setDraft(structuredClone(current.criteria))
+    setPending(null)
+    setAttempted(false)
+  }
   useBlocker({
     shouldBlockFn: () =>
       dirty && !window.confirm("Discard unsaved criteria changes?"),
@@ -78,6 +84,10 @@ export function CriteriaForm({
   function review() {
     setAttempted(true)
     setFailure("")
+    if (conflict) {
+      setFailure("Reload the latest criteria before reviewing a publication.")
+      return
+    }
     if (Object.keys(errors).length) {
       setSection(Object.keys(errors)[0].split(".")[0])
       return
@@ -91,10 +101,17 @@ export function CriteriaForm({
   }
   function confirm() {
     if (!pending) return
+    if (conflict) {
+      setFailure(
+        "Criteria changed in another tab. Reload the latest criteria before publishing."
+      )
+      setPending(null)
+      return
+    }
     try {
       const saved = publish(pending, note.trim())
       setDraft(structuredClone(saved.criteria))
-      setBaseline(JSON.stringify(saved.criteria))
+      setSource(saved)
       setNote("")
       setPending(null)
       setAttempted(false)
@@ -117,8 +134,31 @@ export function CriteriaForm({
         className="space-y-5"
       >
         <h2 className="text-xl font-semibold">
-          Edit from version {current.version}
+          Edit from version {source.version}
         </h2>
+        {conflict && (
+          <div role="alert" className="space-y-3 border p-4">
+            <p>
+              Version {current.version} is now available. Your unsaved draft
+              still uses version {source.version}. Reload the latest criteria to
+              discard this draft before publishing.
+            </p>
+            <Button
+              type="button"
+              onClick={() => {
+                setSource(current)
+                setDraft(structuredClone(current.criteria))
+                setNote("")
+                setPending(null)
+                setAttempted(false)
+                setFailure("")
+                setMessage("")
+              }}
+            >
+              Discard draft and reload latest criteria
+            </Button>
+          </div>
+        )}
         <Tabs
           value={section}
           onValueChange={(value) => setSection(String(value))}
@@ -216,7 +256,7 @@ export function CriteriaForm({
         <Button type="submit">Review and publish</Button>
       </form>
       <AlertDialog
-        open={pending !== null}
+        open={pending !== null && !conflict}
         onOpenChange={(open) => {
           if (!open) setPending(null)
         }}
