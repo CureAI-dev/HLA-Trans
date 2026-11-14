@@ -66,6 +66,28 @@ describe("schemas", () => {
     expect(patientSchema.safeParse(p).success).toBe(false)
   })
 
+  test.each(["2026-02-31", "2026-99-99", "2025-02-29", "1900-02-29", "2026-04-31"])(
+    "rejects impossible optional calendar date %s",
+    (referralDate) => {
+      const donor = emptyDonor()
+      donor.identity.donorId = "D-1"
+      donor.identity.referralDate = referralDate
+      const result = donorSchema.safeParse(donor)
+      expect(result.success).toBe(false)
+      expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain("identity.referralDate")
+    }
+  )
+
+  test.each(["", "2024-02-29", "2000-02-29", "0099-01-01", "0000-02-29"])(
+    "accepts optional calendar date %s",
+    (referralDate) => {
+      const donor = emptyDonor()
+      donor.identity.donorId = "D-1"
+      donor.identity.referralDate = referralDate
+      expect(donorSchema.safeParse(donor).success).toBe(true)
+    }
+  )
+
   test("db requires at least one criteria version", () => {
     const r = dbSchema.safeParse({
       schemaVersion: 1,

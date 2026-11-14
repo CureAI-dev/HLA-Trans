@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { parseIsoDate } from "./dates"
 
 import {
   ABO_SUBTYPE_VALUES,
@@ -58,7 +59,7 @@ const shortText = z.string().max(200)
 /** ISO date (YYYY-MM-DD) or empty when not recorded. */
 const isoDate = z
   .string()
-  .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use the date picker (YYYY-MM-DD).")
+  .refine((value) => value === "" || parseIsoDate(value) !== null, "Use the date picker (YYYY-MM-DD).")
 const isoDateTime = z.string().datetime({ offset: true })
 const id = z.string().min(1).max(64)
 
