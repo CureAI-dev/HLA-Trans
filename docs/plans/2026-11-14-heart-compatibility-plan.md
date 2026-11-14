@@ -1,6 +1,6 @@
 # HLA-Trans Implementation Plan
 
-> **For agentic workers:** Use subagent-driven-development (recommended) or executing-plans to implement this plan task by task. Steps use checkbox (`- [ ]`) syntax.
+> **For agentic workers:** Use subagent-driven-development (recommended) or executing-plans to implement this plan task by task. Steps use checkbox (`- [x]`) syntax.
 
 **Goal:** Build the heart donor–recipient compatibility demo described in the spec.
 
@@ -21,8 +21,21 @@
 - No code references to OPTN allocation ranking. Screening order is labelled "not OPTN allocation".
 - **SSR is off** (`defaultSsr: false` + SPA mode). Route components run only in the browser, so they may read localStorage directly. No hydration gate, no null server snapshot. The root `shellComponent` still renders on the server, so it must not touch browser APIs.
 
-## Current state (before Task 1)
-Drafted earlier in this session. **Not tested and not committed.** Each is reviewed and tested in its task below.
+## Progress (2026-11-14)
+
+Tasks 1–5 are implemented and verified. Initial audit found tasks 1–3 already committed, task 4 drafted with two failing tests and three lint errors, and task 5 drafted without tests. Existing implementations were preserved and reviewed before completing the gaps with separate implementer and reviewer sub-agents.
+
+- Task 1: verified test tooling, client-only rendering, production SPA shell, and served HTML without route content.
+- Task 2: verified schemas/factories and added strict calendar-date validation (`2ab400f`).
+- Task 3: verified reference calculations, fixed invalid-date handling and minute rounding, extended PHM/ischemia coverage (`7f02b73`), and preserved missing post-challenge PVR/OCS perfusion inputs as null (`e3e4d5d`).
+- Task 4: fixed parsing, null-allele mismatches, uncertain typing, Bw derivation, and locus validation (`0689b21`).
+- Task 5: added defaults, descriptor uniqueness, schema, and ordering-boundary tests (`352c177`).
+
+Verification: 166 tests pass; typecheck, lint, and production build pass. Implementation remains on `feat/heart-compatibility-tasks-1-5`. Tasks 6 onward remain pending.
+
+## Original draft inventory (before Task 1)
+
+The following files were drafted before implementation began. The task column identifies where each is reviewed and tested.
 
 | File | Task that verifies it |
 |---|---|
@@ -74,7 +87,7 @@ src/
 - Create: `src/start.ts`
 - Modify: `vite.config.ts`
 
-- [ ] **Step 0: Turn SSR off**
+- [x] **Step 0: Turn SSR off**
 ```ts
 // src/start.ts
 import { createStart } from "@tanstack/react-start"
@@ -86,12 +99,12 @@ tanstackStart({ spa: { enabled: true } })
 ```
 Check: `bun run build` succeeds and outputs the SPA shell. `bun run dev`: page HTML from the server holds no route content.
 
-- [ ] **Step 1: Add scripts**
+- [x] **Step 1: Add scripts**
 ```json
 "test": "vitest run",
 "test:watch": "vitest"
 ```
-- [ ] **Step 2: Create `vitest.config.ts`**
+- [x] **Step 2: Create `vitest.config.ts`**
 ```ts
 import { defineConfig } from "vitest/config"
 import { fileURLToPath } from "node:url"
@@ -101,14 +114,14 @@ export default defineConfig({
   test: { include: ["src/**/*.test.ts"], environment: "node" },
 })
 ```
-- [ ] **Step 3: Smoke test**
+- [x] **Step 3: Smoke test**
 ```ts
 import { expect, test } from "vitest"
 test("vitest runs", () => expect(1 + 1).toBe(2))
 ```
-- [ ] **Step 4:** Run `bun run test`. Expected: 1 passed.
-- [ ] **Step 5:** Run `bun run typecheck`. Fix any errors in drafted files that block compilation. Expected: 0 errors.
-- [ ] **Step 6: Commit** `chore: vitest, test scripts and client-only rendering`
+- [x] **Step 4:** Run `bun run test`. Expected: 1 passed.
+- [x] **Step 5:** Run `bun run typecheck`. Fix any errors in drafted files that block compilation. Expected: 0 errors.
+- [x] **Step 6: Commit** `chore: vitest, test scripts and client-only rendering`
 
 ---
 
@@ -129,7 +142,7 @@ export function defaultPairInputs(): PairInputs           // all times null, sta
 export function newId(prefix: "pat" | "don" | "evl" | "crv" | "aud" | "ab" | "va"): string  // crypto.randomUUID based
 ```
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 ```ts
 import { describe, expect, test } from "vitest"
 import { patientSchema, donorSchema, dbSchema } from "../schema"
@@ -168,10 +181,10 @@ describe("schemas", () => {
   })
 })
 ```
-- [ ] **Step 2:** Run `bun run test schema`. Expected: FAIL (factories missing).
-- [ ] **Step 3:** Implement `factories.ts`. All numeric fields `null`, booleans `false`, tri fields `"unknown"`, serology `"not_done"`, enums at their "unknown/none" value, `listing.state = "evaluation"`, `donor.identity.state = "available"`, `acceptance.acceptDcd = true`, other accept flags `false`.
-- [ ] **Step 4:** Run tests. Expected: PASS.
-- [ ] **Step 5: Commit** `feat(domain): schemas, vocabularies and factories`
+- [x] **Step 2:** Run `bun run test schema`. Expected: FAIL (factories missing).
+- [x] **Step 3:** Implement `factories.ts`. All numeric fields `null`, booleans `false`, tri fields `"unknown"`, serology `"not_done"`, enums at their "unknown/none" value, `listing.state = "evaluation"`, `donor.identity.state = "available"`, `acceptance.acceptDcd = true`, other accept flags `false`.
+- [x] **Step 4:** Run tests. Expected: PASS.
+- [x] **Step 5: Commit** `feat(domain): schemas, vocabularies and factories`
 
 ---
 
@@ -181,7 +194,7 @@ describe("schemas", () => {
 
 **Interfaces (already drafted):** `bmi`, `bmiCategory`, `bsaMosteller`, `bsaDuBois`, `predictedHeartMass`, `patientHemodynamics`, `effectivePvr`, `estimateIschemia`, `ageInYears`, `ageInYearsExact`, `patientPhm`, `donorPhm`, `formatMinutes`, `round`.
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 ```ts
 import { describe, expect, test } from "vitest"
 import * as c from "../calc"
@@ -217,8 +230,8 @@ describe("age", () => {
 ```
 Plus hemodynamics: patient with paSys 50, paDia 20, paMean null, pcwp 18, CO 4 → paMean 30 (derived), TPG 12, DPG 2, PVR 3.0. Vasodilator challenge done with pvrAfterChallenge 2.1 → `effectivePvr` = 2.1.
 Plus ischemia: procurement 30, transport 120, implant 60, 1 prior sternotomy, durable LVAD, criteria extras 45/60 → total 315. OCS with perfusion 200 → cold 115. Any time null → null.
-- [ ] **Step 2:** Run. Fix `calc.ts` until all pass.
-- [ ] **Step 3: Commit** `feat(domain): clinical calculations with reference vectors`
+- [x] **Step 2:** Run. Fix `calc.ts` until all pass.
+- [x] **Step 3: Commit** `feat(domain): clinical calculations with reference vectors`
 
 ---
 
@@ -228,7 +241,7 @@ Plus ischemia: procurement 30, transport 120, implant 60, 1 prior sternotomy, du
 
 **Interfaces (drafted):** `parseHla(raw, locus?)`, `normalizeHla`, `specLabel`, `withAncestors`, `ancestorsOf`, `isBroad`, `splitsOf`, `alleleToSerologic`, `buildProfile(typing)`, `donorCarries(target, profile)`, `abDrMismatches(donor, recipient)`.
 
-- [ ] **Step 1: Tests (table-driven)**
+- [x] **Step 1: Tests (table-driven)**
 
 | Input | Locus | Expected label |
 |---|---|---|
@@ -266,8 +279,8 @@ Crossmatch (`donorCarries`), donor typing A `["A*02:01","A*24:02"]`, B `["B15","
 
 Null allele: donor A `["A*24:09N","A*02:01"]` → profile excludes A24; `nullAlleles` = `["A*24:09N"]`.
 Mismatches: donor A `A1,A2` / B `B8,B44` / DR `DR15,DR4` vs recipient A `A2,A3` / B `B7,B44` / DR `DR15,DR7` → `{A:1,B:1,DR:1,total:3}`.
-- [ ] **Step 2:** Run, fix `hla.ts` until green.
-- [ ] **Step 3: Commit** `feat(domain): HLA parsing, OPTN equivalence and virtual crossmatch`
+- [x] **Step 2:** Run, fix `hla.ts` until green.
+- [x] **Step 3: Commit** `feat(domain): HLA parsing, OPTN equivalence and virtual crossmatch`
 
 ---
 
@@ -275,7 +288,7 @@ Mismatches: donor A `A1,A2` / B `B8,B44` / DR `DR15,DR4` vs recipient A `A2,A3` 
 
 **Files:** Review `src/domain/criteria.ts`. Test `src/domain/__tests__/criteria.test.ts`
 
-- [ ] **Step 1: Tests**
+- [x] **Step 1: Tests**
 ```ts
 import { expect, test } from "vitest"
 import { DEFAULT_CRITERIA, CRITERIA_FIELDS, validateCriteria } from "../criteria"
@@ -296,8 +309,8 @@ test("inverted thresholds are reported", () => {
   expect(validateCriteria(bad).map((i) => i.path)).toContain("immunology.mfiFailMin")
 })
 ```
-- [ ] **Step 2:** Run, fix.
-- [ ] **Step 3: Commit** `feat(domain): default criteria with sources and validation`
+- [x] **Step 2:** Run, fix.
+- [x] **Step 3: Commit** `feat(domain): default criteria with sources and validation`
 
 ---
 
