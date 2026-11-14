@@ -1,8 +1,17 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
+import {
+  ClientOnly,
+  HeadContent,
+  Outlet,
+  Scripts,
+  createRootRoute,
+} from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { TanStackDevtools } from "@tanstack/react-devtools"
 
 import appCss from "../styles.css?url"
+import { AppShell } from "@/components/app/app-shell"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/toast"
 
 export const Route = createRootRoute({
   head: () => ({
@@ -15,7 +24,7 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "HLA-Trans",
       },
     ],
     links: [
@@ -32,7 +41,33 @@ export const Route = createRootRoute({
     </main>
   ),
   shellComponent: RootDocument,
+  component: RootComponent,
 })
+
+function RootComponent() {
+  return (
+    <ClientOnly>
+      <TooltipProvider>
+        <Toaster>
+          <AppShell>
+            <Outlet />
+          </AppShell>
+          {import.meta.env.DEV && (
+            <TanStackDevtools
+              config={{ position: "bottom-right" }}
+              plugins={[
+                {
+                  name: "Tanstack Router",
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          )}
+        </Toaster>
+      </TooltipProvider>
+    </ClientOnly>
+  )
+}
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
@@ -42,17 +77,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
         <Scripts />
       </body>
     </html>

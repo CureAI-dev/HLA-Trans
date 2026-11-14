@@ -1,19 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/app/page-header"
 
-export const Route = createFileRoute("/")({ component: App })
-
-function App() {
+export const Route = createFileRoute("/")({ component: Dashboard })
+function Dashboard() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
+    <>
+      <PageHeader
+        title="Dashboard"
+        description="Review candidates, donor records, and heart compatibility evaluations."
+      />
+      <div className="border bg-card p-6">
+        <h2 className="font-semibold">Start a compatibility review</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Select records or manage local data to begin.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <a
+            className="border bg-primary px-4 py-2 text-sm text-primary-foreground"
+            href="/evaluations/new"
+          >
+            New evaluation
+          </a>
+          <a className="border px-4 py-2 text-sm" href="/data">
+            Manage data
+          </a>
         </div>
       </div>
-    </div>
+    </>
   )
 }

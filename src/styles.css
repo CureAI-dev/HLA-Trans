@@ -162,5 +162,13 @@
 @layer base {
   body {
     font-feature-settings: "tnum" 1;
+    font-variant-numeric: tabular-nums;
   }
+  :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  [id^="rule-"] { scroll-margin-top: 1rem; }
+  .hla-string { font-family: var(--font-mono); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
