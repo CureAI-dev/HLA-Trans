@@ -34,8 +34,34 @@ export type LocalStore<T> = {
   recoveryNotice: () => string | null
 }
 
-const isBrowser = (): boolean =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined"
+const isBrowser = (): boolean => typeof window !== "undefined"
+
+function accessStorage<T>(operation: (storage: Storage) => T): T {
+  try {
+    if (!isBrowser()) throw new StorageWriteError("Storage is unavailable.")
+    const storage = window.localStorage
+    return operation(storage)
+  } catch (error) {
+    if (error instanceof StorageWriteError) throw error
+    const quota =
+      error instanceof DOMException &&
+      (error.name === "QuotaExceededError" || error.code === 22)
+    throw new StorageWriteError(
+      quota
+        ? "Browser storage is full. Export a backup and delete old records."
+        : "The browser blocked access to saved data.",
+      { cause: error }
+    )
+  }
+}
+
+function freeze<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    Object.values(value).forEach(freeze)
+    Object.freeze(value)
+  }
+  return value
+}
 
 export function createLocalStore<T>(options: {
   key: string
@@ -48,24 +74,27 @@ export function createLocalStore<T>(options: {
   const listeners = new Set<() => void>()
   let cache: T | null = null
   let notice: string | null = null
+  let recoveryBlocked = false
 
   const load = (): T => {
-    const raw = window.localStorage.getItem(key)
-    if (raw === null) return initial()
+    const raw = accessStorage((storage) => storage.getItem(key))
+    recoveryBlocked = false
+    if (raw === null) return freeze(schema.parse(initial()))
     try {
       const parsed: unknown = JSON.parse(raw)
       const result = schema.safeParse(migrate ? migrate(parsed) : parsed)
-      if (result.success) return result.data
+      if (result.success) return freeze(result.data)
       throw new Error(result.error.issues[0]?.message ?? "Schema mismatch")
     } catch (error) {
       const backupKey = `${key}.corrupt.${Date.now()}`
       try {
-        window.localStorage.setItem(backupKey, raw)
+        accessStorage((storage) => storage.setItem(backupKey, raw))
         notice = `Saved data could not be read (${error instanceof Error ? error.message : "unknown error"}). A copy was kept under "${backupKey}" and the app started with empty data.`
       } catch {
-        notice = `Saved data could not be read and no backup could be written. The app started with empty data.`
+        recoveryBlocked = true
+        notice = `Saved data could not be read and no backup could be written. Saving is blocked to preserve the original data. Export or copy the original browser storage before recovery.`
       }
-      return initial()
+      return freeze(schema.parse(initial()))
     }
   }
 
@@ -80,26 +109,19 @@ export function createLocalStore<T>(options: {
   }
 
   const write = (next: T) => {
-    const validated = schema.parse(next)
-    try {
-      window.localStorage.setItem(key, JSON.stringify(validated))
-    } catch (error) {
-      const quota =
-        error instanceof DOMException &&
-        (error.name === "QuotaExceededError" || error.code === 22)
+    ensure()
+    if (recoveryBlocked)
       throw new StorageWriteError(
-        quota
-          ? "Browser storage is full. Export a backup and delete old records."
-          : "The browser blocked saving data.",
-        { cause: error }
+        "Saving is blocked because corrupt data could not be backed up. Preserve the original browser storage before recovery."
       )
-    }
-    cache = validated
+    const validated = schema.parse(next)
+    accessStorage((storage) => storage.setItem(key, JSON.stringify(validated)))
+    cache = freeze(validated)
     emit()
   }
 
   const onStorage = (event: StorageEvent) => {
-    if (event.key !== key) return
+    if (event.key !== key && event.key !== null) return
     cache = null
     emit()
   }
@@ -112,10 +134,11 @@ export function createLocalStore<T>(options: {
     },
     update: (fn) => {
       const current = ensure()
-      if (current === null) throw new StorageWriteError("Storage is unavailable.")
-      const next = fn(current)
+      if (current === null)
+        throw new StorageWriteError("Storage is unavailable.")
+      const next = fn(structuredClone(current))
       write(next)
-      return next
+      return cache!
     },
     subscribe: (listener) => {
       listeners.add(listener)
@@ -131,7 +154,7 @@ export function createLocalStore<T>(options: {
     },
     sizeInBytes: () => {
       if (!isBrowser()) return 0
-      return (window.localStorage.getItem(key)?.length ?? 0) * 2
+      return accessStorage((storage) => (storage.getItem(key)?.length ?? 0) * 2)
     },
     recoveryNotice: () => notice,
   }
