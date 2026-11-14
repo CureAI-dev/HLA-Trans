@@ -117,6 +117,33 @@ describe("virtual crossmatch (donorCarries)", () => {
 })
 
 describe("profile", () => {
+  test("unresolved broad cannot exclude an allele group", () => {
+    expect(donorCarries("A*24", buildProfile(typing({ A: ["A9", ""] }))).reactivity).toBe("possible")
+  })
+
+  test("unmapped B alleles cannot establish Bw negativity", () => {
+    const p = buildProfile(typing({ B: ["B*99:01", ""] }))
+    expect(p.bw4).toBeNull()
+    expect(p.bw6).toBeNull()
+  })
+
+  test.each(["B2708", "B*27:08"])("specific Bw assignment wins for %s", (value) => {
+    const p = buildProfile(typing({ B: [value, ""] }))
+    expect(p.bw4).toBe(false)
+    expect(p.bw6).toBe(true)
+  })
+
+  test.each(["DRB4*01", "DRB4*01:01", "DR53"])("untyped DRB4 remains possible for %s", (target) => {
+    expect(donorCarries(target, buildProfile(typing({ DRB345: ["DRB3*01:01", ""] }))).reactivity).toBe("possible")
+  })
+
+  test.each(["B44", "B*44:02", "Bw4"])("rejects %s in an A grid cell", (value) => {
+    const p = buildProfile(typing({ A: [value, ""] }))
+    expect(p.invalid).toHaveLength(1)
+    expect(p.families.B.typed).toBe(false)
+    expect(parseHla(value, "A").ok).toBe(false)
+  })
+
   test("null allele is excluded from the antigen set", () => {
     const p = buildProfile(typing({ A: ["A*24:09N", "A*02:01"] }))
     expect(p.families.A.antigens.has("A24")).toBe(false)
@@ -127,11 +154,16 @@ describe("profile", () => {
   test("invalid entries are collected", () => {
     const p = buildProfile(typing({ A: ["Q12", "A2"] }))
     expect(p.invalid).toHaveLength(1)
-    expect(p.invalid[0]!.locus).toBe("A")
+    expect(p.invalid[0]?.locus).toBe("A")
   })
 })
 
 describe("A/B/DR mismatches", () => {
+  test("recipient null allele does not prevent a mismatch", () => {
+    const donor = typing({ A: ["A1", "A2"], B: ["B44", ""], DRB1: ["DR15", ""] })
+    const recipient = typing({ A: ["A*01:01N", "A2"], B: ["B44", ""], DRB1: ["DR15", ""] })
+    expect(abDrMismatches(donor, recipient)).toEqual({ A: 1, B: 0, DR: 0, total: 1 })
+  })
   test("one mismatch per locus", () => {
     const donor = typing({ A: ["A1", "A2"], B: ["B8", "B44"], DRB1: ["DR15", "DR4"] })
     const recipient = typing({ A: ["A2", "A3"], B: ["B7", "B44"], DRB1: ["DR15", "DR7"] })

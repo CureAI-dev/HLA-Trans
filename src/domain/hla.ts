@@ -310,6 +310,7 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
   if (value === "") return { ok: false, error: "Empty value." }
 
   if (value === "BW4" || value === "BW6") {
+    if (locus) return { ok: false, error: `Bw status is not typing for ${locus}.` }
     return { ok: true, spec: { kind: "bw", antigen: value === "BW4" ? "Bw4" : "Bw6" } }
   }
 
@@ -319,7 +320,9 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
       candidate = `${LOCUS_DEFAULT_GENE[locus]}*${value}`
     } else if (/^\d{1,4}$/.test(value)) {
       const prefix = LOCUS_SEROLOGIC_PREFIX[locus]
-      candidate = prefix ? `${prefix.toUpperCase()}${value}` : `${LOCUS_DEFAULT_GENE[locus]}*${value}`
+      candidate = locus === "DRB345" && ["51", "52", "53"].includes(value)
+        ? `DR${value}`
+        : prefix ? `${prefix.toUpperCase()}${value}` : `${LOCUS_DEFAULT_GENE[locus]}*${value}`
     } else if (locus === "DRB345" && /^[345]\*\d/.test(value)) {
       candidate = `DRB${value}`
     }
@@ -327,11 +330,11 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
 
   const allele = ALLELE_RE.exec(candidate)
   if (allele) {
-    const [, gene = "", groupRaw = "", proteinRaw, suffix] = allele
+    const [, gene, groupRaw, proteinRaw, suffix] = allele
     const group = pad2(groupRaw)
     const protein = proteinRaw ? pad2(proteinRaw) : null
     const family = GENE_FAMILY[gene]
-    if (!family) return { ok: false, error: `Unsupported gene ${gene}.` }
+    if (locus && FAMILY_LOCUS[family] !== locus) return { ok: false, error: `${gene} does not belong in ${locus}.` }
     const name = protein ? `${gene}*${group}:${protein}` : `${gene}*${group}`
     return {
       ok: true,
@@ -341,7 +344,7 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
         group,
         protein,
         name,
-        suffix: suffix ?? null,
+        suffix: suffix || null,
         serologic: alleleToSerologic(gene, group, protein),
         family,
       },
@@ -350,7 +353,7 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
 
   const sero = SEROLOGIC_RE.exec(candidate)
   if (sero) {
-    const [, prefixRaw = "", number = ""] = sero
+    const [, prefixRaw, number] = sero
     const prefix = prefixRaw === "C" || prefixRaw === "CW" ? "Cw" : prefixRaw
     const antigen = `${prefix}${Number(number)}`
     if (!KNOWN_SEROLOGIC.has(antigen)) {
@@ -363,6 +366,7 @@ export function parseHla(raw: string, locus?: HlaLocus): ParseResult {
       : prefix === "DQ" ? "DQ"
       : ["DR51", "DR52", "DR53"].includes(antigen) ? "DR5x"
       : "DR"
+    if (locus && FAMILY_LOCUS[family] !== locus) return { ok: false, error: `${antigen} does not belong in ${locus}.` }
     return { ok: true, spec: { kind: "serologic", family, antigen, isBroad: isBroad(antigen) } }
   }
 
@@ -389,6 +393,7 @@ export function normalizeHla(raw: string, locus?: HlaLocus): string | null {
 /* ------------------------------------------------------------------ */
 
 type FamilyProfile = {
+  typedGenes: Set<string>
   typed: boolean
   /** Serologic antigens carried, including ancestors. */
   antigens: Set<string>
@@ -411,6 +416,7 @@ export type DonorProfile = {
 }
 
 const emptyFamily = (): FamilyProfile => ({
+  typedGenes: new Set(),
   typed: false,
   antigens: new Set(),
   unresolvedBroads: new Set(),
@@ -433,6 +439,7 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
   }
   const invalid: DonorProfile["invalid"] = []
   const nullAlleles: Array<string> = []
+  const bOriginal: Array<string | null> = []
 
   const loci: ReadonlyArray<HlaLocus> = [
     "A", "B", "C", "DRB1", "DRB345", "DQA1", "DQB1", "DPA1", "DPB1",
@@ -450,12 +457,14 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
       if (spec.kind === "bw") continue
 
       if (spec.kind === "allele") {
+        families[spec.family].typedGenes.add(spec.gene)
         if (spec.suffix === "N") {
           nullAlleles.push(spec.name + "N")
           families[spec.family].typed = true
           continue
         }
         const fam = families[spec.family]
+        if (spec.family === "B") bOriginal.push(spec.serologic)
         fam.typed = true
         fam.groups.add(`${spec.gene}*${spec.group}`)
         if (spec.protein) fam.alleles.add(spec.name)
@@ -468,6 +477,9 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
       }
 
       const fam = families[spec.family]
+      if (spec.family === "B") bOriginal.push(spec.antigen)
+      const drGene = { DR51: "DRB5", DR52: "DRB3", DR53: "DRB4" }[spec.antigen]
+      if (drGene) fam.typedGenes.add(drGene)
       fam.typed = true
       fam.highResolution = false
       for (const a of withAncestors(spec.antigen)) fam.antigens.add(a)
@@ -480,10 +492,12 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
   }
 
   // Bw4/Bw6: explicit typing wins; otherwise derive from B antigens.
-  const bAntigens = [...families.B.antigens]
-  const derivedBw4 = bAntigens.some((a) => BW4_B.has(a))
-  const derivedBw6 = bAntigens.some((a) => BW6_B.has(a))
-  const bResolved = families.B.typed && families.B.unresolvedBroads.size === 0
+  // The first assignment is the most specific; ancestors must not override it.
+  const bAssignments = bOriginal.map((antigen) => antigen === null ? undefined
+    : withAncestors(antigen).find((a) => BW4_B.has(a) || BW6_B.has(a)))
+  const derivedBw4 = bAssignments.some((a) => a !== undefined && BW4_B.has(a))
+  const derivedBw6 = bAssignments.some((a) => a !== undefined && BW6_B.has(a))
+  const bResolved = families.B.typed && bAssignments.every((a) => a !== undefined)
 
   const bw = (explicit: HlaTyping["bw4"], derived: boolean): boolean | null => {
     if (explicit === "yes") return true
@@ -531,6 +545,11 @@ export function donorCarries(target: string, profile: DonorProfile): CrossmatchH
   }
 
   const fam = profile.families[spec.family]
+  const drGene = spec.kind === "allele" ? spec.gene
+    : { DR51: "DRB5", DR52: "DRB3", DR53: "DRB4" }[spec.antigen]
+  if (spec.family === "DR5x" && drGene && !fam.typedGenes.has(drGene)) {
+    return { target, reactivity: "possible", reason: `Donor ${drGene} gene is not typed.` }
+  }
   if (!fam.typed) {
     return {
       target,
@@ -560,7 +579,8 @@ export function donorCarries(target: string, profile: DonorProfile): CrossmatchH
     if (fam.groups.has(groupKey)) {
       return { target, reactivity: "definite", reason: `Donor carries an allele in group ${groupKey}.` }
     }
-    if (spec.serologic && fam.antigens.has(spec.serologic) && !fam.highResolution) {
+    if (spec.serologic && !fam.highResolution && (fam.antigens.has(spec.serologic) ||
+      ancestorsOf(spec.serologic).some((a) => fam.unresolvedBroads.has(a)))) {
       return { target, reactivity: "possible", reason: `Donor serology ${spec.serologic} is compatible with ${groupKey}.` }
     }
     return { target, reactivity: "none", reason: `Donor has no ${groupKey} allele.` }
@@ -602,6 +622,7 @@ export function abDrMismatches(
       const p = parseHla(v, locus)
       if (!p.ok) return null
       const s = p.spec
+      if (s.kind === "allele" && s.suffix === "N") continue
       if (s.kind === "serologic") out.push(s.antigen)
       else if (s.kind === "allele" && s.serologic) out.push(s.serologic)
       else return null
