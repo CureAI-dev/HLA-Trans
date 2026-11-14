@@ -29,9 +29,9 @@ Tasks 1-21 are implemented. The initial audit found tasks 1-3 already committed,
 - Tasks 12-13: validated browser database, immutable evaluation snapshots, decision guards, audit trail, and fictional sample records (6 patients, 5 donors, 13 expected-outcome pairs).
 - Tasks 14-15: responsive app shell, light/dark theme, status components and clinical form kit.
 - Tasks 16-20: complete patient/donor/evaluation workflows, versioned criteria, dashboard, audit and data management.
-- Task 21: README and browser QA. Independent task reviews are clean; final whole-branch review is pending.
+- Task 21: README and browser QA. Independent task reviews and the final whole-branch review are approved.
 
-Fresh verification: `bun run typecheck`, `bun run lint`, `bun run test` (19 files, 418 tests), and `bun run build` all pass. Browser QA passed 60 screen/theme/width combinations (15 screens by light/dark by 375/1440 px), keyboard flows, decision finality, snapshot preservation, and export then typed reset then import restoration. No browser console/page errors or horizontal document overflow were found.
+Fresh verification: `bun run typecheck`, `bun run lint`, `bun run test` (20 files, 427 tests), and `bun run build` all pass. Browser QA passed 60 screen/theme/width combinations (15 screens by light/dark by 375/1440 px), keyboard flows, decision finality, snapshot preservation, and export then typed reset then import restoration. No browser console/page errors or horizontal document overflow were found. The final review identified three important and four minor integration issues; all seven were fixed in `2710cce` and approved by a scoped re-review. An additional 23 focused browser receipts cover draft guards, semantic import validation, cross-tab criteria, and local-date filtering, with no page errors.
 
 Implementation decisions and tradeoffs:
 
@@ -43,6 +43,7 @@ Implementation decisions and tradeoffs:
 - Installed TanStack prerenders the root component despite route SSR being disabled. A framework `ClientOnly` boundary wraps the client app; the server document remains browser-free. A future framework change may allow replacing this boundary with a route layout.
 - Commit typed route families and their generated route tree together, after their independent reviews and aggregate checks. This keeps type augmentation consistent; the tradeoff is a larger UI integration commit.
 - An opened mobile navigation sheet remains a modal when the viewport grows; Escape and focus return work. Automatic closing at the desktop breakpoint would be a separate behavior change.
+- Retain the ignored QA reports, scripts and screenshots for review alongside the pre-existing tracked task report. The tradeoff is local disk usage until those artifacts are no longer needed.
 
 ## Original draft inventory (before Task 1)
 
