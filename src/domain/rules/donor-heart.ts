@@ -217,7 +217,7 @@ export function evaluateDonorHeart(ctx: RuleContext): RuleResult {
             ? "review"
             : "pass",
         key === "sodiumPeak" ? "Peak sodium" : "Latest sodium",
-        `Fail below ${c.sodiumFailBelow} or at/above ${c.sodiumFailAtOrAbove}; review outside ${c.sodiumReviewBelow}�${c.sodiumReviewAbove}.`,
+        `Fail below ${c.sodiumFailBelow} or at/above ${c.sodiumFailAtOrAbove}; review outside ${c.sodiumReviewBelow} - ${c.sodiumReviewAbove}.`,
         `${value} mmol/L`
       )
   }

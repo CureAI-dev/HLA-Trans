@@ -23,15 +23,26 @@
 
 ## Progress (2026-11-14)
 
-Tasks 1–5 are implemented and verified. Initial audit found tasks 1–3 already committed, task 4 drafted with two failing tests and three lint errors, and task 5 drafted without tests. Existing implementations were preserved and reviewed before completing the gaps with separate implementer and reviewer sub-agents.
+Tasks 1?21 are implemented. The initial audit found tasks 1?3 already committed, task 4 drafted with failing tests/lint errors, and task 5 drafted without tests. Tasks 1?5 were completed, reviewed, merged and pushed to `master` at `a1d0f28`. Tasks 6?21 were implemented with parallel workers and separate reviews on `feat/heart-compatibility-remaining`.
 
-- Task 1: verified test tooling, client-only rendering, production SPA shell, and served HTML without route content.
-- Task 2: verified schemas/factories and added strict calendar-date validation (`2ab400f`).
-- Task 3: verified reference calculations, fixed invalid-date handling and minute rounding, extended PHM/ischemia coverage (`7f02b73`), and preserved missing post-challenge PVR/OCS perfusion inputs as null (`e3e4d5d`).
-- Task 4: fixed parsing, null-allele mismatches, uncertain typing, Bw derivation, and locus validation (`0689b21`).
-- Task 5: added defaults, descriptor uniqueness, schema, and ordering-boundary tests (`352c177`).
+- Tasks 6?11: all six compatibility rules, finding helpers, logistics, aggregate engine and candidate screening.
+- Tasks 12?13: validated browser database, immutable evaluation snapshots, decision guards, audit trail, and fictional sample records (6 patients, 5 donors, 13 expected-outcome pairs).
+- Tasks 14?15: responsive app shell, light/dark theme, status components and clinical form kit.
+- Tasks 16?20: complete patient/donor/evaluation workflows, versioned criteria, dashboard, audit and data management.
+- Task 21: README and browser QA. Independent task reviews are clean; final whole-branch review is pending.
 
-Verification: 166 tests pass; typecheck, lint, and production build pass. Implementation remains on `feat/heart-compatibility-tasks-1-5`. Tasks 6 onward remain pending.
+Fresh verification: `bun run typecheck`, `bun run lint`, `bun run test` (19 files, 418 tests), and `bun run build` all pass. Browser QA passed 60 screen/theme/width combinations (15 screens ? light/dark ? 375/1440 px), keyboard flows, decision finality, snapshot preservation, and export ? typed reset ? import restoration. No browser console/page errors or horizontal document overflow were found.
+
+Implementation decisions and tradeoffs:
+
+- Continue in a dedicated feature branch in the existing checkout, preserving the previously completed foundations. If isolation requirements change, move the work to a separate worktree.
+- Use three workers plus the main orchestrator, with disjoint file ownership and controller-only commits. This follows the requested parallel execution; the tradeoff is extra integration coordination.
+- Execute the remaining plan continuously against the existing specification. If a narrower batch was intended, later task commits can be retained separately.
+- Preserve donor-age REVIEW above the configured limit; the older-donor informational example is tested with an adjusted review threshold so information alone does not worsen the result. Reverting this choice would require changing that contradictory example.
+- Candidate screening uses default missing pair times and therefore retains logistics REVIEW. A scoped test fixture supplies complete times only to exercise actual PASS-versus-REVIEW ordering, with all real rules; ordinary screening behavior remains covered separately.
+- Installed TanStack prerenders the root component despite route SSR being disabled. A framework `ClientOnly` boundary wraps the client app; the server document remains browser-free. A future framework change may allow replacing this boundary with a route layout.
+- Commit typed route families and their generated route tree together, after their independent reviews and aggregate checks. This keeps type augmentation consistent; the tradeoff is a larger UI integration commit.
+- An opened mobile navigation sheet remains a modal when the viewport grows; Escape and focus return work. Automatic closing at the desktop breakpoint would be a separate behavior change.
 
 ## Original draft inventory (before Task 1)
 
@@ -338,7 +349,7 @@ export function aboCompatible(donor: Abo, recipient: Abo): boolean
 export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary" | "incompatible"
 ```
 
-- [ ] **Step 1: Tests.** Cover every row of spec §6.1:
+- [x] **Step 1: Tests.** Cover every row of spec §6.1:
   - all 16 donor×recipient combos for `aboCompatible` (table test)
   - `aboPriority("O","B")` = primary, `("O","A")` = secondary, `("A","B")` = incompatible
   - missing ABO → review + missing
@@ -348,10 +359,10 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
   - pediatric age 0.5, opted in, A→B → review
   - pediatric age 5, recipient B, donor A: anti-A 1:8 dated 10 days ago, no therapy → review; titer 1:32 → fail; titer dated 40 days ago → review missing; therapy within 30 days → fail
   - pediatric pathway disabled in criteria → fail
-- [ ] **Step 2:** Run. Expected: fail.
-- [ ] **Step 3:** Implement per spec §6.1. Pediatric = age at listing date < 18 if listing date set, else current age < 18. Titer age uses `ctx.now`.
-- [ ] **Step 4:** Run. Expected: pass.
-- [ ] **Step 5: Commit** `feat(rules): finding helpers and blood type rule`
+- [x] **Step 2:** Run. Expected: fail.
+- [x] **Step 3:** Implement per spec §6.1. Pediatric = age at listing date < 18 if listing date set, else current age < 18. Titer age uses `ctx.now`.
+- [x] **Step 4:** Run. Expected: pass.
+- [x] **Step 5: Commit** `feat(rules): finding helpers and blood type rule`
 
 ---
 
@@ -361,7 +372,7 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
 
 **Interface:** `export function evaluateSize(ctx: RuleContext): RuleResult`
 
-- [ ] **Step 1: Tests** (spec §6.2):
+- [x] **Step 1: Tests** (spec §6.2):
   - adult, PHM ratio 1.0 → pass; info findings include weight ratio
   - ratio 0.80 → review; 0.65 → fail; 1.4 → review (oversized)
   - PVR 5 (derived) with ratio 0.92 → review; post-challenge PVR 3 with ratio 0.92 → pass
@@ -370,8 +381,8 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
   - all size data missing → review missing
   - pediatric recipient age 8, weight ratio 2.5 → pass; 3.5 → fail
   - donor weight 60, patient acceptance min 65 → fail
-- [ ] **Step 2–4:** Fail → implement → pass. Evidence strings show values to 2 decimals (e.g. `PHM ratio 0.82 (donor 152 g / recipient 185 g)`).
-- [ ] **Step 5: Commit** `feat(rules): size rule with PHM and pulmonary hypertension adjustment`
+- [x] **Step 2–4:** Fail → implement → pass. Evidence strings show values to 2 decimals (e.g. `PHM ratio 0.82 (donor 152 g / recipient 185 g)`).
+- [x] **Step 5: Commit** `feat(rules): size rule with PHM and pulmonary hypertension adjustment`
 
 ---
 
@@ -381,7 +392,7 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
 
 **Interface:** `export function evaluateImmunology(ctx: RuleContext): RuleResult`
 
-- [ ] **Step 1: Tests** (spec §6.3), donor typing as in Task 4:
+- [x] **Step 1: Tests** (spec §6.3), donor typing as in Task 4:
   - unacceptable `A9` → fail; unacceptable `B62` → review (possible)
   - antibody `B44` MFI 6000 → fail; MFI 3000 → review; MFI 3000 + C1q positive → fail; MFI 1500 → pass with info "1 antibody below review level"
   - antibody `A23` MFI 9000 → pass (not DSA)
@@ -389,8 +400,8 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
   - no antibodies, cPRA null → review missing; cPRA 40 → review missing; cPRA 0 → pass
   - CDC positive → fail; flow positive only → review
   - invalid typing value `"Q12"` in donor A → review
-- [ ] **Step 2–4:** Fail → implement → pass. One finding per DSA / unacceptable hit. Findings sorted fail → review → info.
-- [ ] **Step 5: Commit** `feat(rules): virtual crossmatch rule`
+- [x] **Step 2–4:** Fail → implement → pass. One finding per DSA / unacceptable hit. Findings sorted fail → review → info.
+- [x] **Step 5: Commit** `feat(rules): virtual crossmatch rule`
 
 ---
 
@@ -400,7 +411,7 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
 
 **Interface:** `export function evaluateInfection(ctx: RuleContext): RuleResult`
 
-- [ ] **Step 1: Tests** (spec §6.4). Base fixture: all donor tests negative, recipient CMV/EBV/Toxo done, sample within 96 h → pass. Then one change per test:
+- [x] **Step 1: Tests** (spec §6.4). Base fixture: all donor tests negative, recipient CMV/EBV/Toxo done, sample within 96 h → pass. Then one change per test:
   - one required test not done → review missing (code `infection.missing.hbvNat`)
   - Chagas endemic yes + not done → review missing
   - sample not within 96 h → review
@@ -413,8 +424,8 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
   - CNS `viral_fungal_amebic` → fail
   - PHS criterion `idu` → review; `acceptPhsRisk=false` → fail
   - indeterminate HBsAg → review
-- [ ] **Step 2–4:** Fail → implement → pass.
-- [ ] **Step 5: Commit** `feat(rules): infectious disease rule`
+- [x] **Step 2–4:** Fail → implement → pass.
+- [x] **Step 5: Commit** `feat(rules): infectious disease rule`
 
 ---
 
@@ -424,7 +435,7 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
 
 **Interface:** `export function evaluateDonorHeart(ctx: RuleContext): RuleResult`
 
-- [ ] **Step 1: Tests** (spec §6.5). Base fixture: 30-year-old male, LVEF 60, walls 10/10, normal valves/RV/wall motion, angio not done, sodium 142/145, norepinephrine 0.05 only, no arrest, troponin 0.1, malignancy none → pass. Then one change each:
+- [x] **Step 1: Tests** (spec §6.5). Base fixture: 30-year-old male, LVEF 60, walls 10/10, normal valves/RV/wall motion, angio not done, sodium 142/145, norepinephrine 0.05 only, no arrest, troponin 0.1, malignancy none → pass. Then one change each:
   - age 50 → review; patient maxDonorAge 45 → fail; criteria ageFailAbove 48 → fail
   - LVEF 45 → review; 35 → fail; LVEF 35 with repeat 55 → pass (info notes initial)
   - wall 15 → review; 18 → fail
@@ -441,8 +452,8 @@ export function aboPriority(donor: Abo, recipient: Abo): "primary" | "secondary"
   - cocaine yes + wall 14 → review
   - unexplained sudden death → review
   - donor 52, recipient 30 → info finding `donorHeart.olderDonorYoungerRecipient` (status stays pass)
-- [ ] **Step 2–4:** Fail → implement → pass.
-- [ ] **Step 5: Commit** `feat(rules): donor heart quality rule`
+- [x] **Step 2–4:** Fail → implement → pass.
+- [x] **Step 5: Commit** `feat(rules): donor heart quality rule`
 
 ---
 
@@ -481,8 +492,8 @@ export function screenDonor(donor: Donor, patients: ReadonlyArray<Patient>, crit
 // Only patients with listing.state === "active" are screened.
 ```
 
-- [ ] **Step 1: Logistics tests** (spec §6.6): times null → review missing; 210 min → pass; 300 → review; 400 → fail; 400 with OCS perfusion 200 → pass (cold 200) + info; donor 50 y and 250 min → review; DCD with acceptDcd false → fail; DCD fWIT 25 → pass, 40 → review, 50 → fail, null → review missing; distance 600 with max 500 → fail.
-- [ ] **Step 2: Engine tests:**
+- [x] **Step 1: Logistics tests** (spec §6.6): times null → review missing; 210 min → pass; 300 → review; 400 → fail; 400 with OCS perfusion 200 → pass (cold 200) + info; donor 50 y and 250 min → review; DCD with acceptDcd false → fail; DCD fWIT 25 → pass, 40 → review, 50 → fail, null → review missing; distance 600 with max 500 → fail.
+- [x] **Step 2: Engine tests:**
   - blockers: patient inactive → overall fail, blocker code `blocker.patientState`
   - overall equals worst rule
   - `missingCount` equals the count of missing findings across rules
@@ -498,8 +509,8 @@ export function screenDonor(donor: Donor, patients: ReadonlyArray<Patient>, crit
     - inactive patient is excluded
   - `isPediatricCandidate`: listed at 17, now 19 → true; no listing date, age 16 → true; listed at 18 → false
   - performance: 200 patients screened in < 1000 ms
-- [ ] **Step 3–4:** Fail → implement → pass.
-- [ ] **Step 5: Commit** `feat(domain): logistics rule, engine and donor screening`
+- [x] **Step 3–4:** Fail → implement → pass.
+- [x] **Step 5: Commit** `feat(domain): logistics rule, engine and donor screening`
 
 ---
 
@@ -534,9 +545,9 @@ export function latestCriteria(db: Db): CriteriaVersion
 ```
 Errors: `StorageWriteError` propagates. Domain errors throw `DbActionError` with a user-readable message.
 
-- [ ] **Step 1: Tests:** corrupt JSON in storage → store loads `initialDb()`, backup key written, `recoveryNotice()` non-null; save + reload round-trip; `decide` twice throws; `publishCriteria` increments version; evaluation snapshot unchanged after patient edit; import of invalid JSON throws and leaves data intact; every action writes an audit entry; quota error (stub throws `QuotaExceededError`) → `StorageWriteError`.
-- [ ] **Step 2–4:** Fail → implement → pass.
-- [ ] **Step 5: Commit** `feat(storage): validated local database with audit trail`
+- [x] **Step 1: Tests:** corrupt JSON in storage → store loads `initialDb()`, backup key written, `recoveryNotice()` non-null; save + reload round-trip; `decide` twice throws; `publishCriteria` increments version; evaluation snapshot unchanged after patient edit; import of invalid JSON throws and leaves data intact; every action writes an audit entry; quota error (stub throws `QuotaExceededError`) → `StorageWriteError`.
+- [x] **Step 2–4:** Fail → implement → pass.
+- [x] **Step 5: Commit** `feat(storage): validated local database with audit trail`
 
 ---
 
@@ -551,9 +562,9 @@ Records (fictional, clearly labelled):
 - 5 donors: ideal 28 y DBD male O; 52 y female A with LVEF 45 and single-vessel CAD; 34 y male B HCV NAT+; DCD 31 y male O fWIT 24 TA-NRP; 46 y male A with CO poisoning COHb 22, troponin 0.4.
 - ≥ 8 pairs covering pass, review and fail for each rule group.
 
-- [ ] **Step 1:** Test: all records validate; every `SAMPLE_PAIRS` entry evaluates to `expected`.
-- [ ] **Step 2–4:** Write data → pass.
-- [ ] **Step 5: Commit** `feat(domain): realistic sample dataset`
+- [x] **Step 1:** Test: all records validate; every `SAMPLE_PAIRS` entry evaluates to `expected`.
+- [x] **Step 2–4:** Write data → pass.
+- [x] **Step 5: Commit** `feat(domain): realistic sample dataset`
 
 ---
 
@@ -573,7 +584,7 @@ Records (fictional, clearly labelled):
 - Root: `TooltipProvider`, `Toaster`, title "HLA-Trans", devtools only in dev.
 - Recovery notice from storage shown as a destructive `Alert` on first load.
 
-- [ ] **Step 1:** Build. **Step 2:** `bun run dev`, open in browser, verify: sidebar nav, dark mode, keyboard focus visible, no hydration warnings in console. **Step 3:** typecheck + lint. **Step 4: Commit** `feat(ui): app shell, status components and theme`
+- [x] **Step 1:** Build. **Step 2:** `bun run dev`, open in browser, verify: sidebar nav, dark mode, keyboard focus visible, no hydration warnings in console. **Step 3:** typecheck + lint. **Step 4: Commit** `feat(ui): app shell, status components and theme`
 
 ---
 
@@ -596,7 +607,7 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 ```
 - Unsaved-changes guard via TanStack Router `useBlocker` when `dirty`.
 
-- [ ] **Step 1:** Unit test the pure parts: `parseAntibodyPaste("A2 8000, B44:3500; DQ7 1200")` → 3 rows; invalid tokens reported. **Step 2:** Build components. **Step 3:** typecheck + lint. **Step 4: Commit** `feat(ui): clinical form field kit`
+- [x] **Step 1:** Unit test the pure parts: `parseAntibodyPaste("A2 8000, B44:3500; DQ7 1200")` → 3 rows; invalid tokens reported. **Step 2:** Build components. **Step 3:** typecheck + lint. **Step 4: Commit** `feat(ui): clinical form field kit`
 
 ---
 
@@ -608,7 +619,7 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 - Form: all spec §4.1 sections; live derived values (BMI, BSA, PHM, TPG, PVR, DPG, PVRI, CI); save → toast "Patient saved" → detail page.
 - Detail: summary cards per section, evaluations involving this patient, "Evaluate against a donor".
 
-- [ ] Steps: build → browser check (create, edit, validation errors, unsaved guard, delete with AlertDialog) → typecheck/lint → **Commit** `feat(ui): patient list, form and detail`
+- [x] Steps: build → browser check (create, edit, validation errors, unsaved guard, delete with AlertDialog) → typecheck/lint → **Commit** `feat(ui): patient list, form and detail`
 
 ---
 
@@ -619,7 +630,7 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 - Form: all spec §4.2 sections incl. PHS 10-item checklist and OPTN test panel grid.
 - Detail: tabs "Summary" and "Screen candidates". Screening uses `screenDonor` with latest criteria and default pair inputs. Columns: rank, patient, urgency, pediatric badge, ABO priority (primary/secondary), days at status (with "from listing date" note on fallback), overall, per-rule mini status. Row action "Open full evaluation" → New evaluation prefilled. Banner: "Screening order, not OPTN allocation. Distance circles are not applied. Logistics are not assessed until pair inputs are entered." When the donor is under 18, a line explains "Pediatric candidates are ranked first within each urgency level (OPTN Table 6-8)."
 
-- [ ] Steps: build → browser check → typecheck/lint → **Commit** `feat(ui): donor list, form, detail and candidate screening`
+- [x] Steps: build → browser check → typecheck/lint → **Commit** `feat(ui): donor list, form, detail and candidate screening`
 
 ---
 
@@ -632,7 +643,7 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 - Decision form: verdict (accept/decline/defer), reason codes (required for decline), clinician (prefilled), rationale (required), checkbox "I have reviewed all FAIL and REVIEW findings" (required when any exist). After a decision is saved it is read-only.
 - History: table with filters (verdict, decided/pending, date).
 
-- [ ] Steps: build → browser check with sample pairs (each expected verdict appears) → typecheck/lint → **Commit** `feat(ui): evaluation, results and decision recording`
+- [x] Steps: build → browser check with sample pairs (each expected verdict appears) → typecheck/lint → **Commit** `feat(ui): evaluation, results and decision recording`
 
 ---
 
@@ -645,7 +656,7 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 - History: version list (version, author, date, note), diff vs previous.
 - Banner: "Changing criteria does not change past evaluations."
 
-- [ ] Steps: build → browser check (invalid ordering blocked, publish creates v2, old evaluation still shows v1) → typecheck/lint → **Commit** `feat(ui): versioned criteria editor`
+- [x] Steps: build → browser check (invalid ordering blocked, publish creates v2, old evaluation still shows v1) → typecheck/lint → **Commit** `feat(ui): versioned criteria editor`
 
 ---
 
@@ -657,19 +668,19 @@ function useFormState<T>(initial: T, schema: z.ZodType<T>): {
 - Audit: filterable table (action, date range, text).
 - Data: Export (downloads `hla-trans-YYYY-MM-DD.json`), Import (file → validate → preview counts → confirm replace), Load sample data, Reset (type `RESET` to confirm).
 
-- [ ] Steps: build → browser check (export → reset → import restores) → typecheck/lint → **Commit** `feat(ui): dashboard, audit log and data management`
+- [x] Steps: build → browser check (export → reset → import restores) → typecheck/lint → **Commit** `feat(ui): dashboard, audit log and data management`
 
 ---
 
 ### Task 21: Final QA
 
-- [ ] `bun run typecheck && bun run lint && bun run test`: all green
-- [ ] `bun run build`: succeeds
-- [ ] Browser walkthrough of every screen in light and dark, at 375 px and 1440 px
-- [ ] Keyboard-only pass: sidebar, forms, decision form, dialogs
-- [ ] Console: no errors or hydration warnings
-- [ ] Update `README.md`: what it is, how to run, safety disclaimer, link to spec
-- [ ] **Commit** `docs: readme and QA fixes`
+- [x] `bun run typecheck && bun run lint && bun run test`: all green
+- [x] `bun run build`: succeeds
+- [x] Browser walkthrough of every screen in light and dark, at 375 px and 1440 px
+- [x] Keyboard-only pass: sidebar, forms, decision form, dialogs
+- [x] Console: no errors or hydration warnings
+- [x] Update `README.md`: what it is, how to run, safety disclaimer, link to spec
+- [x] **Commit** `docs: readme and QA fixes`
 
 ---
 
