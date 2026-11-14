@@ -81,12 +81,14 @@ export function AntibodyTable({ value, onChange, errors }: AntibodyTableProps) {
           <SelectField
             label="C1q"
             value={row.c1q}
+            error={errors?.[`${index}.c1q`]}
             options={C1Q}
             onChange={(c1q) => update(index, { c1q })}
           />
           <DateField
             label="Test date"
             value={row.testDate}
+            error={errors?.[`${index}.testDate`]}
             onChange={(testDate) => update(index, { testDate })}
           />
           <Button

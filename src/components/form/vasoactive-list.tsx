@@ -24,6 +24,7 @@ export function VasoactiveList({
           <SelectField
             label="Agent"
             value={row.agent}
+            error={errors?.[`${index}.agent`]}
             options={INOTROPE_AGENT}
             onChange={(agent) => update(index, { agent, dose: null })}
           />
