@@ -1,28 +1,29 @@
-import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { actions, useDb } from "@/lib/storage/db"
-import { PatientTable } from "@/components/patient/patient-table"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { patientListSearch } from "@/features/patients/patients.functions"
+import { patientQueries } from "@/features/patients/patients.queries"
 import { PageHeader } from "@/components/app/page-header"
-import { Button } from "@/components/ui/button"
-import { toast } from "@/components/ui/toast"
+import { Pager } from "@/components/app/pager"
+import { PatientTable } from "@/components/patient/patient-table"
 
-export const Route = createFileRoute("/patients/")({ component: Patients })
-function Patients() {
-  const db = useDb()
-  const [error, setError] = useState("")
-  function load() {
-    try {
-      actions.loadSampleData()
-      toast.add({ title: "Sample data loaded" })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to load demo data")
-    }
-  }
+export const Route = createFileRoute("/patients/")({
+  validateSearch: patientListSearch,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(patientQueries.list(deps)),
+  head: () => ({ meta: [{ title: "Patients · HLA-Trans" }] }),
+  component: PatientsPage,
+})
+
+function PatientsPage() {
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const { data } = useSuspenseQuery(patientQueries.list(search))
   return (
     <>
       <PageHeader
         title="Patients"
-        description="Candidate records and waitlist information."
+        description="Transplant candidates and their listing status."
         actions={
           <Link
             className="border bg-primary px-3 py-2 text-primary-foreground"
@@ -32,26 +33,15 @@ function Patients() {
           </Link>
         }
       />
-      {error && <p role="alert">{error}</p>}
-      {db.patients.length ? (
-        <PatientTable patients={db.patients} />
-      ) : (
-        <div className="border p-10 text-center">
-          <h2 className="text-lg font-semibold">No patient records yet</h2>
-          <p className="my-3 text-muted-foreground">
-            Add a candidate to begin checking compatibility, or explore with
-            synthetic demo data.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Link className="border px-3 py-2" to="/patients/new">
-              Add patient
-            </Link>
-            <Button onClick={load} variant="outline">
-              Load demo data
-            </Button>
-          </div>
-        </div>
-      )}
+      <PatientTable page={data} />
+      <Pager
+        hasCursor={Boolean(search.cursor)}
+        nextCursor={data.nextCursor}
+        onFirst={() =>
+          void navigate({ search: (s) => ({ ...s, cursor: undefined }) })
+        }
+        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+      />
     </>
   )
 }

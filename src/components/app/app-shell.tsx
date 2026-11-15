@@ -1,8 +1,6 @@
 import { useState } from "react"
 import type { ReactNode } from "react"
-import { Menu, TriangleAlert } from "lucide-react"
-import { dbStore, useDb } from "@/lib/storage/db"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -13,15 +11,15 @@ import {
 import { AppSidebar } from "./app-sidebar"
 import { ClinicianControl } from "./clinician-control"
 import { DemoBanner } from "./demo-banner"
+import { LegacyImportBanner } from "./legacy-import-banner"
 import { ThemeToggle } from "./theme-toggle"
+import { TopProgress } from "./top-progress"
 
 export function AppShell({ children }: { children: ReactNode }) {
-  useDb()
   const [open, setOpen] = useState(false)
-  const [recoveryDismissed, setRecoveryDismissed] = useState(false)
-  const notice = dbStore.recoveryNotice()
   return (
     <div className="min-h-svh">
+      <TopProgress />
       <a
         href="#main-content"
         className="sr-only fixed top-2 left-2 z-[100] bg-background p-3 focus:not-sr-only"
@@ -69,23 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           tabIndex={-1}
           className="mx-auto max-w-[1600px] p-4 outline-none lg:p-6"
         >
-          {notice && !recoveryDismissed && (
-            <Alert variant="destructive" className="mb-6">
-              <TriangleAlert aria-hidden="true" />
-              <AlertTitle>Stored data recovery</AlertTitle>
-              <AlertDescription>
-                <p>{notice}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-2"
-                  onClick={() => setRecoveryDismissed(true)}
-                >
-                  Dismiss notice
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
+          <LegacyImportBanner />
           {children}
         </main>
       </div>

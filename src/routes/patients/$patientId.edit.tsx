@@ -1,22 +1,32 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
-import { useDb } from "@/lib/storage/db"
+import { createFileRoute } from "@tanstack/react-router"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { patientQueries } from "@/features/patients/patients.queries"
+import { ensureOrNotFound } from "@/lib/route-helpers"
 import { PatientForm } from "@/components/patient/patient-form"
 import { PageHeader } from "@/components/app/page-header"
 
 export const Route = createFileRoute("/patients/$patientId/edit")({
+  loader: ({ context, params }) =>
+    ensureOrNotFound(
+      context.queryClient.ensureQueryData(
+        patientQueries.detail(params.patientId)
+      )
+    ),
+  head: () => ({ meta: [{ title: "Edit patient · HLA-Trans" }] }),
   component: EditPatient,
 })
+
 function EditPatient() {
   const { patientId } = Route.useParams()
-  const patient = useDb().patients.find((p) => p.id === patientId)
-  return patient ? (
+  const { data } = useSuspenseQuery(patientQueries.detail(patientId))
+  return (
     <>
       <PageHeader title="Edit patient" />
-      <PatientForm key={patient.id} initial={patient} />
+      <PatientForm
+        key={data.record.id}
+        initial={data.record}
+        version={data.version}
+      />
     </>
-  ) : (
-    <p>
-      Patient not found. <Link to="/patients">Return to patients</Link>
-    </p>
   )
 }

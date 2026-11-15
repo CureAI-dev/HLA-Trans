@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router"
 import { ScreeningTable } from "./screening-table"
 import { emptyDonor, emptyPatient } from "@/domain/factories"
-import { initialDb, latestCriteria } from "@/lib/storage/db"
+import { DEFAULT_CRITERIA } from "@/domain/criteria"
 import { screenDonor } from "@/domain/engine"
 
 // ScreeningTable renders router <Link>s, which need a router in context.
@@ -34,7 +34,7 @@ describe("donor screening presentation", () => {
     const rows = screenDonor(
       donor,
       [patient],
-      latestCriteria(initialDb()).criteria,
+      DEFAULT_CRITERIA,
       new Date("2026-11-14T00:00:00Z")
     )
     const html = renderToStaticMarkup(
@@ -77,7 +77,7 @@ describe("donor screening presentation", () => {
     const rows = screenDonor(
       donor,
       [patient],
-      latestCriteria(initialDb()).criteria,
+      DEFAULT_CRITERIA,
       new Date("2026-11-14T00:00:00Z")
     )
     const html = renderToStaticMarkup(

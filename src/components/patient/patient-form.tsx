@@ -5,8 +5,12 @@ import { Link, useNavigate } from "@tanstack/react-router"
 import * as O from "@/domain/options"
 import { patientSchema } from "@/domain/schema"
 import type { Patient } from "@/domain/schema"
-import { actions } from "@/lib/storage/db"
-import { Button } from "@/components/ui/button"
+import {
+  useCreatePatient,
+  useUpdatePatient,
+} from "@/features/patients/patients.mutations"
+import { isAppError } from "@/lib/app-error"
+import { SubmitButton } from "@/components/app/submit-button"
 import { toast } from "@/components/ui/toast"
 import {
   TextField,
@@ -57,7 +61,14 @@ const patientFormSchema = patientSchema
     }
   })
 
-export function PatientForm({ initial }: { initial: Patient }) {
+export function PatientForm({
+  initial,
+  version,
+}: {
+  initial: Patient
+  /** Present when editing: the optimistic-concurrency version the edit started from. */
+  version?: number
+}) {
   const form = useFormState(
     {
       ...initial,
@@ -68,6 +79,11 @@ export function PatientForm({ initial }: { initial: Patient }) {
   )
   const p = form.value
   const navigate = useNavigate()
+  const create = useCreatePatient()
+  const update = useUpdatePatient()
+  const saving = create.isPending || update.isPending
+  // Captured once: a background refetch must not move the edit's base version (that would hide a conflict).
+  const [baseVersion, setBaseVersion] = useState(version)
   const [saveError, setSaveError] = useState("")
   const subErrors = (prefix: string) =>
     Object.fromEntries(
@@ -75,45 +91,65 @@ export function PatientForm({ initial }: { initial: Patient }) {
         .filter(([key]) => key.startsWith(prefix + "."))
         .map(([key, value]) => [key.slice(prefix.length + 1), value])
     )
-  function save(event: React.FormEvent) {
+  async function save(event: React.FormEvent) {
     event.preventDefault()
+    if (saving) return
+    setSaveError("")
     if (!form.validate()) {
       setSaveError("Please correct the marked fields before saving.")
       return
     }
+    const { unacceptableAntigensText, ...rest } = p
+    const candidate: Patient = {
+      ...rest,
+      sensitization: {
+        ...rest.sensitization,
+        unacceptableAntigens: unacceptableAntigensText
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      },
+    }
     try {
-      const candidate = {
-        ...p,
-        sensitization: {
-          ...p.sensitization,
-          unacceptableAntigens: p.unacceptableAntigensText
-            .split(",")
-            .map((value) => value.trim())
-            .filter(Boolean),
-        },
-      }
-      const saved = actions.savePatient(candidate)
+      const result =
+        baseVersion === undefined
+          ? (await create.mutateAsync(candidate)).patient
+          : await update.mutateAsync({
+              patient: candidate,
+              expectedVersion: baseVersion,
+            })
+      setBaseVersion(result.version)
       flushSync(() =>
         form.reset({
-          ...saved,
+          ...result.record,
           unacceptableAntigensText:
-            saved.sensitization.unacceptableAntigens.join(", "),
+            result.record.sensitization.unacceptableAntigens.join(", "),
         })
       )
-      toast.add({ title: "Patient saved" })
+      toast.add({
+        title:
+          baseVersion === undefined
+            ? "Patient saved. Matching started."
+            : "Patient saved",
+      })
       void navigate({
         to: "/patients/$patientId",
-        params: { patientId: saved.id },
+        params: { patientId: result.record.id },
       })
     } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : "Unable to save patient."
-      )
+      if (isAppError(error) && error.code === "VALIDATION") {
+        form.setErrors((previous) => ({ ...previous, ...error.issues }))
+        setSaveError(error.message)
+      } else {
+        setSaveError(
+          error instanceof Error ? error.message : "Unable to save patient."
+        )
+      }
     }
   }
   return (
     <form
-      onSubmit={save}
+      onSubmit={(event) => void save(event)}
       noValidate
       className="grid gap-6 lg:grid-cols-[190px_minmax(0,1fr)]"
     >
@@ -958,7 +994,7 @@ export function PatientForm({ initial }: { initial: Patient }) {
           />
         </FormSection>
         <div className="sticky bottom-0 flex gap-3 border bg-background p-4">
-          <Button type="submit">Save patient</Button>
+          <SubmitButton pending={saving}>Save patient</SubmitButton>
           <Link to="/patients" className="px-3 py-2 underline">
             Cancel
           </Link>

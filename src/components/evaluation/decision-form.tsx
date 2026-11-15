@@ -1,19 +1,21 @@
 import { useState } from "react"
 import { flushSync } from "react-dom"
 import { useBlocker } from "@tanstack/react-router"
-import type { Decision, Evaluation } from "@/domain/schema"
+import type { Decision } from "@/domain/schema"
+import type { MatchDetail } from "@/domain/match-types"
 import { DECISION_VERDICT, DECLINE_REASON } from "@/domain/options"
 import { TextField, SelectField } from "@/components/form"
-import { Button } from "@/components/ui/button"
-import { actions } from "@/lib/storage/db"
+import { SubmitButton } from "@/components/app/submit-button"
+import { useDecideMatch } from "@/features/matches/matches.mutations"
 
 export function DecisionForm({
-  evaluation,
+  match,
   clinician,
 }: {
-  evaluation: Evaluation
+  match: MatchDetail
   clinician: string
 }) {
+  const decide = useDecideMatch(match.id)
   const [draft, setDraft] = useState<Omit<Decision, "decidedAt">>({
     verdict: "defer",
     reasons: [],
@@ -25,26 +27,29 @@ export function DecisionForm({
   const [baseline] = useState(() => JSON.stringify(draft))
   const [saved, setSaved] = useState(false)
   const dirty =
-    !evaluation.decision && !saved && JSON.stringify(draft) !== baseline
+    !match.decision && !saved && JSON.stringify(draft) !== baseline
   useBlocker({
     shouldBlockFn: () =>
       dirty && !window.confirm("Discard unsaved decision changes?"),
     enableBeforeUnload: dirty,
   })
   const requiresAck =
-    evaluation.result.overall !== "pass" ||
+    match.result.overall !== "pass" ||
     [
-      ...evaluation.result.blockers,
-      ...evaluation.result.rules.flatMap((r) => r.findings),
+      ...match.result.blockers,
+      ...match.result.rules.flatMap((r) => r.findings),
     ].some((f) => f.status === "fail" || f.status === "review")
-  if (evaluation.decision) {
-    const d = evaluation.decision
+  if (match.decision) {
+    const d = match.decision
     return (
       <section className="space-y-3 border p-4">
         <h2 className="text-lg font-semibold">Final decision / read-only</h2>
         <p>{DECISION_VERDICT.find((o) => o.value === d.verdict)?.label}</p>
         <p>
-          Clinician: {d.clinician} / {new Date(d.decidedAt).toLocaleString()}
+          Clinician: {d.clinician} /{" "}
+          <time dateTime={d.decidedAt} suppressHydrationWarning>
+            {new Date(d.decidedAt).toLocaleString()}
+          </time>
         </p>
         <p>Rationale: {d.rationale}</p>
         <p>
@@ -78,12 +83,12 @@ export function DecisionForm({
           setError("Acknowledge all FAIL and REVIEW findings.")
           return
         }
-        try {
-          actions.decide(evaluation.id, draft)
-          flushSync(() => setSaved(true))
-        } catch (e) {
-          setError(e instanceof Error ? e.message : "Unable to save decision")
-        }
+        if (decide.isPending) return
+        decide.mutate(draft, {
+          onSuccess: () => flushSync(() => setSaved(true)),
+          onError: (e) =>
+            setError(e instanceof Error ? e.message : "Unable to save decision"),
+        })
       }}
     >
       <h2 className="text-lg font-semibold">Record clinician decision</h2>
@@ -147,7 +152,7 @@ export function DecisionForm({
           {error}
         </p>
       )}
-      <Button type="submit">Save final decision</Button>
+      <SubmitButton pending={decide.isPending}>Save final decision</SubmitButton>
     </form>
   )
 }

@@ -1,24 +1,27 @@
 import { useState } from "react"
-import { actions, useDb } from "@/lib/storage/db"
+import { getRouteApi, useRouter } from "@tanstack/react-router"
+import { CLINICIAN_COOKIE, writePrefCookie } from "@/lib/prefs"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { toast } from "@/components/ui/toast"
+
+const rootRoute = getRouteApi("__root__")
 
 export function ClinicianControl() {
-  const db = useDb()
+  const { prefs } = rootRoute.useRouteContext()
+  const router = useRouter()
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(db.clinicianName)
+  const [name, setName] = useState(prefs.clinician)
   if (!editing)
     return (
       <Button
         variant="ghost"
         size="sm"
         onClick={() => {
-          setName(db.clinicianName)
+          setName(prefs.clinician)
           setEditing(true)
         }}
       >
-        Clinician: {db.clinicianName || "Set name"}
+        Clinician: {prefs.clinician || "Set name"}
       </Button>
     )
   return (
@@ -26,17 +29,9 @@ export function ClinicianControl() {
       className="flex items-center gap-2"
       onSubmit={(event) => {
         event.preventDefault()
-        try {
-          actions.setClinician(name.trim())
-          setEditing(false)
-        } catch (error) {
-          toast.add({
-            title: "Could not save clinician",
-            description:
-              error instanceof Error ? error.message : "Saving failed.",
-            type: "error",
-          })
-        }
+        writePrefCookie(CLINICIAN_COOKIE, name.trim().slice(0, 200))
+        setEditing(false)
+        void router.invalidate()
       }}
     >
       <label htmlFor="clinician-name" className="sr-only">

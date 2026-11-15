@@ -75,7 +75,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <p className="mt-auto border-t p-5 text-xs leading-relaxed text-muted-foreground">
         Clinical review workspace
         <br />
-        Local browser storage
+        Shared PostgreSQL database
       </p>
     </div>
   )
