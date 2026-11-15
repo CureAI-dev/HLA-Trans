@@ -1,14 +1,20 @@
 import { Link } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
 import type { ReactNode } from "react"
+import { cn } from "cn"
 
 export function PageHeader({
   title,
+  titleClassName,
+  badges,
   description,
   actions,
   breadcrumbs,
 }: {
   title: string
+  titleClassName?: string
+  /** Short facts shown under the title (state, ABO, …). */
+  badges?: ReactNode
   description?: string
   actions?: ReactNode
   breadcrumbs?: Array<{ label: string; link?: LinkOptions }>
@@ -33,16 +39,19 @@ export function PageHeader({
           </ol>
         </nav>
       )}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className={cn("text-2xl font-semibold tracking-tight", titleClassName)}>
+            {title}
+          </h1>
+          {badges && <div className="mt-2 flex flex-wrap items-center gap-1.5">{badges}</div>}
           {description && (
             <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
               {description}
             </p>
           )}
         </div>
-        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
     </header>
   )

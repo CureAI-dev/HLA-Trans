@@ -1,27 +1,17 @@
 import { useState } from "react"
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
 import { donorQueries } from "@/features/donors/donors.queries"
-import { useDeleteDonor } from "@/features/donors/donors.mutations"
+import { useDeleteDonor, useRerunDonor } from "@/features/donors/donors.mutations"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { matchingQueries } from "@/features/matching/matching.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
 import { DonorSummary } from "@/components/donor/donor-summary"
 import { ScreeningResults } from "@/components/donor/screening-results"
 import { PageHeader } from "@/components/app/page-header"
+import { RecordActions, toastMatchingStarted } from "@/components/app/page-actions"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog"
 
 const latestRunSearch = (donorId: string) =>
   ({ subjectKind: "donor", subjectId: donorId, status: "succeeded" }) as const
@@ -60,58 +50,37 @@ function DonorDetail() {
     data: { record: donor },
   } = useSuspenseQuery(donorQueries.detail(donorId))
   const del = useDeleteDonor()
+  const rerun = useRerunDonor()
   const navigate = useNavigate()
   const [tab, setTab] = useState("summary")
-  const [error, setError] = useState("")
-  function remove() {
-    setError("")
-    del.mutate(donorId, {
-      onSuccess: () => {
-        toast.add({ title: "Donor deleted" })
-        void navigate({ to: "/donors" })
-      },
-      onError: (e) =>
-        setError(e instanceof Error ? e.message : "Unable to delete donor."),
-    })
-  }
   return (
     <>
       <PageHeader
         title={donor.identity.donorId}
         description={`${donor.identity.donorHospital || "Hospital not recorded"} · ${donor.identity.state}`}
         actions={
-          <>
-            <Link
-              to="/donors/$donorId/edit"
-              params={{ donorId: donor.id }}
-              className="border px-3 py-2"
-            >
-              Edit donor
-            </Link>
-            <AlertDialog>
-              <AlertDialogTrigger render={<Button variant="outline" />}>
-                Delete donor
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete this donor?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    The donor record will be deleted. Existing saved match
-                    results remain available.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={remove}>
-                    Delete donor
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </>
+          <RecordActions
+            entityLabel="donor"
+            editLink={{ to: "/donors/$donorId/edit", params: { donorId } }}
+            checkLink={{ to: "/matches/check", search: { donorId } }}
+            onRerun={() =>
+              rerun.mutate(donorId, {
+                onSuccess: ({ runId }) =>
+                  toastMatchingStarted(
+                    () => void navigate({ to: "/matches", search: { runId } })
+                  ),
+              })
+            }
+            rerunPending={rerun.isPending}
+            deletePending={del.isPending}
+            onDelete={async () => {
+              await del.mutateAsync(donorId)
+              toast.add({ title: "Donor deleted" })
+              void navigate({ to: "/donors" })
+            }}
+          />
         }
       />
-      {error && <p role="alert">{error}</p>}
       <div role="tablist" aria-label="Donor views" className="mb-4 flex gap-2">
         {[
           ["summary", "Summary"],

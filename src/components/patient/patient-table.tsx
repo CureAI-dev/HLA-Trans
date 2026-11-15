@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { Users } from "lucide-react"
+import { Plus, Users } from "lucide-react"
 import type { PatientRow } from "@/domain/match-types"
 import type { Page } from "@/lib/cursor"
 import { ageInYears } from "@/domain/calc"
@@ -10,18 +10,37 @@ import {
   labelOf,
 } from "@/domain/options"
 import { EmptyState } from "@/components/app/empty-state"
+import { Button } from "@/components/ui/button"
 
-export function PatientTable({ page }: { page: Page<PatientRow> }) {
+export function PatientTable({
+  page,
+  filtered = false,
+}: {
+  page: Page<PatientRow>
+  filtered?: boolean
+}) {
   if (!page.items.length)
-    return (
+    return filtered ? (
       <EmptyState
         icon={<Users />}
-        title="No patients found"
-        description="Add a candidate to begin checking compatibility, or load the demo dataset from the Data page."
+        title="No patients match these filters"
+        description="Change the search or reset the filters to see more candidates."
+      />
+    ) : (
+      <EmptyState
+        icon={<Users />}
+        title="No patients yet"
+        description="Add a candidate to begin checking compatibility, or load the synthetic demo dataset."
         action={
-          <Link className="underline" to="/patients/new">
-            Add patient
-          </Link>
+          <>
+            <Button nativeButton={false} render={<Link to="/patients/new" />}>
+              <Plus aria-hidden="true" />
+              Add patient
+            </Button>
+            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+              Load demo dataset
+            </Button>
+          </>
         }
       />
     )
