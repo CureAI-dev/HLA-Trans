@@ -1,10 +1,17 @@
 import { useCallback } from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
-import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { z } from "zod"
 import { donorQueries } from "@/features/donors/donors.queries"
-import { useDeleteDonor, useRerunDonor } from "@/features/donors/donors.mutations"
+import {
+  useDeleteDonor,
+  useRerunDonor,
+} from "@/features/donors/donors.mutations"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { matchingQueries } from "@/features/matching/matching.queries"
 import { criteriaQueries } from "@/features/criteria/criteria.queries"
@@ -19,7 +26,10 @@ import { DonorDerived } from "@/components/donor/donor-summary"
 import { ScreeningResults } from "@/components/donor/screening-results"
 import { MatchTable } from "@/components/match/match-table"
 import { PageHeader } from "@/components/app/page-header"
-import { RecordActions, toastMatchingStarted } from "@/components/app/page-actions"
+import {
+  RecordActions,
+  toastMatchingStarted,
+} from "@/components/app/page-actions"
 import { DetailPageSkeleton } from "@/components/app/page-skeletons"
 import { FilterSelect, ListToolbar } from "@/components/app/list-toolbar"
 import { Pager } from "@/components/app/pager"
@@ -32,7 +42,13 @@ import {
 } from "@/components/app/detail-overview"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "@/components/ui/toast"
 
@@ -50,10 +66,12 @@ const detailSearch = z.object({
 })
 type DetailSearch = z.infer<typeof detailSearch>
 
-const donorRuns = (donorId: string) => ({ subjectKind: "donor", subjectId: donorId }) as const
+const donorRuns = (donorId: string) =>
+  ({ subjectKind: "donor", subjectId: donorId }) as const
 const RUN_STATE: Partial<Record<RunRow["status"], string>> = {
   queued: "This match run is queued; results appear as pairs are processed.",
-  running: "This match run is still running; the list grows as pairs are processed.",
+  running:
+    "This match run is still running; the list grows as pairs are processed.",
   cancelled: "This match run was cancelled; results are partial.",
   failed: "This match run failed; results are partial.",
 }
@@ -155,7 +173,10 @@ function DonorDetail() {
   const del = useDeleteDonor()
   const rerun = useRerunDonor()
   const openRun = useCallback(
-    (runId: string): LinkOptions => ({ to: "/matches", search: { runId } }),
+    (runId: string): LinkOptions => ({
+      to: "/matching/$runId",
+      params: { runId },
+    }),
     []
   )
   const onRerun = () =>
@@ -163,7 +184,10 @@ function DonorDetail() {
       onSuccess: ({ runId }) =>
         toastMatchingStarted(() => void navigate(openRun(runId))),
     })
-  const editLink: LinkOptions = { to: "/donors/$donorId/edit", params: { donorId } }
+  const editLink: LinkOptions = {
+    to: "/donors/$donorId/edit",
+    params: { donorId },
+  }
   const id = donor.identity
   const flags = donorRiskFlags(donor, criteria.criteria)
   return (
@@ -171,11 +195,16 @@ function DonorDetail() {
       <PageHeader
         title={id.donorId || "Unnamed donor"}
         titleClassName="font-mono"
-        breadcrumbs={[{ label: "Donors", link: { to: "/donors" } }, { label: id.donorId || donorId }]}
+        breadcrumbs={[
+          { label: "Donors", link: { to: "/donors" } },
+          { label: id.donorId || donorId },
+        ]}
         badges={
           <>
             <Badge variant="outline">{labelOf(DONOR_STATE, id.state)}</Badge>
-            <Badge variant="outline">ABO {donor.blood.abo ?? "not recorded"}</Badge>
+            <Badge variant="outline">
+              ABO {donor.blood.abo ?? "not recorded"}
+            </Badge>
             <Badge variant="outline">
               {id.ageYears === null ? "Age not recorded" : `${id.ageYears} y`} ·{" "}
               {labelOf(SEX, id.sex)}
@@ -186,7 +215,9 @@ function DonorDetail() {
         description={[
           id.donorHospital || "Hospital not recorded",
           id.opo || "OPO not recorded",
-          id.referralDate ? `referred ${id.referralDate}` : "referral date not recorded",
+          id.referralDate
+            ? `referred ${id.referralDate}`
+            : "referral date not recorded",
         ].join(" · ")}
         actions={
           <RecordActions
@@ -208,7 +239,11 @@ function DonorDetail() {
         value={search.tab ?? "overview"}
         onValueChange={(tab) =>
           void routeNavigate({
-            search: (prev) => ({ ...prev, tab: tab === "overview" ? undefined : (tab as DetailSearch["tab"]) }),
+            search: (prev) => ({
+              ...prev,
+              tab:
+                tab === "overview" ? undefined : (tab as DetailSearch["tab"]),
+            }),
             replace: true,
           })
         }
@@ -222,7 +257,11 @@ function DonorDetail() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-4">
               <OverviewCard title="Key facts">
-                <KeyFacts sections={donorRecordSections} record={donor} paths={KEY_FACTS} />
+                <KeyFacts
+                  sections={donorRecordSections}
+                  record={donor}
+                  paths={KEY_FACTS}
+                />
               </OverviewCard>
               <OverviewCard title="Derived values">
                 <DonorDerived donor={donor} />
@@ -248,7 +287,11 @@ function DonorDetail() {
           </div>
         </TabsContent>
         <TabsContent value="record">
-          <RecordView sections={donorRecordSections} record={donor} editLink={editLink} />
+          <RecordView
+            sections={donorRecordSections}
+            record={donor}
+            editLink={editLink}
+          />
         </TabsContent>
         <TabsContent value="matches">
           <DonorMatches donor={donor} search={search} />
@@ -258,42 +301,79 @@ function DonorDetail() {
   )
 }
 
-function DonorMatches({ donor, search }: { donor: Donor; search: DetailSearch }) {
+function DonorMatches({
+  donor,
+  search,
+}: {
+  donor: Donor
+  search: DetailSearch
+}) {
   const navigate = Route.useNavigate()
   const donorId = donor.id
   const view = search.view ?? "screening"
   const set = (patch: Partial<DetailSearch>) =>
     void navigate({
-      search: (prev) => ({ ...prev, ...patch, cursor: undefined, page: undefined }),
+      search: (prev) => ({
+        ...prev,
+        ...patch,
+        cursor: undefined,
+        page: undefined,
+      }),
       replace: true,
     })
   // Shares the Latest matching card's query. The newest run that produced
   // results (a cancelled or running run still has partial results).
-  const runs = useQuery({ ...matchingQueries.history(donorRuns(donorId)), enabled: view === "screening" })
+  const runs = useQuery({
+    ...matchingQueries.history(donorRuns(donorId)),
+    enabled: view === "screening",
+  })
   const run =
-    runs.data?.items.find((r) => r.processed > 0 || r.status === "succeeded") ?? runs.data?.items[0]
+    runs.data?.items.find((r) => r.processed > 0 || r.status === "succeeded") ??
+    runs.data?.items[0]
   const live = run?.status === "queued" || run?.status === "running"
   const screening = useQuery({
-    ...matchQueries.list({ donorId, runId: run?.id, order: "screen", overall: search.overall, cursor: search.cursor }),
+    ...matchQueries.list({
+      donorId,
+      runId: run?.id,
+      order: "screen",
+      overall: search.overall,
+      cursor: search.cursor,
+    }),
     enabled: view === "screening" && Boolean(run),
     placeholderData: keepPreviousData,
     refetchInterval: live ? 2_000 : false,
   })
   const all = useQuery({
-    ...matchQueries.list({ donorId, order: "recent", overall: search.overall, source: search.source, cursor: search.cursor }),
+    ...matchQueries.list({
+      donorId,
+      order: "recent",
+      overall: search.overall,
+      source: search.source,
+      cursor: search.cursor,
+    }),
     enabled: view === "all",
     placeholderData: keepPreviousData,
   })
   const page = view === "screening" ? screening : all
-  const loading = view === "screening" ? runs.isPending || (Boolean(run) && screening.isPending) : all.isPending
+  const loading =
+    view === "screening"
+      ? runs.isPending || (Boolean(run) && screening.isPending)
+      : all.isPending
   const filtered = Boolean(search.overall || search.source || search.view)
   return (
     <>
-      <ListToolbar canReset={filtered} onReset={() => set({ view: undefined, overall: undefined, source: undefined })}>
+      <ListToolbar
+        canReset={filtered}
+        onReset={() =>
+          set({ view: undefined, overall: undefined, source: undefined })
+        }
+      >
         <Select
           items={VIEW}
           value={view}
-          onValueChange={(v) => set({ view: v === "all" ? "all" : undefined, source: undefined })}
+          onValueChange={(v) =>
+            set({ view: v === "all" ? "all" : undefined, source: undefined })
+          }
         >
           <SelectTrigger aria-label="View" className="w-auto min-w-36">
             <SelectValue />
@@ -306,9 +386,19 @@ function DonorMatches({ donor, search }: { donor: Donor; search: DetailSearch })
             ))}
           </SelectContent>
         </Select>
-        <FilterSelect label="Result" value={search.overall} options={OVERALL} onChange={(overall) => set({ overall })} />
+        <FilterSelect
+          label="Result"
+          value={search.overall}
+          options={OVERALL}
+          onChange={(overall) => set({ overall })}
+        />
         {view === "all" && (
-          <FilterSelect label="Source" value={search.source} options={SOURCE} onChange={(source) => set({ source })} />
+          <FilterSelect
+            label="Source"
+            value={search.source}
+            options={SOURCE}
+            onChange={(source) => set({ source })}
+          />
         )}
       </ListToolbar>
       {view === "screening" && run && RUN_STATE[run.status] && (
@@ -334,14 +424,26 @@ function DonorMatches({ donor, search }: { donor: Donor; search: DetailSearch })
         <MatchTable
           rows={all.data?.items ?? []}
           showDonor={false}
-          emptyText={filtered ? "No results match these filters." : "No saved results for this donor yet."}
+          emptyText={
+            filtered
+              ? "No results match these filters."
+              : "No saved results for this donor yet."
+          }
         />
       )}
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={page.data?.nextCursor ?? null}
-        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined, page: undefined }) })}
-        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor, page: (s.page ?? 1) + 1 }) })}
+        onFirst={() =>
+          void navigate({
+            search: (s) => ({ ...s, cursor: undefined, page: undefined }),
+          })
+        }
+        onNext={(cursor) =>
+          void navigate({
+            search: (s) => ({ ...s, cursor, page: (s.page ?? 1) + 1 }),
+          })
+        }
       />
     </>
   )

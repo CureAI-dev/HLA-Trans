@@ -1,10 +1,17 @@
 import { useCallback } from "react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
-import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { z } from "zod"
 import { patientQueries } from "@/features/patients/patients.queries"
-import { useDeletePatient, useRerunPatient } from "@/features/patients/patients.mutations"
+import {
+  useDeletePatient,
+  useRerunPatient,
+} from "@/features/patients/patients.mutations"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { matchingQueries } from "@/features/matching/matching.queries"
 import { criteriaQueries } from "@/features/criteria/criteria.queries"
@@ -15,10 +22,16 @@ import { CANDIDATE_STATE, SEX, URGENCY_STATUS, labelOf } from "@/domain/options"
 import type { Patient } from "@/domain/schema"
 import { patientRecordSections } from "@/components/record/patient-record"
 import { RecordView } from "@/components/record/record-view"
-import { PatientDerived, PatientHemodynamics } from "@/components/patient/patient-summary"
+import {
+  PatientDerived,
+  PatientHemodynamics,
+} from "@/components/patient/patient-summary"
 import { MatchTable } from "@/components/match/match-table"
 import { PageHeader } from "@/components/app/page-header"
-import { RecordActions, toastMatchingStarted } from "@/components/app/page-actions"
+import {
+  RecordActions,
+  toastMatchingStarted,
+} from "@/components/app/page-actions"
 import { DetailPageSkeleton } from "@/components/app/page-skeletons"
 import { FilterSelect, ListToolbar } from "@/components/app/list-toolbar"
 import { Pager } from "@/components/app/pager"
@@ -115,10 +128,19 @@ export const Route = createFileRoute("/patients/$patientId/")({
   loader: async ({ context, params }) => {
     const qc = context.queryClient
     // Not awaited: secondary cards stream in after the record.
-    void qc.prefetchQuery(matchingQueries.history({ subjectKind: "patient", subjectId: params.patientId }))
-    void qc.prefetchQuery(matchQueries.list({ patientId: params.patientId, order: "recent" }))
+    void qc.prefetchQuery(
+      matchingQueries.history({
+        subjectKind: "patient",
+        subjectId: params.patientId,
+      })
+    )
+    void qc.prefetchQuery(
+      matchQueries.list({ patientId: params.patientId, order: "recent" })
+    )
     await Promise.all([
-      ensureOrNotFound(qc.ensureQueryData(patientQueries.detail(params.patientId))),
+      ensureOrNotFound(
+        qc.ensureQueryData(patientQueries.detail(params.patientId))
+      ),
       qc.ensureQueryData(criteriaQueries.latest()),
     ])
   },
@@ -138,7 +160,10 @@ function PatientDetail() {
   const del = useDeletePatient()
   const rerun = useRerunPatient()
   const openRun = useCallback(
-    (runId: string): LinkOptions => ({ to: "/matches", search: { runId } }),
+    (runId: string): LinkOptions => ({
+      to: "/matching/$runId",
+      params: { runId },
+    }),
     []
   )
   const onRerun = () =>
@@ -146,7 +171,10 @@ function PatientDetail() {
       onSuccess: ({ runId }) =>
         toastMatchingStarted(() => void navigate(openRun(runId))),
     })
-  const editLink: LinkOptions = { to: "/patients/$patientId/edit", params: { patientId } }
+  const editLink: LinkOptions = {
+    to: "/patients/$patientId/edit",
+    params: { patientId },
+  }
   const id = p.identity
   const name = `${id.firstName} ${id.lastName}`.trim() || "Unnamed patient"
   const age = ageInYears(id.dateOfBirth)
@@ -155,12 +183,19 @@ function PatientDetail() {
     <>
       <PageHeader
         title={name}
-        breadcrumbs={[{ label: "Patients", link: { to: "/patients" } }, { label: name }]}
+        breadcrumbs={[
+          { label: "Patients", link: { to: "/patients" } },
+          { label: name },
+        ]}
         badges={
           <>
-            <Badge variant="outline">{labelOf(CANDIDATE_STATE, p.listing.state)}</Badge>
             <Badge variant="outline">
-              {p.listing.urgencyStatus ? labelOf(URGENCY_STATUS, p.listing.urgencyStatus) : "Urgency not recorded"}
+              {labelOf(CANDIDATE_STATE, p.listing.state)}
+            </Badge>
+            <Badge variant="outline">
+              {p.listing.urgencyStatus
+                ? labelOf(URGENCY_STATUS, p.listing.urgencyStatus)
+                : "Urgency not recorded"}
             </Badge>
             <Badge variant="outline">ABO {p.blood.abo ?? "not recorded"}</Badge>
             <Badge variant="outline">
@@ -172,7 +207,9 @@ function PatientDetail() {
         description={[
           `MRN ${id.mrn || "not recorded"}`,
           id.transplantCenter || "Center not recorded",
-          p.listing.listingDate ? `listed ${p.listing.listingDate}` : "listing date not recorded",
+          p.listing.listingDate
+            ? `listed ${p.listing.listingDate}`
+            : "listing date not recorded",
         ].join(" · ")}
         actions={
           <RecordActions
@@ -194,7 +231,11 @@ function PatientDetail() {
         value={search.tab ?? "overview"}
         onValueChange={(tab) =>
           void routeNavigate({
-            search: (prev) => ({ ...prev, tab: tab === "overview" ? undefined : (tab as DetailSearch["tab"]) }),
+            search: (prev) => ({
+              ...prev,
+              tab:
+                tab === "overview" ? undefined : (tab as DetailSearch["tab"]),
+            }),
             replace: true,
           })
         }
@@ -208,7 +249,11 @@ function PatientDetail() {
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="space-y-4">
               <OverviewCard title="Key facts">
-                <KeyFacts sections={patientRecordSections} record={p} paths={KEY_FACTS} />
+                <KeyFacts
+                  sections={patientRecordSections}
+                  record={p}
+                  paths={KEY_FACTS}
+                />
               </OverviewCard>
               <OverviewCard title="Derived values">
                 <div className="grid gap-3">
@@ -237,7 +282,11 @@ function PatientDetail() {
           </div>
         </TabsContent>
         <TabsContent value="record">
-          <RecordView sections={patientRecordSections} record={p} editLink={editLink} />
+          <RecordView
+            sections={patientRecordSections}
+            record={p}
+            editLink={editLink}
+          />
         </TabsContent>
         <TabsContent value="matches">
           <PatientMatches patientId={patientId} search={search} />
@@ -247,10 +296,19 @@ function PatientDetail() {
   )
 }
 
-function PatientMatches({ patientId, search }: { patientId: string; search: DetailSearch }) {
+function PatientMatches({
+  patientId,
+  search,
+}: {
+  patientId: string
+  search: DetailSearch
+}) {
   const navigate = Route.useNavigate()
   const set = (patch: Partial<DetailSearch>) =>
-    void navigate({ search: (prev) => ({ ...prev, ...patch, cursor: undefined }), replace: true })
+    void navigate({
+      search: (prev) => ({ ...prev, ...patch, cursor: undefined }),
+      replace: true,
+    })
   const results = useQuery({
     ...matchQueries.list({
       patientId,
@@ -264,9 +322,22 @@ function PatientMatches({ patientId, search }: { patientId: string; search: Deta
   const filtered = Boolean(search.overall || search.source)
   return (
     <>
-      <ListToolbar canReset={filtered} onReset={() => set({ overall: undefined, source: undefined })}>
-        <FilterSelect label="Result" value={search.overall} options={OVERALL} onChange={(overall) => set({ overall })} />
-        <FilterSelect label="Source" value={search.source} options={SOURCE} onChange={(source) => set({ source })} />
+      <ListToolbar
+        canReset={filtered}
+        onReset={() => set({ overall: undefined, source: undefined })}
+      >
+        <FilterSelect
+          label="Result"
+          value={search.overall}
+          options={OVERALL}
+          onChange={(overall) => set({ overall })}
+        />
+        <FilterSelect
+          label="Source"
+          value={search.source}
+          options={SOURCE}
+          onChange={(source) => set({ source })}
+        />
       </ListToolbar>
       {results.isPending ? (
         <Skeleton className="h-64 w-full" aria-label="Loading match results" />
@@ -284,8 +355,12 @@ function PatientMatches({ patientId, search }: { patientId: string; search: Deta
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={results.data?.nextCursor ?? null}
-        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined }) })}
-        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+        onFirst={() =>
+          void navigate({ search: (s) => ({ ...s, cursor: undefined }) })
+        }
+        onNext={(cursor) =>
+          void navigate({ search: (s) => ({ ...s, cursor }) })
+        }
       />
     </>
   )
