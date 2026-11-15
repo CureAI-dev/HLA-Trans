@@ -1,7 +1,7 @@
 import { createStart } from "@tanstack/react-start"
+import { appErrorAdapter } from "@/lib/app-error"
 
-/**
- * SSR is off for every route. Data lives in localStorage, so the server has
- * nothing to render. Only the root HTML shell comes from the server.
- */
-export const startInstance = createStart(() => ({ defaultSsr: false }))
+/** SSR is on: loaders prefetch through TanStack Query and dehydrate into the HTML. */
+export const startInstance = createStart(() => ({
+  serializationAdapters: [appErrorAdapter],
+}))

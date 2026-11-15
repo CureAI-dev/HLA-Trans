@@ -12,13 +12,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-
-// TODO(Task 3): replace with `errorMessage` from "@/lib/app-error" once it exists.
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error && error.message) return error.message
-  if (typeof error === "string" && error) return error
-  return fallback
-}
+import { errorMessage } from "@/lib/app-error"
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter()
