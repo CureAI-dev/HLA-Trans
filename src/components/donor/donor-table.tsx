@@ -1,21 +1,40 @@
 import { Link } from "@tanstack/react-router"
-import { HeartPulse } from "lucide-react"
+import { HeartPulse, Plus } from "lucide-react"
 import type { DonorRow } from "@/domain/match-types"
 import type { Page } from "@/lib/cursor"
-import { DONOR_STATE, labelOf } from "@/domain/options"
+import { DONATION_TYPE, DONOR_STATE, labelOf } from "@/domain/options"
 import { EmptyState } from "@/components/app/empty-state"
+import { Button } from "@/components/ui/button"
 
-export function DonorTable({ page }: { page: Page<DonorRow> }) {
+export function DonorTable({
+  page,
+  filtered = false,
+}: {
+  page: Page<DonorRow>
+  filtered?: boolean
+}) {
   if (!page.items.length)
-    return (
+    return filtered ? (
       <EmptyState
         icon={<HeartPulse />}
-        title="No donors found"
-        description="Add a donor to screen it against active candidates."
+        title="No donors match these filters"
+        description="Change the search or reset the filters to see more donors."
+      />
+    ) : (
+      <EmptyState
+        icon={<HeartPulse />}
+        title="No donors yet"
+        description="Add a donor to screen it against active candidates, or load the synthetic demo dataset."
         action={
-          <Link className="underline" to="/donors/new">
-            Add donor
-          </Link>
+          <>
+            <Button nativeButton={false} render={<Link to="/donors/new" />}>
+              <Plus aria-hidden="true" />
+              Add donor
+            </Button>
+            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+              Load demo dataset
+            </Button>
+          </>
         }
       />
     )
@@ -56,7 +75,9 @@ export function DonorTable({ page }: { page: Page<DonorRow> }) {
               <td className="p-3">{row.hospital || "Not recorded"}</td>
               <td className="p-3">{row.ageYears ?? "Not recorded"}</td>
               <td className="p-3">{row.abo ?? "Not recorded"}</td>
-              <td className="p-3">{row.donationType.toUpperCase()}</td>
+              <td className="p-3" title={labelOf(DONATION_TYPE, row.donationType)}>
+                {row.donationType.toUpperCase()}
+              </td>
               <td className="p-3">
                 <time dateTime={row.updatedAt} suppressHydrationWarning>
                   {new Date(row.updatedAt).toLocaleDateString()}

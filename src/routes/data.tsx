@@ -3,6 +3,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Download, Upload, Database, Trash2 } from "lucide-react"
 import { PageHeader } from "@/components/app/page-header"
+import { PagePending } from "@/components/app/page-skeletons"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
@@ -19,6 +20,7 @@ import { deleteLegacyData, hasLegacyData } from "@/lib/legacy-import"
 
 export const Route = createFileRoute("/data")({
   head: () => ({ meta: [{ title: "Data · HLA-Trans" }] }),
+  pendingComponent: PagePending,
   component: DataPage,
 })
 

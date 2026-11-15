@@ -1,29 +1,37 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
+import { ScrollText } from "lucide-react"
 import { auditSearch } from "@/features/audit/audit.functions"
 import { auditQueries } from "@/features/audit/audit.queries"
 import { PageHeader } from "@/components/app/page-header"
 import { Pager } from "@/components/app/pager"
+import { FilterSelect, ListToolbar } from "@/components/app/list-toolbar"
+import { TablePageSkeleton } from "@/components/app/page-skeletons"
+import { EmptyState } from "@/components/app/empty-state"
+import type { AuditAction } from "@/domain/match-types"
 import { Button } from "@/components/ui/button"
 
+/** Every action the API writes, with readable labels for the filter. */
 const ACTIONS = [
-  "patient.created",
-  "patient.updated",
-  "patient.deleted",
-  "donor.created",
-  "donor.updated",
-  "donor.deleted",
-  "match.checked",
-  "match.decided",
-  "match_run.queued",
-  "match_run.succeeded",
-  "match_run.failed",
-  "match_run.cancelled",
-  "criteria.published",
-  "data.imported",
-  "data.seeded",
-  "data.reset",
-] as const
+  { value: "patient.created", label: "Patient created" },
+  { value: "patient.updated", label: "Patient updated" },
+  { value: "patient.deleted", label: "Patient deleted" },
+  { value: "donor.created", label: "Donor created" },
+  { value: "donor.updated", label: "Donor updated" },
+  { value: "donor.deleted", label: "Donor deleted" },
+  { value: "match.checked", label: "Pair checked" },
+  { value: "match.decided", label: "Decision recorded" },
+  { value: "match_run.queued", label: "Match run queued" },
+  { value: "match_run.succeeded", label: "Match run finished" },
+  { value: "match_run.failed", label: "Match run failed" },
+  { value: "match_run.cancelled", label: "Match run cancelled" },
+  { value: "criteria.published", label: "Criteria published" },
+  { value: "data.imported", label: "Data imported" },
+  { value: "data.seeded", label: "Demo data loaded" },
+  { value: "data.reset", label: "Database reset" },
+] as const satisfies ReadonlyArray<{ value: AuditAction; label: string }>
+type ActionValue = (typeof ACTIONS)[number]["value"]
+const actionLabel = (a: string) => ACTIONS.find((x) => x.value === a)?.label ?? a
 
 export const Route = createFileRoute("/audit")({
   validateSearch: auditSearch,
@@ -31,6 +39,7 @@ export const Route = createFileRoute("/audit")({
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(auditQueries.list(deps)),
   head: () => ({ meta: [{ title: "Audit log · HLA-Trans" }] }),
+  pendingComponent: () => <TablePageSkeleton columns={5} />,
   component: AuditPage,
 })
 
@@ -44,33 +53,17 @@ function AuditPage() {
         title="Audit log"
         description="Record of changes, match results, decisions, match runs and data operations."
       />
-      <div className="mb-5 grid items-end gap-4 border bg-card p-4 sm:grid-cols-3">
-        <label className="space-y-2 text-sm">
-          Action
-          <select
-            aria-label="Action"
-            className="h-8 w-full border bg-background px-2"
-            value={search.action ?? ""}
-            onChange={(e) =>
-              void navigate({
-                search: { action: e.target.value || undefined },
-              })
-            }
-          >
-            <option value="">All actions</option>
-            {ACTIONS.map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
-        </label>
-        {search.action && (
-          <Button variant="outline" onClick={() => void navigate({ search: {} })}>
-            Clear filters
-          </Button>
-        )}
-      </div>
+      <ListToolbar
+        canReset={Boolean(search.action)}
+        onReset={() => void navigate({ search: {}, replace: true })}
+      >
+        <FilterSelect
+          label="Action"
+          value={ACTIONS.some((a) => a.value === search.action) ? (search.action as ActionValue) : undefined}
+          options={ACTIONS}
+          onChange={(action) => void navigate({ search: { action }, replace: true })}
+        />
+      </ListToolbar>
       <p className="mb-3 text-sm">Newest first. Times use your local time.</p>
       {data.items.length ? (
         <div className="overflow-x-auto border">
@@ -94,7 +87,10 @@ function AuditPage() {
                     </time>
                   </td>
                   <td className="p-3">{e.actor}</td>
-                  <td className="p-3">{e.action}</td>
+                  <td className="p-3">
+                    {actionLabel(e.action)}
+                    <span className="block font-mono text-xs text-muted-foreground">{e.action}</span>
+                  </td>
                   <td className="max-w-64 p-3 break-words">{e.subjectId}</td>
                   <td className="p-3">{e.summary}</td>
                 </tr>
@@ -102,13 +98,23 @@ function AuditPage() {
             </tbody>
           </table>
         </div>
+      ) : search.action ? (
+        <EmptyState
+          icon={<ScrollText />}
+          title="No entries for this action"
+          description="Reset the filter to see every audit entry."
+        />
       ) : (
-        <div className="border p-6">
-          <p>No audit entries match these filters.</p>
-          <Link to="/data" className="mt-3 inline-block underline">
-            Load synthetic demo data
-          </Link>
-        </div>
+        <EmptyState
+          icon={<ScrollText />}
+          title="No audit entries yet"
+          description="Changes, match results, decisions and data operations are recorded here."
+          action={
+            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+              Load demo dataset
+            </Button>
+          }
+        />
       )}
       <Pager
         hasCursor={Boolean(search.cursor)}
