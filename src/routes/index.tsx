@@ -1,6 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
+import { Database, History } from "lucide-react"
 import { PageHeader } from "@/components/app/page-header"
+import { PagePending } from "@/components/app/page-skeletons"
+import { EmptyState } from "@/components/app/empty-state"
+import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/app/status"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { dashboardQueries } from "@/features/dashboard/dashboard.queries"
@@ -10,14 +14,17 @@ export const Route = createFileRoute("/")({
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(dashboardQueries.summary()),
   head: () => ({ meta: [{ title: "Dashboard · HLA-Trans" }] }),
+  pendingComponent: PagePending,
   component: Dashboard,
 })
 function MatchList({
   records,
   empty,
+  hint,
 }: {
   records: Array<MatchRow>
   empty: string
+  hint: string
 }) {
   return records.length ? (
     <ul className="divide-y">
@@ -46,13 +53,18 @@ function MatchList({
       ))}
     </ul>
   ) : (
-    <p className="p-4 text-sm text-muted-foreground">
-      {empty}{" "}
-      <Link className="underline" to="/matches/check">
-        Check a pair
-      </Link>
-      .
-    </p>
+    <div className="p-4">
+      <EmptyState
+        icon={<History />}
+        title={empty}
+        description={hint}
+        action={
+          <Button variant="outline" nativeButton={false} render={<Link to="/matches/check" />}>
+            Check a pair
+          </Button>
+        }
+      />
+    </div>
   )
 }
 function Dashboard() {
@@ -63,15 +75,36 @@ function Dashboard() {
       <PageHeader
         title="Dashboard"
         description="Review candidates, donors, and saved match results."
+        actions={
+          <>
+            <Button nativeButton={false} render={<Link to="/matches/check" />}>
+              Check a pair
+            </Button>
+            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+              Manage data
+            </Button>
+          </>
+        }
       />
-      <div className="mb-6 flex flex-wrap gap-4">
-        <Link className="underline" to="/matches/check">
-          Check a pair
-        </Link>
-        <Link className="underline" to="/data">
-          Manage data
-        </Link>
-      </div>
+      {data.activePatients === 0 && data.availableDonors === 0 && !recent.length && (
+        <div className="mb-6">
+          <EmptyState
+            icon={<Database />}
+            title="The database is empty"
+            description="Add patients and donors, or load the synthetic demo dataset to explore matching."
+            action={
+              <>
+                <Button nativeButton={false} render={<Link to="/patients/new" />}>
+                  Add patient
+                </Button>
+                <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+                  Load demo dataset
+                </Button>
+              </>
+            }
+          />
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-3">
         {(
           [
@@ -112,6 +145,7 @@ function Dashboard() {
           <MatchList
             records={pending}
             empty="No decisions are pending."
+            hint="Results saved with Check a pair wait here for a clinician decision."
           />
         </section>
         <section className="border bg-card">
@@ -119,6 +153,7 @@ function Dashboard() {
           <MatchList
             records={recent}
             empty="No match results have been saved."
+            hint="Saved results from matching and Check a pair appear here."
           />
         </section>
       </div>
