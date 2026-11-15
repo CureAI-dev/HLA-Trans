@@ -15,6 +15,7 @@ import {
   TextField,
 } from "@/components/form"
 import { Button } from "@/components/ui/button"
+import { SubmitButton } from "@/components/app/submit-button"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   AlertDialog,
@@ -36,7 +37,7 @@ export function CriteriaForm({
   publish,
 }: {
   current: CriteriaVersion
-  publish: (criteria: Criteria, note: string) => CriteriaVersion
+  publish: (criteria: Criteria, note: string) => Promise<CriteriaVersion>
 }) {
   const [draft, setDraft] = useState<Draft>(() =>
     structuredClone(current.criteria)
@@ -48,9 +49,11 @@ export function CriteriaForm({
   const [message, setMessage] = useState("")
   const [failure, setFailure] = useState("")
   const [section, setSection] = useState<string>("abo")
+  const [publishing, setPublishing] = useState(false)
   const dirty =
     JSON.stringify(draft) !== JSON.stringify(source.criteria) || note.length > 0
-  const conflict = current.id !== source.id
+  // While our own publish settles, the new latest version arrives before `source` catches up.
+  const conflict = !publishing && current.id !== source.id
   if (conflict && !dirty) {
     setSource(current)
     setDraft(structuredClone(current.criteria))
@@ -99,8 +102,9 @@ export function CriteriaForm({
     }
     setPending(parsed.data)
   }
-  function confirm() {
-    if (!pending) return
+  async function confirm() {
+    const toPublish = pending
+    if (!toPublish || publishing) return
     if (conflict) {
       setFailure(
         "Criteria changed in another tab. Reload the latest criteria before publishing."
@@ -108,19 +112,21 @@ export function CriteriaForm({
       setPending(null)
       return
     }
+    setPublishing(true)
+    setPending(null)
     try {
-      const saved = publish(pending, note.trim())
+      const saved = await publish(toPublish, note.trim())
       setDraft(structuredClone(saved.criteria))
       setSource(saved)
       setNote("")
-      setPending(null)
       setAttempted(false)
       setMessage(`Published criteria version ${saved.version}.`)
     } catch (error) {
       setFailure(
         error instanceof Error ? error.message : "Unable to publish criteria."
       )
-      setPending(null)
+    } finally {
+      setPublishing(false)
     }
   }
   return (
@@ -253,7 +259,9 @@ export function CriteriaForm({
         )}
         {failure && <p role="alert">{failure}</p>}
         {message && <p role="status">{message}</p>}
-        <Button type="submit">Review and publish</Button>
+        <SubmitButton pending={publishing} pendingLabel="Publishing…">
+          Review and publish
+        </SubmitButton>
       </form>
       <AlertDialog
         open={pending !== null && !conflict}
@@ -267,7 +275,7 @@ export function CriteriaForm({
           </AlertDialogTitle>
           <AlertDialogDescription>
             Review each change before publishing. Changing criteria does not
-            change past evaluations.
+            change past match results.
           </AlertDialogDescription>
           {pending && (
             <CriteriaDiff before={current.criteria} after={pending} />
@@ -277,7 +285,7 @@ export function CriteriaForm({
           </p>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirm}>
+            <AlertDialogAction onClick={() => void confirm()}>
               Confirm publication
             </AlertDialogAction>
           </AlertDialogFooter>

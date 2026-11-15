@@ -1,5 +1,5 @@
-import { validateCriteria } from "../../domain/criteria"
-import { dbSchema } from "../../domain/schema"
+import { validateCriteria } from "./criteria"
+import { dbSchema } from "./schema"
 
 /** Shared import-preview, import-action and persisted-store invariant. */
 export const validatedDbSchema = dbSchema.superRefine((db, ctx) => {

@@ -41,5 +41,5 @@ export function useFormState<T>(initial: T, schema: z.ZodType<T>) {
     setBaseline(next)
     setErrors({})
   }
-  return { value, set, errors, dirty, validate, reset }
+  return { value, set, errors, setErrors, dirty, validate, reset }
 }

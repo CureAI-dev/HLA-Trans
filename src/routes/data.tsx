@@ -1,36 +1,111 @@
-import { useRef, useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { useEffect, useRef, useState } from "react"
+import { createFileRoute, useRouter } from "@tanstack/react-router"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Download, Upload, Database, Trash2 } from "lucide-react"
 import { PageHeader } from "@/components/app/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { validatedDbSchema } from "@/lib/storage/validated-db-schema"
+import { Spinner } from "@/components/ui/spinner"
+import { toast } from "@/components/ui/toast"
+import { validatedDbSchema } from "@/domain/backup-schema"
 import type { Db } from "@/domain/schema"
-import { actions, useDb } from "@/lib/storage/db"
+import {
+  exportDataFn,
+  importDataFn,
+  resetDataFn,
+  seedDemoFn,
+} from "@/features/data/data.functions"
+import { deleteLegacyData, hasLegacyData } from "@/lib/legacy-import"
 
-export const Route = createFileRoute("/data")({ component: DataPage })
+export const Route = createFileRoute("/data")({
+  head: () => ({ meta: [{ title: "Data · HLA-Trans" }] }),
+  component: DataPage,
+})
+
+const failed = (e: unknown) =>
+  e instanceof Error ? e.message : "The operation failed. Saved data was not changed."
+
 function DataPage() {
-  const db = useDb()
+  const qc = useQueryClient()
+  const router = useRouter()
   const [preview, setPreview] = useState<{ name: string; db: Db } | null>(null)
   const [reset, setReset] = useState("")
   const [error, setError] = useState("")
   const [message, setMessage] = useState("")
   const [reading, setReading] = useState(false)
+  const [legacy, setLegacy] = useState(false)
+  useEffect(() => setLegacy(hasLegacyData()), []) // client only
   const readVersion = useRef(0)
-  function run(operation: () => void, success: string) {
+  const clearStatus = () => {
     setError("")
     setMessage("")
-    try {
-      operation()
-      setMessage(success)
-    } catch (e) {
-      setError(
-        e instanceof Error
-          ? e.message
-          : "The operation failed. Saved data was not changed."
-      )
-    }
   }
+  const exporter = useMutation({
+    mutationKey: ["data", "export"],
+    meta: { errorTitle: "Export failed" },
+    mutationFn: () =>
+      qc.fetchQuery({
+        queryKey: ["data", "export"],
+        queryFn: () => exportDataFn(),
+        staleTime: 0,
+      }),
+    onSuccess: (data) => {
+      const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+      })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `hla-trans-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setMessage("Export downloaded.")
+    },
+    onError: (e) => setError(failed(e)),
+  })
+  const importer = useMutation({
+    mutationKey: ["data", "import"],
+    meta: { errorTitle: "Import failed" },
+    mutationFn: (backup: unknown) => importDataFn({ data: { backup } }),
+    onSuccess: (s) => {
+      setPreview(null)
+      setMessage(
+        `Imported ${s.patients} patients, ${s.donors} donors, ${s.matches} match results and ${s.decisions} decisions. ${s.skipped} existing match results were skipped.`
+      )
+      void qc.invalidateQueries()
+    },
+    onError: (e) => setError(failed(e)),
+  })
+  const seeder = useMutation({
+    mutationKey: ["data", "seed"],
+    meta: { errorTitle: "Demo data not loaded" },
+    mutationFn: () => seedDemoFn(),
+    onSuccess: (r) => {
+      toast.add({
+        title: `Demo data loaded. Matching started for ${r.runs} donors.`,
+      })
+      setMessage(
+        `Added ${r.patients} patients and ${r.donors} donors. Existing records were kept.`
+      )
+      void qc.invalidateQueries()
+    },
+    onError: (e) => setError(failed(e)),
+  })
+  const resetter = useMutation({
+    mutationKey: ["data", "reset"],
+    meta: { errorTitle: "Database not reset" },
+    mutationFn: () => resetDataFn({ data: { confirm: "RESET" } }),
+    onSuccess: () => {
+      setReset("")
+      setPreview(null)
+      readVersion.current++
+      setReading(false)
+      setMessage("Database reset.")
+      qc.clear()
+      void router.invalidate()
+    },
+    onError: (e) => setError(failed(e)),
+  })
   async function readFile(file: File | undefined) {
     const version = ++readVersion.current
     setPreview(null)
@@ -63,27 +138,15 @@ function DataPage() {
       if (version === readVersion.current) setReading(false)
     }
   }
-  function exportBackup() {
-    run(() => {
-      const blob = new Blob([actions.exportDb()], { type: "application/json" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `hla-trans-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      setTimeout(() => URL.revokeObjectURL(url), 1000)
-    }, "Backup downloaded.")
-  }
   return (
     <>
       <PageHeader
         title="Data management"
-        description="Back up and manage the database stored in this browser."
+        description="Export, import, seed and reset the shared database."
       />
       <p className="mb-5 text-sm text-muted-foreground">
-        Current database: {db.patients.length} candidates, {db.donors.length}{" "}
-        donors, {db.evaluations.length} evaluations. Files are processed locally
-        in your browser.
+        Exports contain patient and donor records and the criteria history. For
+        a full database backup use <code>pg_dump</code> (see README).
       </p>
       {error && (
         <p role="alert" className="mb-5 border p-4">
@@ -97,21 +160,29 @@ function DataPage() {
       )}
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="border bg-card p-5">
-          <h2 className="font-semibold">Export backup</h2>
+          <h2 className="font-semibold">Export</h2>
           <p className="my-3 text-sm text-muted-foreground">
-            Download all records, saved match results, criteria versions, and
-            audit entries as JSON. Keep backups in a secure location.
+            Download current patient and donor records, the criteria history and
+            an index of saved match results as JSON, for human review. Keep
+            exports in a secure location.
           </p>
-          <Button onClick={exportBackup}>
-            <Download />
+          <Button
+            disabled={exporter.isPending}
+            onClick={() => {
+              clearStatus()
+              exporter.mutate()
+            }}
+          >
+            {exporter.isPending ? <Spinner /> : <Download />}
             Export JSON
           </Button>
         </section>
         <section className="border bg-card p-5">
           <h2 className="font-semibold">Import backup</h2>
           <p id="import-help" className="my-3 text-sm text-muted-foreground">
-            Choose a JSON backup. Review its contents before confirming
-            replacement of all current data.
+            Choose a backup from the previous browser-based version (v1
+            format). Records are added to the shared database; existing
+            records with the same id are never overwritten.
           </p>
           <label className="block space-y-2 text-sm">
             Backup JSON file
@@ -147,22 +218,19 @@ function DataPage() {
                 ))}
               </dl>
               <p className="text-sm">
-                Confirm replacement? Current records and settings will be
-                replaced by this backup. Export first if you need to retain
-                them.
+                Import these records? Records already in the database are
+                skipped, so importing twice adds nothing.
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  onClick={() =>
-                    run(() => {
-                      actions.importDb(preview.db)
-                      setPreview(null)
-                      setReset("")
-                    }, "Backup imported. Database replaced.")
-                  }
+                  disabled={importer.isPending}
+                  onClick={() => {
+                    clearStatus()
+                    importer.mutate(preview.db)
+                  }}
                 >
-                  <Upload />
-                  Confirm replace database
+                  {importer.isPending ? <Spinner /> : <Upload />}
+                  Import records
                 </Button>
                 <Button variant="outline" onClick={() => setPreview(null)}>
                   Cancel import
@@ -174,28 +242,29 @@ function DataPage() {
         <section className="border bg-card p-5">
           <h2 className="font-semibold">Synthetic demo data</h2>
           <p className="my-3 text-sm text-muted-foreground">
-            Add synthetic candidate and donor records. Repeated loads add no
-            duplicate records and preserve existing edits.
+            Add synthetic candidate and donor records and start matching for
+            each available donor. Repeated loads add no duplicate records and
+            preserve existing edits.
           </p>
           <Button
             variant="outline"
-            onClick={() =>
-              run(
-                () => actions.loadSampleData(),
-                "Synthetic demo records loaded. Existing records were preserved."
-              )
-            }
+            disabled={seeder.isPending}
+            onClick={() => {
+              clearStatus()
+              seeder.mutate()
+            }}
           >
-            <Database />
-            Load demo data
+            {seeder.isPending ? <Spinner /> : <Database />}
+            Load demo dataset
           </Button>
         </section>
         <section className="border bg-card p-5">
-          <h2 className="font-semibold">Reset local database</h2>
+          <h2 className="font-semibold">Reset database</h2>
           <p id="reset-help" className="my-3 text-sm text-muted-foreground">
-            Delete all candidates, donors, match results, and previous audit
-            entries; restore default criteria and clear the clinician name.
-            Export a backup first. Type RESET to confirm.
+            Delete all patients, donors, match runs, match results, decisions
+            and previous audit entries for everyone using this database, and
+            restore the default criteria. Take a <code>pg_dump</code> first.
+            Type RESET to confirm.
           </p>
           <label className="block space-y-2 text-sm">
             Reset confirmation
@@ -209,21 +278,36 @@ function DataPage() {
           <Button
             className="mt-3"
             variant="outline"
-            disabled={reset !== "RESET"}
-            onClick={() =>
-              run(() => {
-                actions.reset()
-                setReset("")
-                setPreview(null)
-                readVersion.current++
-                setReading(false)
-              }, "Local database reset.")
-            }
+            disabled={reset !== "RESET" || resetter.isPending}
+            onClick={() => {
+              clearStatus()
+              resetter.mutate()
+            }}
           >
-            <Trash2 />
+            {resetter.isPending ? <Spinner /> : <Trash2 />}
             Reset database
           </Button>
         </section>
+        {legacy && (
+          <section className="border bg-card p-5">
+            <h2 className="font-semibold">Browser copy</h2>
+            <p className="my-3 text-sm text-muted-foreground">
+              This browser still holds records from the previous version. Delete
+              that copy once it has been imported.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                deleteLegacyData()
+                setLegacy(false)
+                setMessage("Browser copy deleted.")
+              }}
+            >
+              <Trash2 />
+              Delete browser copy
+            </Button>
+          </section>
+        )}
       </div>
     </>
   )

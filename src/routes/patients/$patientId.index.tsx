@@ -1,6 +1,10 @@
 import { useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
-import { actions, useDb } from "@/lib/storage/db"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { patientQueries } from "@/features/patients/patients.queries"
+import { useDeletePatient } from "@/features/patients/patients.mutations"
+import { matchQueries } from "@/features/matches/matches.queries"
+import { ensureOrNotFound } from "@/lib/route-helpers"
 import { PatientSummary } from "@/components/patient/patient-summary"
 import { PageHeader } from "@/components/app/page-header"
 import { StatusBadge } from "@/components/app/status"
@@ -19,29 +23,39 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export const Route = createFileRoute("/patients/$patientId/")({
+  loader: async ({ context, params }) => {
+    // Not awaited: the matches list streams in after the record.
+    void context.queryClient.prefetchQuery(
+      matchQueries.list({ patientId: params.patientId })
+    )
+    await ensureOrNotFound(
+      context.queryClient.ensureQueryData(
+        patientQueries.detail(params.patientId)
+      )
+    )
+  },
   component: PatientDetail,
 })
 function PatientDetail() {
   const { patientId } = Route.useParams()
-  const db = useDb()
-  const p = db.patients.find((x) => x.id === patientId)
+  const {
+    data: { record: p },
+  } = useSuspenseQuery(patientQueries.detail(patientId))
+  const matches = useQuery(matchQueries.list({ patientId }))
+  const del = useDeletePatient()
   const navigate = useNavigate()
   const [error, setError] = useState("")
-  if (!p)
-    return (
-      <p>
-        Patient not found. <Link to="/patients">Return to patients</Link>
-      </p>
-    )
-  const evaluations = db.evaluations.filter((e) => e.patientId === p.id)
+  const evaluations = matches.data?.items ?? []
   function remove() {
-    try {
-      actions.deletePatient(patientId)
-      toast.add({ title: "Patient deleted" })
-      void navigate({ to: "/patients" })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to delete patient")
-    }
+    setError("")
+    del.mutate(patientId, {
+      onSuccess: () => {
+        toast.add({ title: "Patient deleted" })
+        void navigate({ to: "/patients" })
+      },
+      onError: (e) =>
+        setError(e instanceof Error ? e.message : "Unable to delete patient"),
+    })
   }
   return (
     <>
@@ -92,7 +106,9 @@ function PatientDetail() {
         <h2 className="mb-3 text-lg font-semibold">
           Match results involving this patient
         </h2>
-        {evaluations.length ? (
+        {matches.isPending ? (
+          <p className="text-sm text-muted-foreground">Loading match results…</p>
+        ) : evaluations.length ? (
           <ul className="space-y-2">
             {evaluations.map((e) => (
               <li key={e.id}>
@@ -101,10 +117,17 @@ function PatientDetail() {
                   to="/matches/$matchId"
                   params={{ matchId: e.id }}
                 >
-                  {e.donorSnapshot.identity.donorId} |{" "}
-                  {new Date(e.createdAt).toLocaleDateString()}
+                  {e.donorCode} |{" "}
+                  <time dateTime={e.createdAt} suppressHydrationWarning>
+                    {new Date(e.createdAt).toLocaleDateString()}
+                  </time>
                 </Link>{" "}
-                <StatusBadge status={e.result.overall} />
+                <StatusBadge status={e.overall} />
+                {e.outOfDate && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    Out of date
+                  </span>
+                )}
               </li>
             ))}
           </ul>

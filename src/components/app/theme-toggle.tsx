@@ -1,34 +1,27 @@
-import { useEffect, useState } from "react"
+import { getRouteApi, useRouter } from "@tanstack/react-router"
 import { Moon, Sun } from "lucide-react"
+import { THEME_COOKIE, writePrefCookie } from "@/lib/prefs"
 import { Button } from "@/components/ui/button"
 
-const THEME_KEY = "hla-trans.theme"
+const rootRoute = getRouteApi("__root__")
+
+/** The theme lives in a cookie so the server renders the right class (no flash). */
 export function ThemeToggle() {
-  const [dark, setDark] = useState(() => {
-    try {
-      const stored = localStorage.getItem(THEME_KEY)
-      return stored
-        ? stored === "dark"
-        : matchMedia("(prefers-color-scheme: dark)").matches
-    } catch {
-      return false
-    }
-  })
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark)
-    document.documentElement.style.colorScheme = dark ? "dark" : "light"
-    try {
-      localStorage.setItem(THEME_KEY, dark ? "dark" : "light")
-    } catch {
-      /* Theme still works when persistence is blocked. */
-    }
-  }, [dark])
+  const { prefs } = rootRoute.useRouteContext()
+  const router = useRouter()
+  const dark = prefs.theme === "dark"
   return (
     <Button
       variant="ghost"
       size="icon"
       aria-label={dark ? "Use light theme" : "Use dark theme"}
-      onClick={() => setDark(!dark)}
+      onClick={() => {
+        const next = dark ? "light" : "dark"
+        writePrefCookie(THEME_COOKIE, next)
+        document.documentElement.classList.toggle("dark", next === "dark")
+        document.documentElement.style.colorScheme = next
+        void router.invalidate()
+      }}
     >
       {dark ? <Sun /> : <Moon />}
     </Button>

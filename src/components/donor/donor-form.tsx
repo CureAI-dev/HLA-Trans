@@ -3,8 +3,9 @@ import { flushSync } from "react-dom"
 import { Link, useNavigate } from "@tanstack/react-router"
 import * as O from "@/domain/options"
 import { donorSchema, type Donor } from "@/domain/schema"
-import { actions } from "@/lib/storage/db"
-import { Button } from "@/components/ui/button"
+import { useCreateDonor, useUpdateDonor } from "@/features/donors/donors.mutations"
+import { isAppError } from "@/lib/app-error"
+import { SubmitButton } from "@/components/app/submit-button"
 import { toast } from "@/components/ui/toast"
 import {
   TextField,
@@ -38,10 +39,22 @@ export const donorSections = [
   { id: "hla", title: "HLA typing" },
   { id: "notes", title: "Notes" },
 ]
-export function DonorForm({ initial }: { initial: Donor }) {
+export function DonorForm({
+  initial,
+  version,
+}: {
+  initial: Donor
+  /** Present when editing: the optimistic-concurrency version the edit started from. */
+  version?: number
+}) {
   const form = useFormState(initial, donorSchema)
   const p = form.value
   const navigate = useNavigate()
+  const create = useCreateDonor()
+  const update = useUpdateDonor()
+  const saving = create.isPending || update.isPending
+  // Captured once: a background refetch must not move the edit's base version (that would hide a conflict).
+  const [baseVersion, setBaseVersion] = useState(version)
   const [saveError, setSaveError] = useState("")
   const subErrors = (prefix: string) =>
     Object.fromEntries(
@@ -49,26 +62,43 @@ export function DonorForm({ initial }: { initial: Donor }) {
         .filter(([key]) => key.startsWith(prefix + "."))
         .map(([key, value]) => [key.slice(prefix.length + 1), value])
     )
-  function save(event: React.FormEvent) {
+  async function save(event: React.FormEvent) {
     event.preventDefault()
+    if (saving) return
+    setSaveError("")
     if (!form.validate()) {
       setSaveError("Please correct the marked fields before saving.")
       return
     }
     try {
-      const saved = actions.saveDonor(p)
-      flushSync(() => form.reset(saved))
-      toast.add({ title: "Donor saved" })
-      void navigate({ to: "/donors/$donorId", params: { donorId: saved.id } })
+      const result =
+        baseVersion === undefined
+          ? (await create.mutateAsync(p)).donor
+          : await update.mutateAsync({ donor: p, expectedVersion: baseVersion })
+      setBaseVersion(result.version)
+      flushSync(() => form.reset(result.record))
+      toast.add({
+        title:
+          baseVersion === undefined ? "Donor saved. Matching started." : "Donor saved",
+      })
+      void navigate({
+        to: "/donors/$donorId",
+        params: { donorId: result.record.id },
+      })
     } catch (error) {
-      setSaveError(
-        error instanceof Error ? error.message : "Unable to save donor."
-      )
+      if (isAppError(error) && error.code === "VALIDATION") {
+        form.setErrors((previous) => ({ ...previous, ...error.issues }))
+        setSaveError(error.message)
+      } else {
+        setSaveError(
+          error instanceof Error ? error.message : "Unable to save donor."
+        )
+      }
     }
   }
   return (
     <form
-      onSubmit={save}
+      onSubmit={(event) => void save(event)}
       noValidate
       className="grid gap-6 lg:grid-cols-[190px_minmax(0,1fr)]"
     >
@@ -849,7 +879,7 @@ export function DonorForm({ initial }: { initial: Donor }) {
           />
         </FormSection>
         <div className="sticky bottom-0 flex flex-wrap gap-3 border bg-background p-4">
-          <Button type="submit">Save donor</Button>
+          <SubmitButton pending={saving}>Save donor</SubmitButton>
           <Link to="/donors" className="px-3 py-2 underline">
             Cancel
           </Link>

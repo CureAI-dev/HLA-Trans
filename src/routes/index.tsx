@@ -2,15 +2,21 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
 import { PageHeader } from "@/components/app/page-header"
 import { StatusBadge } from "@/components/app/status"
-import { dbStore, useDb } from "@/lib/storage/db"
-import type { Evaluation } from "@/domain/schema"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { dashboardQueries } from "@/features/dashboard/dashboard.queries"
+import type { MatchRow } from "@/domain/match-types"
 
-export const Route = createFileRoute("/")({ component: Dashboard })
-function EvaluationList({
+export const Route = createFileRoute("/")({
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(dashboardQueries.summary()),
+  head: () => ({ meta: [{ title: "Dashboard · HLA-Trans" }] }),
+  component: Dashboard,
+})
+function MatchList({
   records,
   empty,
 }: {
-  records: Array<Evaluation>
+  records: Array<MatchRow>
   empty: string
 }) {
   return records.length ? (
@@ -24,18 +30,17 @@ function EvaluationList({
           >
             <span>
               <span className="block font-medium">
-                {e.patientSnapshot.identity.firstName}{" "}
-                {e.patientSnapshot.identity.lastName} -{" "}
-                {e.donorSnapshot.identity.donorId}
+                {e.patientName} - {e.donorCode}
               </span>
               <time
                 className="text-xs text-muted-foreground"
                 dateTime={e.createdAt}
+                suppressHydrationWarning
               >
                 {new Date(e.createdAt).toLocaleString()}
               </time>
             </span>
-            <StatusBadge status={e.result.overall} />
+            <StatusBadge status={e.overall} />
           </Link>
         </li>
       ))}
@@ -51,17 +56,8 @@ function EvaluationList({
   )
 }
 function Dashboard() {
-  const db = useDb()
-  const recent = [...db.evaluations].sort((a, b) =>
-    b.createdAt.localeCompare(a.createdAt)
-  )
-  const pending = recent.filter((e) => !e.decision)
-  let usage = "Unavailable"
-  try {
-    usage = `${(dbStore.sizeInBytes() / 1024).toFixed(1)} KiB`
-  } catch {
-    /* Storage access may be blocked. */
-  }
+  const { data } = useSuspenseQuery(dashboardQueries.summary())
+  const { recent, pending } = data
   return (
     <>
       <PageHeader
@@ -73,7 +69,7 @@ function Dashboard() {
           Check a pair
         </Link>
         <Link className="underline" to="/data">
-          Manage local data
+          Manage data
         </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
@@ -81,19 +77,17 @@ function Dashboard() {
           [
             {
               label: "Active candidates",
-              count: db.patients.filter((p) => p.listing.state === "active")
-                .length,
+              count: data.activePatients,
               link: { to: "/patients" },
             },
             {
               label: "Available donors",
-              count: db.donors.filter((d) => d.identity.state === "available")
-                .length,
+              count: data.availableDonors,
               link: { to: "/donors" },
             },
             {
               label: "Pending decisions",
-              count: pending.length,
+              count: data.pendingDecisions,
               link: { to: "/", hash: "pending" },
             },
           ] satisfies Array<{ label: string; count: number; link: LinkOptions }>
@@ -113,32 +107,34 @@ function Dashboard() {
       <div className="my-6 grid gap-6 xl:grid-cols-2">
         <section id="pending" className="border bg-card">
           <h2 className="border-b p-4 font-semibold">
-            Pending decisions ({pending.length})
+            Pending decisions ({data.pendingDecisions})
           </h2>
-          <EvaluationList
-            records={pending.slice(0, 5)}
+          <MatchList
+            records={pending}
             empty="No decisions are pending."
           />
         </section>
         <section className="border bg-card">
           <h2 className="border-b p-4 font-semibold">Recent match results</h2>
-          <EvaluationList
-            records={recent.slice(0, 5)}
+          <MatchList
+            records={recent}
             empty="No match results have been saved."
           />
         </section>
       </div>
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6">
         <section className="border bg-card p-4">
-          <h2 className="mb-4 font-semibold">Saved match result outcome mix</h2>
+          <h2 className="mb-4 font-semibold">
+            Outcome mix of the {recent.length} most recent results
+          </h2>
           <div
             role="img"
-            aria-label={`Outcome mix of ${recent.length} saved match results: PASS ${recent.filter((e) => e.result.overall === "pass").length}, REVIEW ${recent.filter((e) => e.result.overall === "review").length}, FAIL ${recent.filter((e) => e.result.overall === "fail").length}`}
+            aria-label={`Outcome mix of ${recent.length} saved match results: PASS ${recent.filter((e) => e.overall === "pass").length}, REVIEW ${recent.filter((e) => e.overall === "review").length}, FAIL ${recent.filter((e) => e.overall === "fail").length}`}
             className="space-y-3"
           >
             {(["pass", "review", "fail"] as const).map((status) => {
               const count = recent.filter(
-                (e) => e.result.overall === status
+                (e) => e.overall === status
               ).length
               return (
                 <div key={status}>
@@ -169,17 +165,6 @@ function Dashboard() {
               Save a match result to populate the chart.
             </p>
           )}
-        </section>
-        <section className="border bg-card p-4">
-          <h2 className="font-semibold">Browser storage</h2>
-          <p className="my-3 text-2xl tabular-nums">{usage}</p>
-          <p className="text-sm text-muted-foreground">
-            Database usage in this browser. Browser quota varies; export a
-            backup before clearing browser data.
-          </p>
-          <Link className="mt-4 inline-block underline" to="/data">
-            Export or manage data
-          </Link>
         </section>
       </div>
     </>

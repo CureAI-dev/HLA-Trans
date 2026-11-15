@@ -1,108 +1,81 @@
-import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
+import { useSuspenseQuery } from "@tanstack/react-query"
+import { auditSearch } from "@/features/audit/audit.functions"
+import { auditQueries } from "@/features/audit/audit.queries"
 import { PageHeader } from "@/components/app/page-header"
-import { Input } from "@/components/ui/input"
+import { Pager } from "@/components/app/pager"
 import { Button } from "@/components/ui/button"
-import { auditEntrySchema } from "@/domain/schema"
-import { useDb } from "@/lib/storage/db"
 
-export const Route = createFileRoute("/audit")({ component: AuditPage })
+const ACTIONS = [
+  "patient.created",
+  "patient.updated",
+  "patient.deleted",
+  "donor.created",
+  "donor.updated",
+  "donor.deleted",
+  "match.checked",
+  "match.decided",
+  "match_run.queued",
+  "match_run.succeeded",
+  "match_run.failed",
+  "match_run.cancelled",
+  "criteria.published",
+  "data.imported",
+  "data.seeded",
+  "data.reset",
+] as const
+
+export const Route = createFileRoute("/audit")({
+  validateSearch: auditSearch,
+  loaderDeps: ({ search }) => search,
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(auditQueries.list(deps)),
+  head: () => ({ meta: [{ title: "Audit log · HLA-Trans" }] }),
+  component: AuditPage,
+})
+
 function AuditPage() {
-  const db = useDb()
-  const [action, setAction] = useState("")
-  const [from, setFrom] = useState("")
-  const [to, setTo] = useState("")
-  const [text, setText] = useState("")
-  const invalidRange = Boolean(from && to && from > to)
-  const records = [...db.audit]
-    .filter((e) => {
-      const date = new Date(e.at)
-      const day = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
-      return (
-        (!action || e.action === action) &&
-        (!from || day >= from) &&
-        (!to || day <= to) &&
-        `${e.actor} ${e.action} ${e.subjectId} ${e.summary}`
-          .toLowerCase()
-          .includes(text.trim().toLowerCase())
-      )
-    })
-    .sort((a, b) => b.at.localeCompare(a.at))
+  const search = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const { data } = useSuspenseQuery(auditQueries.list(search))
   return (
     <>
       <PageHeader
         title="Audit log"
-        description="Local record of changes, match results, decisions, and data operations."
+        description="Record of changes, match results, decisions, match runs and data operations."
       />
-      <div className="mb-5 grid items-end gap-4 border bg-card p-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-5 grid items-end gap-4 border bg-card p-4 sm:grid-cols-3">
         <label className="space-y-2 text-sm">
           Action
           <select
             aria-label="Action"
             className="h-8 w-full border bg-background px-2"
-            value={action}
-            onChange={(e) => setAction(e.target.value)}
+            value={search.action ?? ""}
+            onChange={(e) =>
+              void navigate({
+                search: { action: e.target.value || undefined },
+              })
+            }
           >
             <option value="">All actions</option>
-            {auditEntrySchema.shape.action.options.map((a) => (
+            {ACTIONS.map((a) => (
               <option key={a} value={a}>
                 {a}
               </option>
             ))}
           </select>
         </label>
-        <label className="space-y-2 text-sm">
-          From date
-          <Input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            aria-describedby={invalidRange ? "date-error" : undefined}
-          />
-        </label>
-        <label className="space-y-2 text-sm">
-          Through date
-          <Input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            aria-describedby={invalidRange ? "date-error" : undefined}
-          />
-        </label>
-        <label className="space-y-2 text-sm">
-          Search audit text
-          <Input
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="Actor, subject, or summary"
-          />
-        </label>
-        <Button
-          variant="outline"
-          onClick={() => {
-            setAction("")
-            setFrom("")
-            setTo("")
-            setText("")
-          }}
-        >
-          Clear filters
-        </Button>
+        {search.action && (
+          <Button variant="outline" onClick={() => void navigate({ search: {} })}>
+            Clear filters
+          </Button>
+        )}
       </div>
-      {invalidRange && (
-        <p id="date-error" role="alert" className="mb-4">
-          From date must be on or before through date.
-        </p>
-      )}
-      <p className="mb-3 text-sm" aria-live="polite">
-        {records.length} matching entries - Dates use your local time.
-      </p>
-      {records.length ? (
+      <p className="mb-3 text-sm">Newest first. Times use your local time.</p>
+      {data.items.length ? (
         <div className="overflow-x-auto border">
           <table className="w-full text-left text-sm">
-            <caption className="sr-only">
-              Filtered audit entries, newest first
-            </caption>
+            <caption className="sr-only">Audit entries, newest first</caption>
             <thead className="bg-muted">
               <tr>
                 {["Time", "Actor", "Action", "Subject", "Summary"].map((h) => (
@@ -113,10 +86,10 @@ function AuditPage() {
               </tr>
             </thead>
             <tbody>
-              {records.map((e) => (
+              {data.items.map((e) => (
                 <tr className="border-t" key={e.id}>
                   <td className="p-3 whitespace-nowrap">
-                    <time dateTime={e.at}>
+                    <time dateTime={e.at} suppressHydrationWarning>
                       {new Date(e.at).toLocaleString()}
                     </time>
                   </td>
@@ -132,26 +105,17 @@ function AuditPage() {
       ) : (
         <div className="border p-6">
           <p>No audit entries match these filters.</p>
-          {db.audit.length ? (
-            <Button
-              className="mt-3"
-              variant="outline"
-              onClick={() => {
-                setAction("")
-                setFrom("")
-                setTo("")
-                setText("")
-              }}
-            >
-              Clear filters
-            </Button>
-          ) : (
-            <Link to="/data" className="mt-3 inline-block underline">
-              Load synthetic demo data
-            </Link>
-          )}
+          <Link to="/data" className="mt-3 inline-block underline">
+            Load synthetic demo data
+          </Link>
         </div>
       )}
+      <Pager
+        hasCursor={Boolean(search.cursor)}
+        nextCursor={data.nextCursor}
+        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined }) })}
+        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+      />
     </>
   )
 }

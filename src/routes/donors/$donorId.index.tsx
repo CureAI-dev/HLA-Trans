@@ -1,9 +1,13 @@
 import { useState } from "react"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
-import { actions, useDb, latestCriteria } from "@/lib/storage/db"
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query"
+import { donorQueries } from "@/features/donors/donors.queries"
+import { useDeleteDonor } from "@/features/donors/donors.mutations"
+import { matchQueries } from "@/features/matches/matches.queries"
+import { matchingQueries } from "@/features/matching/matching.queries"
+import { ensureOrNotFound } from "@/lib/route-helpers"
 import { DonorSummary } from "@/components/donor/donor-summary"
-import { ScreeningTable } from "@/components/donor/screening-table"
-import { screenDonor } from "@/domain/engine"
+import { ScreeningResults } from "@/components/donor/screening-results"
 import { PageHeader } from "@/components/app/page-header"
 import { Button } from "@/components/ui/button"
 import { toast } from "@/components/ui/toast"
@@ -19,30 +23,56 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog"
 
+const latestRunSearch = (donorId: string) =>
+  ({ subjectKind: "donor", subjectId: donorId, status: "succeeded" }) as const
+
 export const Route = createFileRoute("/donors/$donorId/")({
+  loader: async ({ context, params }) => {
+    // Not awaited: the latest run is only needed for the Screen candidates tab.
+    void context.queryClient.prefetchQuery(
+      matchingQueries.history(latestRunSearch(params.donorId))
+    )
+    await ensureOrNotFound(
+      context.queryClient.ensureQueryData(donorQueries.detail(params.donorId))
+    )
+  },
   component: DonorDetail,
 })
+
+/** Results of the donor's newest finished match run, in screening order. */
+function DonorScreening({ donorId }: { donorId: string }) {
+  const runs = useQuery(matchingQueries.history(latestRunSearch(donorId)))
+  const runId = runs.data?.items[0]?.id
+  const results = useQuery({
+    ...matchQueries.list({ donorId, runId, order: "screen" }),
+    enabled: Boolean(runId),
+  })
+  if (runs.isPending || (runId && results.isPending))
+    return (
+      <p className="text-sm text-muted-foreground">Loading screening results…</p>
+    )
+  return <ScreeningResults donorId={donorId} rows={results.data?.items ?? []} />
+}
+
 function DonorDetail() {
   const { donorId } = Route.useParams()
-  const db = useDb()
-  const donor = db.donors.find((d) => d.id === donorId)
+  const {
+    data: { record: donor },
+  } = useSuspenseQuery(donorQueries.detail(donorId))
+  const del = useDeleteDonor()
   const navigate = useNavigate()
   const [tab, setTab] = useState("summary")
   const [error, setError] = useState("")
-  if (!donor)
-    return (
-      <p>
-        Donor not found. <Link to="/donors">Return to donors</Link>
-      </p>
-    )
   function remove() {
-    try {
-      actions.deleteDonor(donorId)
-      toast.add({ title: "Donor deleted" })
-      void navigate({ to: "/donors" })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to delete donor.")
-    }
+    setError("")
+    del.mutate(donorId, {
+      onSuccess: () => {
+        toast.add({ title: "Donor deleted" })
+        void navigate({ to: "/donors" })
+      },
+      onError: (e) =>
+        setError(e instanceof Error ? e.message : "Unable to delete donor."),
+    })
   }
   return (
     <>
@@ -127,10 +157,7 @@ function DonorDetail() {
         {tab === "summary" ? (
           <DonorSummary donor={donor} />
         ) : (
-          <ScreeningTable
-            donor={donor}
-            rows={screenDonor(donor, db.patients, latestCriteria(db).criteria)}
-          />
+          <DonorScreening donorId={donor.id} />
         )}
       </div>
     </>
