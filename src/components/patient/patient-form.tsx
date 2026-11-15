@@ -149,20 +149,35 @@ export function PatientForm({
       },
     }
     try {
-      const result =
-        baseVersion === undefined
-          ? (await create.mutateAsync(candidate)).patient
-          : await update.mutateAsync({
-              patient: candidate,
-              expectedVersion: baseVersion,
-            })
+      let runId: string | null = null
+      let result
+      if (baseVersion === undefined) {
+        const created = await create.mutateAsync(candidate)
+        runId = created.runId
+        result = created.patient
+      } else {
+        result = await update.mutateAsync({
+          patient: candidate,
+          expectedVersion: baseVersion,
+        })
+      }
       setBaseVersion(result.version)
       flushSync(() => form.reset(toFormValue(result.record)))
+      const startedRun = runId
       toast.add({
-        title:
-          baseVersion === undefined
-            ? "Patient saved. Matching started."
-            : "Patient saved",
+        title: startedRun
+          ? "Patient saved. Matching started."
+          : "Patient saved",
+        ...(startedRun && {
+          actionProps: {
+            children: "View",
+            onClick: () =>
+              void navigate({
+                to: "/matching/$runId",
+                params: { runId: startedRun },
+              }),
+          },
+        }),
       })
       void navigate({
         to: "/patients/$patientId",

@@ -93,17 +93,33 @@ export function DonorForm({
       return
     }
     try {
-      const result =
-        baseVersion === undefined
-          ? (await create.mutateAsync(p)).donor
-          : await update.mutateAsync({ donor: p, expectedVersion: baseVersion })
+      let runId: string | null = null
+      let result
+      if (baseVersion === undefined) {
+        const created = await create.mutateAsync(p)
+        runId = created.runId
+        result = created.donor
+      } else {
+        result = await update.mutateAsync({
+          donor: p,
+          expectedVersion: baseVersion,
+        })
+      }
       setBaseVersion(result.version)
       flushSync(() => form.reset(result.record))
+      const startedRun = runId
       toast.add({
-        title:
-          baseVersion === undefined
-            ? "Donor saved. Matching started."
-            : "Donor saved",
+        title: startedRun ? "Donor saved. Matching started." : "Donor saved",
+        ...(startedRun && {
+          actionProps: {
+            children: "View",
+            onClick: () =>
+              void navigate({
+                to: "/matching/$runId",
+                params: { runId: startedRun },
+              }),
+          },
+        }),
       })
       void navigate({
         to: "/donors/$donorId",
