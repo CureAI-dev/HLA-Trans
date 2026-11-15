@@ -3,8 +3,8 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
 import { PageHeader } from "@/components/app/page-header"
-import { ResultView } from "@/components/evaluation/result-view"
-import { DecisionForm } from "@/components/evaluation/decision-form"
+import { ResultView } from "@/components/match/result-view"
+import { DecisionForm } from "@/components/match/decision-form"
 
 const rootRoute = getRouteApi("__root__")
 

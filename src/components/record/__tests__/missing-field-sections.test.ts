@@ -3,7 +3,7 @@ import { donorSections } from "@/components/donor/donor-form"
 import { patientSections } from "@/components/patient/patient-form"
 import { MISSING_FIELD_FALLBACK, MISSING_FIELD_TARGETS } from "@/domain/missing-fields"
 
-/** `<section id="pair-inputs">` in src/components/evaluation/pair-inputs-form.tsx. */
+/** `<section id="pair-inputs">` in src/components/match/pair-inputs-form.tsx. */
 const PAIR_SECTIONS = ["pair-inputs"]
 
 const sectionIds = {

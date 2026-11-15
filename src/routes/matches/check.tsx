@@ -17,9 +17,9 @@ import { defaultPairInputs } from "@/domain/factories"
 import { evaluate } from "@/domain/engine"
 import { pairInputsSchema } from "@/domain/schema"
 import { PageHeader } from "@/components/app/page-header"
-import { PairPicker } from "@/components/evaluation/pair-picker"
-import { PairInputsForm } from "@/components/evaluation/pair-inputs-form"
-import { ResultView } from "@/components/evaluation/result-view"
+import { PairPicker } from "@/components/match/pair-picker"
+import { PairInputsForm } from "@/components/match/pair-inputs-form"
+import { ResultView } from "@/components/match/result-view"
 
 const searchSchema = z.object({
   patientId: z.string().optional().catch(undefined),
