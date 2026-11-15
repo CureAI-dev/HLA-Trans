@@ -147,7 +147,7 @@ function AuditPage() {
             </Button>
           ) : (
             <Link to="/data" className="mt-3 inline-block underline">
-              Load fictional sample data
+              Load synthetic demo data
             </Link>
           )}
         </div>

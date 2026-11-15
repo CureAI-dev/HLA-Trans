@@ -2,7 +2,7 @@
 
 A browser-only demonstration of heart donor–recipient compatibility review. It captures patient and donor records, checks six rule groups with explainable PASS / REVIEW / FAIL findings, supports versioned criteria, and saves evaluations and clinician decisions with snapshots and an audit trail.
 
-**Demo only: use fictional data. This is not a validated medical device or clinical decision system.** The app advises; a qualified clinician makes the final decision. Missing or unknown clinically relevant inputs require review. Thresholds include center-practice assumptions and need clinical sign-off. Screening order is **not OPTN allocation** and does not implement national match runs.
+**Demo environment: synthetic records only. Not for clinical use. This is not a validated medical device or clinical decision system.** The app advises; a qualified clinician makes the final decision. Missing or unknown clinically relevant inputs require review. Thresholds include center-practice assumptions and need clinical sign-off. Screening order is **not OPTN allocation** and does not implement national match runs.
 
 ## Run locally
 
@@ -27,7 +27,7 @@ bun run preview
 
 ## Local data
 
-Records are stored in this browser profile and origin under localStorage key `hla-trans.db.v1`; there is no backend, account, or multi-user synchronization. Enter a clinician name in the header before recording actions. The Data screen provides fictional sample records, JSON export/import, and reset. Export a backup before clearing browser storage or replacing records. Exported files contain the records and must also remain fictional. Clearing browser data removes local records; this app is not a durable clinical record system.
+Records are stored in this browser profile and origin under localStorage key `hla-trans.db.v1`; there is no backend, account, or multi-user synchronization. Enter a clinician name in the header before recording actions. The Data screen provides synthetic demo records (24 candidates, 12 donors covering every rule scenario), JSON export/import, and reset. Export a backup before clearing browser storage or replacing records. Exported files contain the records and must also remain synthetic. Clearing browser data removes local records; this app is not a durable clinical record system.
 
 Saved evaluations contain copies of the patient, donor, criteria, pair inputs, and results used at that time. Later edits do not rewrite those snapshots. Final decisions require a clinician, rationale, and acknowledgement of FAIL/REVIEW findings; decline also requires a reason.
 

@@ -12,7 +12,7 @@ function CriteriaPage() {
     <>
       <PageHeader
         title="Criteria"
-        description="Manage the thresholds and finding outcomes used for new evaluations."
+        description="Manage the thresholds and finding outcomes used for new match results."
       />
       <p className="mb-6 border bg-muted p-4 text-sm">
         Changing criteria does not change past evaluations.

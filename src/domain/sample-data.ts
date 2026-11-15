@@ -2,7 +2,7 @@ import { emptyDonor, emptyPatient, defaultPairInputs } from "./factories"
 import { DONOR_TEST_VALUES, RECIPIENT_TEST_VALUES } from "./options"
 import type { Donor, Patient, PairInputs, Outcome } from "./schema"
 
-/** All records are fictional teaching examples, never clinical recommendations. */
+/** Test fixtures for the engine tests, never clinical recommendations. The demo dataset lives in ./demo-data. */
 export const SAMPLE_NOW = new Date("2026-11-14T12:00:00.000Z")
 const date = "2026-11-13"
 
@@ -10,11 +10,11 @@ function patient(index: number): Patient {
   const p = emptyPatient(SAMPLE_NOW)
   p.id = `sample-patient-${index}`
   Object.assign(p.identity, {
-    mrn: `FICTIONAL-${index}`,
-    firstName: "Fictional",
+    mrn: `TEST-${index}`,
+    firstName: "Test",
     lastName: `Candidate ${index}`,
     dateOfBirth: "1980-04-08",
-    transplantCenter: "Fictional Teaching Center",
+    transplantCenter: "Test Center",
   })
   Object.assign(p.listing, {
     state: "active",
@@ -34,7 +34,7 @@ function patient(index: number): Patient {
   Object.assign(p.sensitization, { cpra: 0, cpraPeak: 0, cpraDate: date })
   for (const test of RECIPIENT_TEST_VALUES) p.serology[test] = "negative"
   p.serologyDate = date
-  p.notes = "FICTIONAL teaching candidate. No real patient information."
+  p.notes = ""
   return p
 }
 
@@ -97,10 +97,10 @@ function donor(index: number): Donor {
   const d = emptyDonor(SAMPLE_NOW)
   d.id = `sample-donor-${index}`
   Object.assign(d.identity, {
-    donorId: `FICTIONAL-D${index}`,
+    donorId: `TSTD${String(index).padStart(3, "0")}`,
     ageYears: 28,
-    donorHospital: "Fictional Teaching Hospital",
-    opo: "Fictional OPO",
+    donorHospital: "Test Hospital",
+    opo: "Test OPO",
     referralDate: date,
   })
   d.body = { heightCm: 175, weightKg: 75 }
@@ -166,7 +166,7 @@ function donor(index: number): Donor {
     bw6: "yes",
     typingDate: date,
   })
-  d.notes = "FICTIONAL teaching donor. No real donor information."
+  d.notes = ""
   return d
 }
 export const SAMPLE_DONORS: Donor[] = Array.from({ length: 5 }, (_, i) =>

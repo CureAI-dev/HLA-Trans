@@ -10,7 +10,7 @@ import {
   SAMPLE_NOW,
 } from "../sample-data"
 
-describe("fictional sample dataset", () => {
+describe("engine test fixtures", () => {
   it("preserves the specified teaching profiles", () => {
     expect(SAMPLE_PATIENTS.map((p) => p.listing.urgencyStatus)).toEqual([
       "A1",
@@ -60,14 +60,14 @@ describe("fictional sample dataset", () => {
     expect(SAMPLE_DONORS[4].death.carboxyhemoglobinPct).toBe(22)
     expect(SAMPLE_DONORS[4].labs.troponinIPeak).toBe(0.4)
   })
-  it("has six patients and five donors with stable unique ids and clear labels", () => {
+  it("has six patients and five donors with stable unique ids and neutral labels", () => {
     expect(SAMPLE_PATIENTS).toHaveLength(6)
     expect(SAMPLE_DONORS).toHaveLength(5)
     for (const records of [SAMPLE_PATIENTS, SAMPLE_DONORS]) {
       expect(new Set(records.map((record) => record.id)).size).toBe(
         records.length
       )
-      for (const record of records) expect(record.notes).toMatch(/fictional/i)
+      for (const record of records) expect(record.notes).toBe("")
     }
     for (const record of SAMPLE_PATIENTS)
       expect(patientSchema.safeParse(record).success).toBe(true)
