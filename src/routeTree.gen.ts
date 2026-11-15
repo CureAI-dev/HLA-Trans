@@ -22,6 +22,8 @@ import { Route as EvaluationsNewRouteImport } from './routes/evaluations/new'
 import { Route as MatchesIndexRouteImport } from './routes/matches/index'
 import { Route as MatchesMatchIdRouteImport } from './routes/matches/$matchId'
 import { Route as MatchesCheckRouteImport } from './routes/matches/check'
+import { Route as MatchingIndexRouteImport } from './routes/matching/index'
+import { Route as MatchingRunIdRouteImport } from './routes/matching/$runId'
 import { Route as PatientsIndexRouteImport } from './routes/patients/index'
 import { Route as PatientsPatientIdRouteImport } from './routes/patients/$patientId'
 import { Route as PatientsNewRouteImport } from './routes/patients/new'
@@ -95,6 +97,16 @@ const MatchesCheckRoute = MatchesCheckRouteImport.update({
   path: '/matches/check',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchingIndexRoute = MatchingIndexRouteImport.update({
+  id: '/matching/',
+  path: '/matching/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchingRunIdRoute = MatchingRunIdRouteImport.update({
+  id: '/matching/$runId',
+  path: '/matching/$runId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PatientsIndexRoute = PatientsIndexRouteImport.update({
   id: '/patients/',
   path: '/patients/',
@@ -142,11 +154,13 @@ export interface FileRoutesByFullPath {
   '/evaluations/new': typeof EvaluationsNewRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/matches/check': typeof MatchesCheckRoute
+  '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/matching/': typeof MatchingIndexRoute
   '/patients/': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -163,10 +177,12 @@ export interface FileRoutesByTo {
   '/evaluations/new': typeof EvaluationsNewRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/matches/check': typeof MatchesCheckRoute
+  '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/new': typeof PatientsNewRoute
   '/donors': typeof DonorsIndexRoute
   '/evaluations': typeof EvaluationsIndexRoute
   '/matches': typeof MatchesIndexRoute
+  '/matching': typeof MatchingIndexRoute
   '/patients': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -185,11 +201,13 @@ export interface FileRoutesById {
   '/evaluations/new': typeof EvaluationsNewRoute
   '/matches/$matchId': typeof MatchesMatchIdRoute
   '/matches/check': typeof MatchesCheckRoute
+  '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
   '/matches/': typeof MatchesIndexRoute
+  '/matching/': typeof MatchingIndexRoute
   '/patients/': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -209,11 +227,13 @@ export interface FileRouteTypes {
     | '/evaluations/new'
     | '/matches/$matchId'
     | '/matches/check'
+    | '/matching/$runId'
     | '/patients/$patientId'
     | '/patients/new'
     | '/donors/'
     | '/evaluations/'
     | '/matches/'
+    | '/matching/'
     | '/patients/'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -230,10 +250,12 @@ export interface FileRouteTypes {
     | '/evaluations/new'
     | '/matches/$matchId'
     | '/matches/check'
+    | '/matching/$runId'
     | '/patients/new'
     | '/donors'
     | '/evaluations'
     | '/matches'
+    | '/matching'
     | '/patients'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -251,11 +273,13 @@ export interface FileRouteTypes {
     | '/evaluations/new'
     | '/matches/$matchId'
     | '/matches/check'
+    | '/matching/$runId'
     | '/patients/$patientId'
     | '/patients/new'
     | '/donors/'
     | '/evaluations/'
     | '/matches/'
+    | '/matching/'
     | '/patients/'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -274,11 +298,13 @@ export interface RootRouteChildren {
   EvaluationsNewRoute: typeof EvaluationsNewRoute
   MatchesMatchIdRoute: typeof MatchesMatchIdRoute
   MatchesCheckRoute: typeof MatchesCheckRoute
+  MatchingRunIdRoute: typeof MatchingRunIdRoute
   PatientsPatientIdRoute: typeof PatientsPatientIdRouteWithChildren
   PatientsNewRoute: typeof PatientsNewRoute
   DonorsIndexRoute: typeof DonorsIndexRoute
   EvaluationsIndexRoute: typeof EvaluationsIndexRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
+  MatchingIndexRoute: typeof MatchingIndexRoute
   PatientsIndexRoute: typeof PatientsIndexRoute
 }
 
@@ -375,6 +401,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MatchesCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matching/': {
+      id: '/matching/'
+      path: '/matching'
+      fullPath: '/matching/'
+      preLoaderRoute: typeof MatchingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matching/$runId': {
+      id: '/matching/$runId'
+      path: '/matching/$runId'
+      fullPath: '/matching/$runId'
+      preLoaderRoute: typeof MatchingRunIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/patients/': {
       id: '/patients/'
       path: '/patients'
@@ -465,11 +505,13 @@ const rootRouteChildren: RootRouteChildren = {
   EvaluationsNewRoute: EvaluationsNewRoute,
   MatchesMatchIdRoute: MatchesMatchIdRoute,
   MatchesCheckRoute: MatchesCheckRoute,
+  MatchingRunIdRoute: MatchingRunIdRoute,
   PatientsPatientIdRoute: PatientsPatientIdRouteWithChildren,
   PatientsNewRoute: PatientsNewRoute,
   DonorsIndexRoute: DonorsIndexRoute,
   EvaluationsIndexRoute: EvaluationsIndexRoute,
   MatchesIndexRoute: MatchesIndexRoute,
+  MatchingIndexRoute: MatchingIndexRoute,
   PatientsIndexRoute: PatientsIndexRoute,
 }
 export const routeTree = rootRouteImport
