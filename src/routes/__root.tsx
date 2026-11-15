@@ -11,6 +11,7 @@ import { TanStackDevtools } from "@tanstack/react-devtools"
 import appCss from "../styles.css?url"
 import type { RouterContext } from "@/router"
 import { readPrefs } from "@/lib/prefs"
+import { matchingQueries } from "@/features/matching/matching.queries"
 import { AppShell } from "@/components/app/app-shell"
 import { NotFound } from "@/components/app/route-error"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -19,6 +20,10 @@ import { Toaster } from "@/components/ui/toast"
 export const Route = createRootRouteWithContext<RouterContext>()({
   // Cookie parse only: microseconds on the client, so it is fine on every navigation.
   beforeLoad: () => ({ prefs: readPrefs() }),
+  // Active runs feed the header indicator and sidebar badge; include them in the SSR HTML.
+  // ensureQueryData returns the cached value instantly after the first load.
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(matchingQueries.active()),
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -43,7 +48,10 @@ function RootComponent() {
           <TanStackDevtools
             config={{ position: "bottom-right" }}
             plugins={[
-              { name: "TanStack Router", render: <TanStackRouterDevtoolsPanel /> },
+              {
+                name: "TanStack Router",
+                render: <TanStackRouterDevtoolsPanel />,
+              },
               { name: "TanStack Query", render: <ReactQueryDevtoolsPanel /> },
             ]}
           />

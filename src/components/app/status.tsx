@@ -6,8 +6,7 @@ import {
   TriangleAlert,
 } from "lucide-react"
 import { cn } from "cn"
-import { RULE_IDS } from "@/domain/schema"
-import type { Finding, RuleResult } from "@/domain/schema"
+import type { Finding } from "@/domain/schema"
 
 type StatusProps = {
   status: Finding["status"]
@@ -62,39 +61,5 @@ export function StatusBadge({
       {labels[effectiveStatus]}
       {missing && " · Missing data"}
     </span>
-  )
-}
-
-const ruleLabels = {
-  abo: "ABO",
-  size: "Size",
-  immunology: "Immunology",
-  infection: "Infection",
-  donorHeart: "Donor heart",
-  logistics: "Logistics",
-}
-
-export function VerdictStrip({ rules }: { rules: Array<RuleResult> }) {
-  return (
-    <nav
-      aria-label="Compatibility rules"
-      className="grid grid-cols-2 border-t border-l sm:grid-cols-3 xl:grid-cols-6"
-    >
-      {RULE_IDS.map((id) => {
-        const rule = rules.find((item) => item.rule === id)
-        const missing =
-          !rule || rule.findings.some((finding) => finding.missing)
-        return (
-          <a
-            key={id}
-            href={`#rule-${id}`}
-            className="flex flex-col gap-2 border-r border-b bg-card p-3 hover:bg-muted"
-          >
-            <span className="text-sm font-medium">{ruleLabels[id]}</span>
-            <StatusBadge status={rule?.status ?? "review"} missing={missing} />
-          </a>
-        )
-      })}
-    </nav>
   )
 }
