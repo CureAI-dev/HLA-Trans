@@ -1,51 +1,50 @@
 import { Link } from "@tanstack/react-router"
+import { Users } from "lucide-react"
 import type { MatchRow } from "@/domain/match-types"
 import { StatusBadge } from "@/components/app/status"
+import { EmptyState } from "@/components/app/empty-state"
+import { Badge } from "@/components/ui/badge"
 
-/** Saved screening results for one donor run, in screening order (urgency, pediatric, ABO, days at status). */
+/**
+ * Saved screening results for one donor run, in screening order
+ * (outcome, urgency, pediatric priority, ABO priority, days at status).
+ * `rankOffset` continues the numbering across keyset pages.
+ */
 export function ScreeningResults({
   donorId,
   rows,
+  rankOffset = 0,
+  criteriaVersion,
+  emptyText,
 }: {
   donorId: string
   rows: ReadonlyArray<MatchRow>
+  rankOffset?: number
+  criteriaVersion?: number
+  emptyText: string
 }) {
   return (
-    <section className="space-y-4">
-      <p role="note" className="border p-4">
+    <section className="space-y-3" aria-label="Candidate screening results">
+      <p role="note" className="border bg-muted/40 p-3 text-sm">
         Screening order, not OPTN allocation. Distance circles are not applied.
         Logistics are not assessed until pair inputs are entered.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Screening uses the criteria of the match run and default pair inputs.
-        Missing transport and procedure times produce REVIEW; enter pair inputs
-        in Check a pair to assess logistics.
+        <span className="mt-1 block text-xs text-muted-foreground">
+          Screening uses the criteria of the match run
+          {criteriaVersion !== undefined && ` (v${criteriaVersion})`} and default
+          pair inputs. Missing transport and procedure times produce REVIEW;
+          enter pair inputs in Check a pair to assess logistics.
+        </span>
       </p>
       {rows.length === 0 ? (
-        <p>
-          No screening results for this donor yet. Results appear when its
-          match run finishes.{" "}
-          <Link className="underline" to="/patients/new">
-            Add a patient
-          </Link>{" "}
-          or activate an existing candidate to include them.
-        </p>
+        <EmptyState icon={<Users />} title="No screening results" description={emptyText} />
       ) : (
         <div className="overflow-x-auto border">
           <table className="w-full text-left text-sm">
-            <caption className="sr-only">Candidate screening results</caption>
-            <thead className="bg-muted">
+            <caption className="sr-only">Candidate screening results, in screening order</caption>
+            <thead className="bg-muted text-xs text-muted-foreground uppercase">
               <tr>
-                {[
-                  "Rank",
-                  "Patient",
-                  "Overall",
-                  "Blockers",
-                  "Missing inputs",
-                  "Criteria",
-                  "Action",
-                ].map((h) => (
-                  <th key={h} scope="col" className="p-3">
+                {["Rank", "Patient", "Result", "Blockers", "Missing", "Action"].map((h) => (
+                  <th key={h} scope="col" className="p-3 font-medium">
                     {h}
                   </th>
                 ))}
@@ -53,11 +52,11 @@ export function ScreeningResults({
             </thead>
             <tbody>
               {rows.map((row, index) => (
-                <tr key={row.id} className="border-t">
-                  <td className="p-3 tabular-nums">{index + 1}</td>
+                <tr key={row.id} className="border-t hover:bg-muted/50">
+                  <td className="p-3 tabular-nums">{rankOffset + index + 1}</td>
                   <td className="p-3">
                     <Link
-                      className="underline"
+                      className="hover:underline"
                       to="/patients/$patientId"
                       params={{ patientId: row.patientId }}
                     >
@@ -65,26 +64,21 @@ export function ScreeningResults({
                     </Link>
                   </td>
                   <td className="p-3">
-                    <StatusBadge status={row.overall} />
-                    {row.outOfDate && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Out of date
-                      </p>
-                    )}
+                    <Link
+                      to="/matches/$matchId"
+                      params={{ matchId: row.id }}
+                      aria-label={`View result for ${row.patientName}`}
+                      className="inline-flex items-center gap-2 focus-visible:outline-2"
+                    >
+                      <StatusBadge status={row.overall} />
+                      {row.outOfDate && <Badge variant="outline">Out of date</Badge>}
+                    </Link>
                   </td>
                   <td className="p-3 tabular-nums">{row.blockerCount}</td>
                   <td className="p-3 tabular-nums">{row.missingCount}</td>
-                  <td className="p-3">v{row.criteriaVersion}</td>
                   <td className="p-3">
                     <Link
-                      className="mr-3 underline"
-                      to="/matches/$matchId"
-                      params={{ matchId: row.id }}
-                    >
-                      View result
-                    </Link>
-                    <Link
-                      className="underline"
+                      className="underline-offset-4 hover:underline"
                       to="/matches/check"
                       search={{ patientId: row.patientId, donorId }}
                     >
