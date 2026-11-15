@@ -89,6 +89,7 @@ export function HlaTypingGrid({ value, onChange, errors }: HlaTypingGridProps) {
         />
         <DateField
           label="Typing date"
+          disableFuture
           value={value.typingDate}
           error={errors?.typingDate}
           onChange={(typingDate) => onChange({ ...value, typingDate })}
@@ -103,4 +104,3 @@ export function HlaTypingGrid({ value, onChange, errors }: HlaTypingGridProps) {
     </div>
   )
 }
-

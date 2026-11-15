@@ -1,5 +1,5 @@
-import { Input } from "@/components/ui/input"
-import { FieldFrame, useField } from "./field-frame"
+import { DatePickerField } from "./date-picker-field"
+import type { DatePickerFieldProps } from "./date-picker-field"
 import type { FieldProps } from "./field-frame"
 
 export interface DateFieldProps extends FieldProps {
@@ -8,19 +8,8 @@ export interface DateFieldProps extends FieldProps {
   min?: string
   max?: string
 }
-export function DateField(props: DateFieldProps) {
-  const field = useField(props)
-  return (
-    <FieldFrame {...props} id={field.id}>
-      <Input
-        {...field}
-        type="date"
-        value={props.value}
-        disabled={props.disabled}
-        min={props.min}
-        max={props.max}
-        onChange={(event) => props.onChange(event.target.value)}
-      />
-    </FieldFrame>
-  )
+
+/** Every date input is the shadcn picker (typed entry plus calendar). Kept as an alias so call sites need no rename. */
+export function DateField(props: DatePickerFieldProps) {
+  return <DatePickerField {...props} />
 }

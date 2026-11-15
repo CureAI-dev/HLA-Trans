@@ -26,10 +26,14 @@ export function UnsavedGuard({ when }: { when: boolean }) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
-          <AlertDialogDescription>Your edits on this page have not been saved.</AlertDialogDescription>
+          <AlertDialogDescription>
+            Your edits on this page have not been saved.
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => blocker.reset?.()}>Keep editing</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => blocker.reset?.()}>
+            Keep editing
+          </AlertDialogCancel>
           <Button variant="destructive" onClick={() => blocker.proceed?.()}>
             Discard
           </Button>

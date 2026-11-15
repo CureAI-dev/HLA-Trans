@@ -24,7 +24,7 @@ export function FormSection({
       {description && (
         <p className="text-sm text-muted-foreground">{description}</p>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">{children}</div>
+      <div className="space-y-4">{children}</div>
     </section>
   )
 }

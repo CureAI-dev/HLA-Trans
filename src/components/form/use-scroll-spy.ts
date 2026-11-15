@@ -11,7 +11,10 @@ export function useScrollSpy(ids: ReadonlyArray<string>): string | null {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const e of entries)
-          visible.set(e.target.id, e.isIntersecting ? e.boundingClientRect.top : Infinity)
+          visible.set(
+            e.target.id,
+            e.isIntersecting ? e.boundingClientRect.top : Infinity
+          )
         const top = [...visible]
           .filter(([, y]) => y !== Infinity)
           .sort((a, b) => a[1] - b[1])

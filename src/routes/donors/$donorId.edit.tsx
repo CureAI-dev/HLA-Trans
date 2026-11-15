@@ -4,6 +4,7 @@ import { donorQueries } from "@/features/donors/donors.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
 import { DonorForm } from "@/components/donor/donor-form"
 import { PageHeader } from "@/components/app/page-header"
+import { FormPageSkeleton } from "@/components/app/page-skeletons"
 
 export const Route = createFileRoute("/donors/$donorId/edit")({
   loader: ({ context, params }) =>
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/donors/$donorId/edit")({
       context.queryClient.ensureQueryData(donorQueries.detail(params.donorId))
     ),
   head: () => ({ meta: [{ title: "Edit donor · HLA-Trans" }] }),
+  pendingComponent: FormPageSkeleton,
   component: EditDonor,
 })
 
