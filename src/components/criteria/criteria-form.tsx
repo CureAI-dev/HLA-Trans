@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { useBlocker } from "@tanstack/react-router"
 import {
   CRITERIA_FIELDS,
   CRITERIA_SECTIONS,
@@ -16,6 +15,7 @@ import {
 } from "@/components/form"
 import { Button } from "@/components/ui/button"
 import { SubmitButton } from "@/components/app/submit-button"
+import { UnsavedGuard } from "@/components/form/unsaved-guard"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import {
   AlertDialog,
@@ -60,11 +60,6 @@ export function CriteriaForm({
     setPending(null)
     setAttempted(false)
   }
-  useBlocker({
-    shouldBlockFn: () =>
-      dirty && !window.confirm("Discard unsaved criteria changes?"),
-    enableBeforeUnload: dirty,
-  })
   const parsed = criteriaSchema.safeParse(draft)
   const errors: Record<string, string> = {}
   if (!parsed.success)
@@ -131,6 +126,7 @@ export function CriteriaForm({
   }
   return (
     <>
+      <UnsavedGuard when={dirty && !publishing} />
       <form
         noValidate
         onSubmit={(event) => {

@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query"
 import { criteriaQueries } from "@/features/criteria/criteria.queries"
 import { usePublishCriteria } from "@/features/criteria/criteria.mutations"
 import { PageHeader } from "@/components/app/page-header"
+import { FormPageSkeleton } from "@/components/app/page-skeletons"
 import { CriteriaForm } from "@/components/criteria/criteria-form"
 import { CriteriaHistory } from "@/components/criteria/criteria-history"
 
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/criteria")({
       context.queryClient.ensureQueryData(criteriaQueries.versions()),
     ]),
   head: () => ({ meta: [{ title: "Criteria · HLA-Trans" }] }),
+  pendingComponent: FormPageSkeleton,
   component: CriteriaPage,
 })
 

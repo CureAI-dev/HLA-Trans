@@ -1,13 +1,16 @@
 import { useState } from "react"
 import { flushSync } from "react-dom"
-import { useBlocker } from "@tanstack/react-router"
 import type { Decision } from "@/domain/schema"
 import type { MatchDetail } from "@/domain/match-types"
 import { DECISION_VERDICT, DECLINE_REASON } from "@/domain/options"
 import { TextField, SelectField } from "@/components/form"
+import { UnsavedGuard } from "@/components/form/unsaved-guard"
 import { SubmitButton } from "@/components/app/submit-button"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
 import { useDecideMatch } from "@/features/matches/matches.mutations"
 
+/** Recording form for a checked result with no decision yet. */
 export function DecisionForm({
   match,
   clinician,
@@ -26,48 +29,16 @@ export function DecisionForm({
   const [error, setError] = useState("")
   const [baseline] = useState(() => JSON.stringify(draft))
   const [saved, setSaved] = useState(false)
-  const dirty =
-    !match.decision && !saved && JSON.stringify(draft) !== baseline
-  useBlocker({
-    shouldBlockFn: () =>
-      dirty && !window.confirm("Discard unsaved decision changes?"),
-    enableBeforeUnload: dirty,
-  })
+  const dirty = !saved && JSON.stringify(draft) !== baseline
   const requiresAck =
     match.result.overall !== "pass" ||
     [
       ...match.result.blockers,
       ...match.result.rules.flatMap((r) => r.findings),
     ].some((f) => f.status === "fail" || f.status === "review")
-  if (match.decision) {
-    const d = match.decision
-    return (
-      <section className="space-y-3 border p-4">
-        <h2 className="text-lg font-semibold">Final decision / read-only</h2>
-        <p>{DECISION_VERDICT.find((o) => o.value === d.verdict)?.label}</p>
-        <p>
-          Clinician: {d.clinician} /{" "}
-          <time dateTime={d.decidedAt} suppressHydrationWarning>
-            {new Date(d.decidedAt).toLocaleString()}
-          </time>
-        </p>
-        <p>Rationale: {d.rationale}</p>
-        <p>
-          Reasons:{" "}
-          {d.reasons
-            .map((r) => DECLINE_REASON.find((o) => o.value === r)?.label ?? r)
-            .join(", ") || "None"}
-        </p>
-        <p>
-          FAIL / REVIEW findings acknowledged:{" "}
-          {d.acknowledgedFindings ? "Yes" : "Not required"}
-        </p>
-      </section>
-    )
-  }
   return (
     <form
-      className="space-y-4 border p-4"
+      className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault()
         setError("")
@@ -91,8 +62,10 @@ export function DecisionForm({
         })
       }}
     >
-      <h2 className="text-lg font-semibold">Record clinician decision</h2>
-      <p>This decision is final and cannot be edited after saving.</p>
+      <UnsavedGuard when={dirty && !decide.isPending} />
+      <p className="text-sm text-muted-foreground">
+        This decision is final and cannot be edited after saving.
+      </p>
       <SelectField
         label="Decision"
         value={draft.verdict}
@@ -104,27 +77,26 @@ export function DecisionForm({
         value={draft.clinician}
         onChange={(v) => setDraft({ ...draft, clinician: v })}
       />
-      <label className="block">
+      <label className="block text-sm">
         Rationale (required)
-        <textarea
-          className="mt-2 block min-h-28 w-full border p-2"
+        <Textarea
+          className="mt-2 min-h-28"
           required
           value={draft.rationale}
           onChange={(e) => setDraft({ ...draft, rationale: e.target.value })}
         />
       </label>
       {draft.verdict === "decline" && (
-        <fieldset className="space-y-2">
-          <legend>Decline reasons (choose at least one)</legend>
+        <fieldset className="space-y-2 text-sm">
+          <legend className="mb-1">Decline reasons (choose at least one)</legend>
           {DECLINE_REASON.map((o) => (
             <label className="flex items-center gap-2" key={o.value}>
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={draft.reasons.includes(o.value)}
-                onChange={(e) =>
+                onCheckedChange={(checked) =>
                   setDraft({
                     ...draft,
-                    reasons: e.target.checked
+                    reasons: checked
                       ? [...draft.reasons, o.value]
                       : draft.reasons.filter((r) => r !== o.value),
                   })
@@ -136,23 +108,25 @@ export function DecisionForm({
         </fieldset>
       )}
       {requiresAck && (
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
+        <label className="flex items-start gap-2 text-sm">
+          <Checkbox
+            className="mt-0.5"
             checked={draft.acknowledgedFindings}
-            onChange={(e) =>
-              setDraft({ ...draft, acknowledgedFindings: e.target.checked })
+            onCheckedChange={(checked) =>
+              setDraft({ ...draft, acknowledgedFindings: checked })
             }
           />
           I have reviewed all FAIL and REVIEW findings
         </label>
       )}
       {error && (
-        <p role="alert" className="text-fail">
+        <p role="alert" className="text-sm text-fail">
           {error}
         </p>
       )}
-      <SubmitButton pending={decide.isPending}>Save final decision</SubmitButton>
+      <SubmitButton pending={decide.isPending} className="w-full">
+        Save final decision
+      </SubmitButton>
     </form>
   )
 }

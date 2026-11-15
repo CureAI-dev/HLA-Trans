@@ -1,178 +1,185 @@
+import { useState } from "react"
+import type { ReactNode } from "react"
+import { flushSync } from "react-dom"
 import { Link } from "@tanstack/react-router"
-import type { LinkOptions } from "@tanstack/react-router"
-import type {
-  EvaluationResult,
-  Patient,
-  Donor,
-  PairInputs,
-  Criteria,
-} from "@/domain/schema"
-import { StatusBadge, VerdictStrip } from "@/components/app/status"
-import { RuleCard, FindingView } from "./rule-card"
+import { OctagonX, TriangleAlert } from "lucide-react"
+import type { MatchDetail } from "@/domain/match-types"
+import type { RuleId } from "@/domain/schema"
+import { Accordion } from "@/components/ui/accordion"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FindingRow, RuleAccordionItem } from "./rule-card"
+import { VerdictBar } from "./verdict-bar"
+import { MissingDataTable } from "./missing-data-table"
 import { SideBySide } from "./side-by-side"
 import { IschemiaBreakdown } from "./ischemia-breakdown"
-import { CROSSMATCH, PRESERVATION } from "@/domain/options"
+import { PairInputsSummary } from "./pair-inputs-summary"
 
-function reviewLink(
-  rule: string,
-  saved: boolean,
-  patientId: string,
-  donorId: string
-): LinkOptions | null {
-  if (rule === "logistics")
-    return saved
-      ? {
-          to: "/matches/check",
-          search: { patientId, donorId },
-          hash: "pair-inputs",
-        }
-      : null // live preview: the pair inputs are on this page
-  if (rule === "donorHeart")
-    return { to: "/donors/$donorId/edit", params: { donorId } }
-  return { to: "/patients/$patientId/edit", params: { patientId } }
-}
+export type ResultInput = Pick<
+  MatchDetail,
+  "result" | "patient" | "donor" | "pair" | "criteria" | "criteriaVersion"
+> &
+  Partial<
+    Pick<
+      MatchDetail,
+      "id" | "source" | "outOfDate" | "createdAt" | "createdBy" | "decision"
+    >
+  >
 
 export function ResultView({
-  result,
-  patient,
-  donor,
-  pair,
-  criteria,
-  criteriaVersion,
-  saved = false,
+  detail,
+  mode,
+  onPairFix,
+  aside,
 }: {
-  result: EvaluationResult
-  patient: Patient
-  donor: Donor
-  pair: PairInputs
-  criteria: Criteria
-  criteriaVersion: number
-  saved?: boolean
+  detail: ResultInput
+  mode: "saved" | "preview"
+  onPairFix: () => void
+  /** Right-hand column (decision panel), pinned at xl. */
+  aside?: ReactNode
 }) {
+  const { result, patient, donor } = detail
+  // FAIL and REVIEW rules start open; PASS rules start collapsed.
+  const [open, setOpen] = useState<RuleId[]>(() =>
+    result.rules.filter((r) => r.status !== "pass").map((r) => r.rule)
+  )
+  const [tab, setTab] = useState("findings")
   const missing = result.rules.flatMap((r) =>
     r.findings
       .filter((f) => f.missing)
-      .map((f) => ({ finding: f, rule: r.rule }))
+      .map((finding) => ({ rule: r.rule, finding }))
   )
+  const goToRule = (id: RuleId) => {
+    flushSync(() => {
+      setTab("findings")
+      setOpen((prev) => (prev.includes(id) ? prev : [...prev, id]))
+    })
+    document
+      .getElementById(`rule-${id}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
+  const savedMeta =
+    mode === "saved" && detail.createdAt ? (
+      <>
+        Saved{" "}
+        <time dateTime={detail.createdAt} suppressHydrationWarning>
+          {new Date(detail.createdAt).toLocaleString()}
+        </time>{" "}
+        by {detail.createdBy || "Unspecified clinician"}. Records, pair inputs
+        and criteria are frozen.
+      </>
+    ) : null
   return (
-    <div
-      className="space-y-5"
-      onClick={(event) => {
-        if (!(event.target instanceof Element)) return
-        const href = event.target.closest("a")?.getAttribute("href")
-        if (!href?.startsWith("#rule-")) return
-        const target = document.getElementById(href.slice(1))
-        if (target instanceof HTMLDetailsElement) target.open = true
-      }}
-    >
-      <section
-        aria-label="Compatibility result"
-        className="space-y-3 border p-4"
+    <div>
+      <VerdictBar
+        overall={result.overall}
+        patientName={`${patient.identity.firstName} ${patient.identity.lastName}`.trim()}
+        donorCode={donor.identity.donorId}
+        sourceLabel={
+          mode === "preview"
+            ? "Live preview (not saved)"
+            : detail.source === "screening"
+              ? "Screening result"
+              : "Checked pair"
+        }
+        criteriaVersion={detail.criteriaVersion}
+        engineVersion={result.engineVersion}
+        outOfDate={detail.outOfDate ?? false}
+        rules={result.rules}
+        onRule={goToRule}
+        meta={savedMeta}
+        bleed={mode === "saved"}
+      />
+      <div
+        className={
+          aside ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]" : undefined
+        }
       >
-        <h2 className="text-xl font-semibold">
-          {saved ? "Saved match result" : "Live preview"}
-        </h2>
-        <StatusBadge status={result.overall} />
-        <p>
-          Criteria version {criteriaVersion} / Engine {result.engineVersion}
-        </p>
-        <p>The app advises; the clinician makes the final decision.</p>
-      </section>
-      <VerdictStrip rules={result.rules} />
-      {result.blockers.length > 0 && (
-        <section className="border p-4">
-          <h2>Blockers</h2>
-          <ul>
-            {result.blockers.map((f) => (
-              <FindingView key={f.code} finding={f} />
-            ))}
-          </ul>
-        </section>
-      )}
-      {missing.length > 0 && (
-        <section className="border p-4">
-          <h2 className="font-semibold">Missing data ({missing.length})</h2>
-          <ul className="list-inside list-disc">
-            {missing.map(({ finding, rule }) => {
-              const link = reviewLink(rule, saved, patient.id, donor.id)
-              return (
-                <li key={finding.code}>
-                  <a className="underline" href={`#rule-${rule}`}>
-                    {finding.title}
-                  </a>{" "}
-                  /{" "}
-                  {link ? (
-                    <Link {...link} className="underline">
-                      Review inputs
-                    </Link>
-                  ) : (
-                    <a className="underline" href="#pair-inputs">
-                      Review inputs
-                    </a>
-                  )}
-                  {rule !== "logistics" && (
-                    <span>
-                      {" "}
-                      /{" "}
-                      <Link
-                        className="underline"
-                        to="/donors/$donorId/edit"
-                        params={{ donorId: donor.id }}
-                      >
-                        Donor record
-                      </Link>{" "}
-                      /{" "}
-                      <Link
-                        className="underline"
-                        to="/patients/$patientId/edit"
-                        params={{ patientId: patient.id }}
-                      >
-                        Patient record
-                      </Link>
-                    </span>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      )}
-      <SideBySide patient={patient} donor={donor} />
-      {saved && (
-        <section className="border p-4">
-          <h2 className="text-lg font-semibold">Frozen pair inputs</h2>
-          <dl className="grid gap-3 sm:grid-cols-2">
-            {[
-              ["Distance (NM)", pair.distanceNm],
-              ["Procurement (minutes)", pair.procurementMinutes],
-              ["Transport (minutes)", pair.transportMinutes],
-              ["Implant (minutes)", pair.implantMinutes],
-              ["Perfusion (minutes)", pair.perfusionMinutes],
-              [
-                "Preservation",
-                PRESERVATION.find((o) => o.value === pair.preservation)?.label,
-              ],
-              [
-                "Flow crossmatch",
-                CROSSMATCH.find((o) => o.value === pair.flowCrossmatch)?.label,
-              ],
-              [
-                "CDC crossmatch",
-                CROSSMATCH.find((o) => o.value === pair.cdcCrossmatch)?.label,
-              ],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt>{label}</dt>
-                <dd>{value ?? "Not recorded"}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      )}
-      <IschemiaBreakdown pair={pair} patient={patient} criteria={criteria} />
-      {result.rules.map((rule) => (
-        <RuleCard key={rule.rule} rule={rule} />
-      ))}
+        <div className="min-w-0 space-y-5">
+          {detail.outOfDate && (
+            <Alert>
+              <TriangleAlert aria-hidden="true" className="text-caution" />
+              <AlertTitle>Out of date</AlertTitle>
+              <AlertDescription>
+                The patient, donor or criteria changed after this result was
+                saved.{" "}
+                <Link
+                  to="/matches/check"
+                  search={{ patientId: patient.id, donorId: donor.id }}
+                  className="underline underline-offset-4"
+                >
+                  Check the pair again
+                </Link>{" "}
+                for a current result.
+              </AlertDescription>
+            </Alert>
+          )}
+          {result.blockers.length > 0 && (
+            <Alert variant="destructive">
+              <OctagonX aria-hidden="true" />
+              <AlertTitle>
+                Blockers ({result.blockers.length})
+              </AlertTitle>
+              <AlertDescription>
+                <ul className="w-full">
+                  {result.blockers.map((f) => (
+                    <FindingRow key={f.code} finding={f} />
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+          <MissingDataTable
+            items={missing}
+            patientId={patient.id}
+            donorId={donor.id}
+            onPairFix={onPairFix}
+          />
+          <Tabs value={tab} onValueChange={(v) => setTab(String(v))}>
+            <TabsList>
+              <TabsTrigger value="findings">Findings</TabsTrigger>
+              <TabsTrigger value="compare">Patient vs donor</TabsTrigger>
+              <TabsTrigger value="logistics">
+                Pair inputs &amp; ischemia
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="findings" className="pt-4">
+              <Accordion
+                multiple
+                value={open}
+                onValueChange={(v) => setOpen(v as RuleId[])}
+                className="gap-3"
+              >
+                {result.rules.map((r) => (
+                  <RuleAccordionItem key={r.rule} rule={r} />
+                ))}
+              </Accordion>
+            </TabsContent>
+            <TabsContent value="compare" className="pt-4">
+              <SideBySide patient={patient} donor={donor} />
+            </TabsContent>
+            <TabsContent value="logistics" className="space-y-4 pt-4">
+              <PairInputsSummary
+                pair={detail.pair}
+                title={mode === "saved" ? "Frozen pair inputs" : "Pair inputs"}
+              />
+              <IschemiaBreakdown
+                pair={detail.pair}
+                patient={patient}
+                criteria={detail.criteria}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+        {aside && (
+          <aside
+            aria-label="Decision"
+            className="xl:sticky xl:top-40 xl:self-start"
+          >
+            {aside}
+          </aside>
+        )}
+      </div>
     </div>
   )
 }
