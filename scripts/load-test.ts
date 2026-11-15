@@ -21,6 +21,13 @@ const url = seedOnly
 if (!url) throw new Error("PERF_DATABASE_URL or TEST_DATABASE_URL required")
 const target = new URL(url)
 console.log(`Load test target: ${target.hostname}:${target.port}${target.pathname}`)
+// --seed-only wipes the dev database first. Require an explicit second flag so it never happens by accident.
+if (seedOnly && !process.argv.includes("--wipe-dev-data")) {
+  console.error(
+    "--seed-only deletes ALL data in the dev database before seeding 2,000 patients. Re-run with --seed-only --wipe-dev-data to confirm."
+  )
+  process.exit(1)
+}
 
 const { pool, db } = createDb(url, { max: 8, statementTimeoutMs: 60_000 })
 await runMigrations(db)

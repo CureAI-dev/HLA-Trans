@@ -5111,7 +5111,7 @@ Run: `bun run typecheck && bun run lint && bun run test && bun run generate-rout
 Expected: PASS.
 
 Manual check:
-1. Seed 2,000 patients with `bun scripts/load-test.ts --seed-only` (Task 15) or the demo dataset. Add a donor, then navigate between Patients, Donors and Criteria while the run progresses.
+1. Seed 2,000 patients with `bun scripts/load-test.ts --seed-only --wipe-dev-data` (wipes dev data) (Task 15) or the demo dataset. Add a donor, then navigate between Patients, Donors and Criteria while the run progresses.
    Expected: the header indicator updates every second; the pages stay responsive; a toast with a "View" action appears at the end.
 2. Cancel a run.
    Expected: it reaches `cancelled` within one chunk.
