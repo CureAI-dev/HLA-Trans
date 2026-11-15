@@ -14,7 +14,8 @@ import type {
  * tests "not_done". Nothing defaults to a value that would pass a rule.
  */
 
-export type IdPrefix = "pat" | "don" | "evl" | "crv" | "aud" | "ab" | "va"
+export type IdPrefix =
+  "pat" | "don" | "evl" | "crv" | "aud" | "ab" | "va" | "run" | "mat" | "dec"
 
 export function newId(prefix: IdPrefix): string {
   return `${prefix}_${crypto.randomUUID()}`
