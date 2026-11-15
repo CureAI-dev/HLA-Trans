@@ -16,6 +16,33 @@ export default [
     },
   },
   {
+    files: ["src/**/*.tsx"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          // \x2F is "/": esquery regex literals cannot contain a raw slash.
+          selector:
+            "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] > Literal[value=/^\\x2F/]",
+          message:
+            "Use <Link to> for internal navigation. A raw <a href> reloads the whole page.",
+        },
+        {
+          selector:
+            "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] TemplateLiteral > TemplateElement:first-child[value.raw=/^\\x2F/]",
+          message:
+            "Use <Link to params search> for internal navigation. A raw <a href> reloads the whole page.",
+        },
+        {
+          selector:
+            "JSXOpeningElement[name.name='a'] > JSXAttribute[name.name='href'] ConditionalExpression",
+          message:
+            "Conditional hrefs hide internal links from lint. Use <Link> with typed options.",
+        },
+      ],
+    },
+  },
+  {
     // shadcn-generated code is vendored, not linted
     ignores: [
       "eslint.config.js",

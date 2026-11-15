@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { useState } from "react"
 import { flushSync } from "react-dom"
-import { useNavigate } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
 import * as O from "@/domain/options"
 import { patientSchema } from "@/domain/schema"
 import type { Patient } from "@/domain/schema"
@@ -959,9 +959,9 @@ export function PatientForm({ initial }: { initial: Patient }) {
         </FormSection>
         <div className="sticky bottom-0 flex gap-3 border bg-background p-4">
           <Button type="submit">Save patient</Button>
-          <a href="/patients" className="px-3 py-2 underline">
+          <Link to="/patients" className="px-3 py-2 underline">
             Cancel
-          </a>
+          </Link>
           <span className="py-2 text-sm text-muted-foreground">
             {form.dirty ? "Unsaved changes" : "All changes saved"}
           </span>

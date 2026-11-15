@@ -77,7 +77,7 @@ const ruleLabels = {
 export function VerdictStrip({ rules }: { rules: Array<RuleResult> }) {
   return (
     <nav
-      aria-label="Evaluation rules"
+      aria-label="Compatibility rules"
       className="grid grid-cols-2 border-t border-l sm:grid-cols-3 xl:grid-cols-6"
     >
       {RULE_IDS.map((id) => {

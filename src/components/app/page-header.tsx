@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router"
+import type { LinkOptions } from "@tanstack/react-router"
 import type { ReactNode } from "react"
 
 export function PageHeader({
@@ -9,7 +11,7 @@ export function PageHeader({
   title: string
   description?: string
   actions?: ReactNode
-  breadcrumbs?: Array<{ label: string; href?: string }>
+  breadcrumbs?: Array<{ label: string; link?: LinkOptions }>
 }) {
   return (
     <header className="mb-6 space-y-3">
@@ -19,10 +21,10 @@ export function PageHeader({
             {breadcrumbs.map((item, index) => (
               <li key={`${item.label}-${index}`} className="flex gap-2">
                 {index > 0 && <span aria-hidden="true">/</span>}
-                {item.href ? (
-                  <a href={item.href} className="underline underline-offset-4">
+                {item.link ? (
+                  <Link {...item.link} className="underline underline-offset-4">
                     {item.label}
-                  </a>
+                  </Link>
                 ) : (
                   <span aria-current="page">{item.label}</span>
                 )}

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router"
 import type { Donor } from "@/domain/schema"
 import type { ScreenRow } from "@/domain/engine"
 import { labelOf, URGENCY_STATUS } from "@/domain/options"
@@ -30,8 +31,8 @@ export function ScreeningTable({
       </p>
       <p className="text-sm text-muted-foreground">
         Screening uses the latest criteria and default pair inputs. Missing
-        transport and procedure times produce REVIEW; enter pair inputs in a
-        full evaluation to assess logistics.
+        transport and procedure times produce REVIEW; enter pair inputs in Check
+        a pair to assess logistics.
       </p>
       {donor.identity.ageYears !== null && donor.identity.ageYears < 18 && (
         <p>
@@ -42,9 +43,9 @@ export function ScreeningTable({
       {rows.length === 0 ? (
         <p>
           No active candidates to screen.{" "}
-          <a className="underline" href="/patients/new">
+          <Link className="underline" to="/patients/new">
             Add a patient
-          </a>{" "}
+          </Link>{" "}
           or activate an existing candidate.
         </p>
       ) : (
@@ -75,13 +76,14 @@ export function ScreeningTable({
                 <tr key={row.patient.id}>
                   <td className="p-3">{index + 1}</td>
                   <td className="p-3">
-                    <a
+                    <Link
                       className="underline"
-                      href={`/patients/${row.patient.id}`}
+                      to="/patients/$patientId"
+                      params={{ patientId: row.patient.id }}
                     >
                       {row.patient.identity.firstName}{" "}
                       {row.patient.identity.lastName}
-                    </a>
+                    </Link>
                     <p className="text-xs">MRN {row.patient.identity.mrn}</p>
                   </td>
                   <td className="p-3">
@@ -137,12 +139,13 @@ export function ScreeningTable({
                     </ul>
                   </td>
                   <td className="p-3">
-                    <a
+                    <Link
                       className="underline"
-                      href={`/evaluations/new?patientId=${encodeURIComponent(row.patient.id)}&donorId=${encodeURIComponent(donor.id)}`}
+                      to="/matches/check"
+                      search={{ patientId: row.patient.id, donorId: donor.id }}
                     >
-                      Open full evaluation
-                    </a>
+                      Check this pair
+                    </Link>
                   </td>
                 </tr>
               ))}

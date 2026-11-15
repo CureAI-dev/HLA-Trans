@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "@tanstack/react-router"
 import type { Donor } from "@/domain/schema"
 import { ABO, DONOR_STATE, labelOf } from "@/domain/options"
 import { TextField, SelectField } from "@/components/form"
@@ -80,9 +81,13 @@ export function DonorTable({ donors }: { donors: ReadonlyArray<Donor> }) {
               {rows.map((d) => (
                 <tr key={d.id}>
                   <td className="p-3">
-                    <a className="underline" href={`/donors/${d.id}`}>
+                    <Link
+                      className="underline"
+                      to="/donors/$donorId"
+                      params={{ donorId: d.id }}
+                    >
                       {d.identity.donorId}
-                    </a>
+                    </Link>
                   </td>
                   <td className="p-3">
                     {labelOf(DONOR_STATE, d.identity.state)}
@@ -115,9 +120,9 @@ export function DonorTable({ donors }: { donors: ReadonlyArray<Donor> }) {
               ? "No donors match these filters. Adjust the search or filters."
               : "No donors recorded yet."}
           </p>
-          <a href="/donors/new" className="underline">
+          <Link to="/donors/new" className="underline">
             Add donor
-          </a>
+          </Link>
         </div>
       )}
     </section>

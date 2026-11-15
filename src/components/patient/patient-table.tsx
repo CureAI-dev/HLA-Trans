@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "@tanstack/react-router"
 import type { Patient } from "@/domain/schema"
 import { patientAge } from "@/domain/calc"
 import {
@@ -86,12 +87,13 @@ export function PatientTable({ patients }: { patients: Patient[] }) {
               {rows.map((p) => (
                 <tr key={p.id} className="border-t">
                   <td className="p-3">
-                    <a
+                    <Link
                       className="font-medium underline"
-                      href={`/patients/${p.id}`}
+                      to="/patients/$patientId"
+                      params={{ patientId: p.id }}
                     >
                       {p.identity.firstName} {p.identity.lastName}
-                    </a>
+                    </Link>
                   </td>
                   <td className="p-3">{p.identity.mrn}</td>
                   <td className="p-3">{patientAge(p) ?? "Not recorded"}</td>
