@@ -105,6 +105,37 @@ export function daysAtStatus(
   }
 }
 
+export function isPediatricDonor(donor: Donor): boolean {
+  return donor.identity.ageYears !== null && donor.identity.ageYears < 18
+}
+
+/** One screening row: the pair evaluated with default (unrecorded) pair inputs. */
+export function screenRow(
+  donor: Donor,
+  patient: Patient,
+  criteria: Criteria,
+  now: Date
+): ScreenRow {
+  const duration = daysAtStatus(patient, now)
+  return {
+    patient,
+    result: evaluate({
+      patient,
+      donor,
+      criteria,
+      pair: defaultPairInputs(),
+      now,
+    }),
+    aboPriority:
+      donor.blood.abo === null || patient.blood.abo === null
+        ? "incompatible"
+        : aboPriority(donor.blood.abo, patient.blood.abo),
+    isPediatricCandidate: isPediatricCandidate(patient, now),
+    daysAtStatus: duration.days,
+    daysAtStatusFromListing: duration.fromListing,
+  }
+}
+
 /** Screening order, not OPTN allocation. Pair times remain unrecorded until pair assessment. */
 export function screenDonor(
   donor: Donor,
@@ -114,30 +145,10 @@ export function screenDonor(
 ): Array<ScreenRow> {
   const rows = patients
     .filter((patient) => patient.listing.state === "active")
-    .map((patient) => {
-      const duration = daysAtStatus(patient, now)
-      return {
-        patient,
-        result: evaluate({
-          patient,
-          donor,
-          criteria,
-          pair: defaultPairInputs(),
-          now,
-        }),
-        aboPriority:
-          donor.blood.abo === null || patient.blood.abo === null
-            ? ("incompatible" as const)
-            : aboPriority(donor.blood.abo, patient.blood.abo),
-        isPediatricCandidate: isPediatricCandidate(patient, now),
-        daysAtStatus: duration.days,
-        daysAtStatusFromListing: duration.fromListing,
-      }
-    })
+    .map((patient) => screenRow(donor, patient, criteria, now))
   const outcomeRank = { pass: 0, review: 1, fail: 2 }
   const bloodRank = { primary: 0, secondary: 1, incompatible: 2 }
-  const pediatricDonor =
-    donor.identity.ageYears !== null && donor.identity.ageYears < 18
+  const pediatricDonor = isPediatricDonor(donor)
   const urgency = (row: ScreenRow) =>
     row.patient.listing.urgencyStatus === null
       ? Number.POSITIVE_INFINITY

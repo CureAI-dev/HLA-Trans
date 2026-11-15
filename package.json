@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "concurrently -k -n web,worker -c blue,magenta \"bun run dev:web\" \"bun run dev:worker\"",
     "generate-routes": "tsr generate",
     "build": "vite build",
     "preview": "vite preview",
@@ -19,7 +19,10 @@
     "db:migrate": "bun scripts/migrate.ts",
     "db:migrate:test": "bun scripts/migrate.ts --test",
     "db:studio": "drizzle-kit studio",
-    "test:db": "bun run db:migrate:test && vitest run --config vitest.db.config.ts"
+    "test:db": "bun run db:migrate:test && vitest run --config vitest.db.config.ts",
+    "worker": "NODE_ENV=production bun src/worker/main.ts",
+    "dev:web": "vite dev --port 3000",
+    "dev:worker": "bun --watch src/worker/main.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -64,6 +67,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6",
+    "concurrently": "10.0.7",
     "drizzle-kit": "0.31.11",
     "eslint": "^10",
     "prettier": "^3.9.10",
