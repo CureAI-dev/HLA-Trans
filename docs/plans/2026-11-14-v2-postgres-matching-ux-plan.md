@@ -6516,7 +6516,7 @@ git commit -m "feat(data): realistic synthetic demo dataset with enforced scenar
 
 - [ ] **Step 1: Load generator**
 
-Create `scripts/load-test.ts`. It seeds the **test** database (port 5434) only, so it never touches dev data:
+Create `scripts/load-test.ts`. It seeds the **test** database (port 5444) only, so it never touches dev data:
 
 ```ts
 import { performance } from "node:perf_hooks"
