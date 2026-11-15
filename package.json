@@ -22,7 +22,9 @@
     "test:db": "bun run db:migrate:test && vitest run --config vitest.db.config.ts",
     "worker": "NODE_ENV=production bun src/worker/main.ts",
     "dev:web": "vite dev --port 3000",
-    "dev:worker": "bun --watch src/worker/main.ts"
+    "dev:worker": "bun --watch src/worker/main.ts",
+    "perf": "bun scripts/load-test.ts",
+    "check:bundle": "bun run build && bun scripts/check-client-bundle.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
