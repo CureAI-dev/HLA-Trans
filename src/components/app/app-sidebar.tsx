@@ -1,12 +1,16 @@
 import { Link, useRouterState } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
+import { useQuery } from "@tanstack/react-query"
 import { Activity } from "lucide-react"
 import { cn } from "cn"
+import { matchingQueries } from "@/features/matching/matching.queries"
 
 type NavItem = {
   label: string
   link: LinkOptions
   isActive: (pathname: string) => boolean
+  /** Shows the live count of active match runs. */
+  liveCount?: boolean
 }
 const under = (base: string) => (pathname: string) =>
   pathname === base || pathname.startsWith(`${base}/`)
@@ -19,6 +23,12 @@ const items: ReadonlyArray<NavItem> = [
     isActive: under("/patients"),
   },
   { label: "Donors", link: { to: "/donors" }, isActive: under("/donors") },
+  {
+    label: "Matching",
+    link: { to: "/matching" },
+    isActive: under("/matching"),
+    liveCount: true,
+  },
   {
     label: "Match results",
     link: { to: "/matches" },
@@ -40,6 +50,9 @@ const items: ReadonlyArray<NavItem> = [
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  // Same cached, polled query as the header indicator: no extra request.
+  const { data: activeRuns } = useQuery(matchingQueries.active())
+  const activeCount = activeRuns?.length ?? 0
   return (
     <div className="flex h-full flex-col">
       <Link
@@ -68,6 +81,12 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               {item.label}
+              {item.liveCount && activeCount > 0 && (
+                <span className="ml-auto min-w-5 bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground tabular-nums">
+                  {activeCount}
+                  <span className="sr-only"> running</span>
+                </span>
+              )}
             </Link>
           )
         })}

@@ -14,12 +14,15 @@ import { DemoBanner } from "./demo-banner"
 import { LegacyImportBanner } from "./legacy-import-banner"
 import { ThemeToggle } from "./theme-toggle"
 import { TopProgress } from "./top-progress"
+import { RunIndicator } from "@/features/matching/components/run-indicator"
+import { RunWatcher } from "@/features/matching/components/run-watcher"
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="min-h-svh">
       <TopProgress />
+      <RunWatcher />
       <a
         href="#main-content"
         className="sr-only fixed top-2 left-2 z-[100] bg-background p-3 focus:not-sr-only"
@@ -58,6 +61,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <RunIndicator />
             <ClinicianControl />
             <ThemeToggle />
           </div>
