@@ -1,10 +1,11 @@
-import { createFileRoute, getRouteApi } from "@tanstack/react-router"
+import { createFileRoute, getRouteApi, useNavigate } from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
 import { PageHeader } from "@/components/app/page-header"
+import { ResultPageSkeleton } from "@/components/app/page-skeletons"
 import { ResultView } from "@/components/match/result-view"
-import { DecisionForm } from "@/components/match/decision-form"
+import { DecisionPanel } from "@/components/match/decision-panel"
 
 const rootRoute = getRouteApi("__root__")
 
@@ -14,42 +15,37 @@ export const Route = createFileRoute("/matches/$matchId")({
       context.queryClient.ensureQueryData(matchQueries.detail(params.matchId))
     ),
   head: () => ({ meta: [{ title: "Match result · HLA-Trans" }] }),
+  pendingComponent: ResultPageSkeleton,
   component: MatchResultDetail,
 })
 
 function MatchResultDetail() {
   const { matchId } = Route.useParams()
   const { prefs } = rootRoute.useRouteContext()
+  const navigate = useNavigate()
   const { data: match } = useSuspenseQuery(matchQueries.detail(matchId))
   return (
-    <div className="space-y-5">
+    <>
       <PageHeader
         title="Match result"
-        description={`Saved ${new Date(match.createdAt).toLocaleString()} by ${match.createdBy || "Unspecified clinician"}. Patient, donor, pair inputs, criteria and result are frozen.`}
+        breadcrumbs={[
+          { label: "Match results", link: { to: "/matches" } },
+          { label: "Match result" },
+        ]}
       />
-      {match.outOfDate && (
-        <p role="note" className="border p-4 text-sm">
-          Out of date: the patient, donor or criteria changed after this result
-          was saved. Check the pair again for a current result.
-        </p>
-      )}
       <ResultView
-        saved
-        result={match.result}
-        patient={match.patient}
-        donor={match.donor}
-        pair={match.pair}
-        criteria={match.criteria}
-        criteriaVersion={match.criteriaVersion}
+        key={match.id}
+        detail={match}
+        mode="saved"
+        onPairFix={() =>
+          void navigate({
+            to: "/matches/check",
+            search: { patientId: match.patientId, donorId: match.donorId },
+            hash: "pair-inputs",
+          })
+        }
+        aside={<DecisionPanel detail={match} clinician={prefs.clinician} />}
       />
-      {match.source === "checked" ? (
-        <DecisionForm key={match.id} match={match} clinician={prefs.clinician} />
-      ) : (
-        <p className="border p-4 text-sm">
-          This result comes from a match run with default pair inputs. To record
-          a decision, check this pair with real pair inputs first.
-        </p>
-      )}
-    </div>
+    </>
   )
 }
