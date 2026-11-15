@@ -16,7 +16,7 @@
 - `src/domain/**` stays pure: no React, no browser APIs, no `pg`/Drizzle, no imports from `features/`, `server/` or `lib/`.
 - **IDs are `text` (max 64 chars), not `uuid`.** Existing records use prefixed IDs (`pat_<uuid>`, `sample-patient-1`), and the import must preserve them. This corrects spec §3.1. New IDs come from `newId(prefix)` in `src/domain/factories.ts`.
 - **Every timestamp is written from application code with millisecond precision** (`new Date()`), never with `now()`/`defaultNow()`. Keyset cursors depend on it. Columns are `timestamptz` and are read with Drizzle `mode: "date"`. The API serialises them with `toISOString()`.
-- **Database:** `DATABASE_URL=postgres://postgres:password@localhost:5432/main`. **Tests:** `TEST_DATABASE_URL=postgres://postgres:password@localhost:5434/main` (tmpfs container). These credentials are local-only, not secrets.
+- **Database:** `DATABASE_URL=postgres://postgres:password@localhost:5442/main`. **Tests:** `TEST_DATABASE_URL=postgres://postgres:password@localhost:5444/main` (tmpfs container). These credentials are local-only, not secrets.
 - **Only `src/server/**/*.server.ts` files** (plus `src/worker/**` and `drizzle.config.ts`) may import `pg`, `drizzle-orm/node-postgres` or `node:*`. Start's import protection enforces the default `**/*.server.*` rule. Server functions live in `src/features/*/*.functions.ts` and import from `.server.ts` only inside handlers.
 - **Internal navigation uses `<Link>` or `navigate()` only.** A raw `<a href="/…">` fails lint.
 - **UI naming:** "Matching" (runs), "Match results" (saved results), "Check a pair" (manual check), "Match run", "Match result". The word "evaluation" must not appear in user-visible text. Domain type names (`EvaluationResult`) stay.
@@ -395,12 +395,12 @@ x-postgres: &postgres
 services:
   postgres:
     <<: *postgres
-    ports: ["5432:5432"]
+    ports: ["5442:5432"]
     volumes: ["pgdata:/var/lib/postgresql"]
 
   postgres-test:
     <<: *postgres
-    ports: ["5434:5432"]
+    ports: ["5444:5432"]
     tmpfs: ["/var/lib/postgresql"]
     # The tmpfs is small (memory): WAL capped well under it, and no fsync for
     # a database that is thrown away. The default 1 GB WAL filled it.
@@ -420,8 +420,8 @@ volumes:
 Create `.env.example`:
 
 ```dotenv
-DATABASE_URL=postgres://postgres:password@localhost:5432/main
-TEST_DATABASE_URL=postgres://postgres:password@localhost:5434/main
+DATABASE_URL=postgres://postgres:password@localhost:5442/main
+TEST_DATABASE_URL=postgres://postgres:password@localhost:5444/main
 ```
 
 Append to `.gitignore` (the existing `.env*` rule would otherwise hide the example):
@@ -750,7 +750,7 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./src/server/db/schema.server.ts",
   out: "./src/server/db/migrations",
-  dbCredentials: { url: process.env.DATABASE_URL ?? "postgres://postgres:password@localhost:5432/main" },
+  dbCredentials: { url: process.env.DATABASE_URL ?? "postgres://postgres:password@localhost:5442/main" },
   strict: true,
 })
 ```
@@ -6649,7 +6649,7 @@ Update `README.md`:
 
 Update the spec:
 - §3.1: replace "IDs are `uuid`" with "IDs are `text` (≤ 64), preserving v1 prefixed IDs".
-- §6.1: replace the requirements list with "Implemented in `compose.yaml`: Postgres 18.3, database `main`, dev on 5432 (volume), tests on 5434 (tmpfs)".
+- §6.1: replace the requirements list with "Implemented in `compose.yaml`: Postgres 18.3, database `main`, dev on 5442 (volume), tests on 5444 (tmpfs)".
 - §12: replace "each test runs in a transaction that is rolled back" with "tables are truncated before each test (TRUNCATE is allowed past the immutability triggers)".
 
 - [ ] **Step 5: Final verification and progress notes**
