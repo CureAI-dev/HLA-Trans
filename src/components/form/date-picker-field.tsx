@@ -3,7 +3,11 @@ import { CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { parseIsoDate } from "@/domain/dates"
 import { FieldFrame, useField } from "./field-frame"
 import type { DateFieldProps } from "./date-field"
@@ -12,8 +16,10 @@ const pad = (n: number) => String(n).padStart(2, "0")
 /** Calendar days are UTC midnights in the domain (parseIsoDate). Keep the picker in the same frame. */
 const toIso = (d: Date) =>
   `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
-const fromPicker = (d: Date) => new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-const toPicker = (d: Date) => new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+const fromPicker = (d: Date) =>
+  new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+const toPicker = (d: Date) =>
+  new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
 
 export type DatePickerFieldProps = DateFieldProps & {
   captionLayout?: "label" | "dropdown"
@@ -39,7 +45,10 @@ export function DatePickerField(props: DatePickerFieldProps) {
           type="date"
           value={props.value}
           min={props.min}
-          max={props.max ?? (props.disableFuture ? toIso(fromPicker(today)) : undefined)}
+          max={
+            props.max ??
+            (props.disableFuture ? toIso(fromPicker(today)) : undefined)
+          }
           disabled={props.disabled}
           onChange={(e) => props.onChange(e.target.value)}
           className="flex-1"

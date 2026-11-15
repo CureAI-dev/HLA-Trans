@@ -87,6 +87,7 @@ export function AntibodyTable({ value, onChange, errors }: AntibodyTableProps) {
           />
           <DateField
             label="Test date"
+            disableFuture
             value={row.testDate}
             error={errors?.[`${index}.testDate`]}
             onChange={(testDate) => update(index, { testDate })}

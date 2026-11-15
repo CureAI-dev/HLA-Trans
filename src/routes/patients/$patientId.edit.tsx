@@ -4,6 +4,7 @@ import { patientQueries } from "@/features/patients/patients.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
 import { PatientForm } from "@/components/patient/patient-form"
 import { PageHeader } from "@/components/app/page-header"
+import { FormPageSkeleton } from "@/components/app/page-skeletons"
 
 export const Route = createFileRoute("/patients/$patientId/edit")({
   loader: ({ context, params }) =>
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/patients/$patientId/edit")({
       )
     ),
   head: () => ({ meta: [{ title: "Edit patient · HLA-Trans" }] }),
+  pendingComponent: FormPageSkeleton,
   component: EditPatient,
 })
 

@@ -41,12 +41,24 @@ it("rejects unknown antigen names while retaining allele colons", () => {
 
 describe("date picker frame", () => {
   it("round-trips ISO dates across DST boundaries", () => {
-    for (const iso of ["2026-03-08", "2026-03-29", "2026-10-25", "2026-11-01", "2024-02-29"]) {
+    for (const iso of [
+      "2026-03-08",
+      "2026-03-29",
+      "2026-10-25",
+      "2026-11-01",
+      "2024-02-29",
+    ]) {
       const d = parseIsoDate(iso)
       expect(d).not.toBeNull()
       if (!d) continue
-      const local = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-      const back = new Date(Date.UTC(local.getFullYear(), local.getMonth(), local.getDate()))
+      const local = new Date(
+        d.getUTCFullYear(),
+        d.getUTCMonth(),
+        d.getUTCDate()
+      )
+      const back = new Date(
+        Date.UTC(local.getFullYear(), local.getMonth(), local.getDate())
+      )
       expect(back.toISOString().slice(0, 10)).toBe(iso)
     }
   })
