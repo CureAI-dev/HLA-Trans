@@ -21,7 +21,8 @@ import type {
   Patient,
 } from "@/domain/schema"
 
-const ts = (name: string) => timestamp(name, { withTimezone: true, mode: "date" })
+const ts = (name: string) =>
+  timestamp(name, { withTimezone: true, mode: "date" })
 
 export const patients = pgTable(
   "patients",
@@ -46,10 +47,18 @@ export const patients = pgTable(
     deletedAt: ts("deleted_at"),
   },
   (t) => [
-    index("patients_state_idx").on(t.listingState).where(sql`${t.deletedAt} is null`),
-    index("patients_updated_idx").on(t.updatedAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("patients_state_idx")
+      .on(t.listingState)
+      .where(sql`${t.deletedAt} is null`),
+    index("patients_updated_idx").on(
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("patients_name_idx").on(t.sortName, t.id),
-    index("patients_listed_idx").on(t.listingDate.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("patients_listed_idx").on(
+      t.listingDate.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
   ]
 )
 
@@ -71,8 +80,13 @@ export const donors = pgTable(
     deletedAt: ts("deleted_at"),
   },
   (t) => [
-    index("donors_state_idx").on(t.state).where(sql`${t.deletedAt} is null`),
-    index("donors_updated_idx").on(t.updatedAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("donors_state_idx")
+      .on(t.state)
+      .where(sql`${t.deletedAt} is null`),
+    index("donors_updated_idx").on(
+      t.updatedAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("donors_code_idx").on(t.donorCode, t.id),
   ]
 )
@@ -96,8 +110,19 @@ export const criteriaVersions = pgTable("criteria_versions", {
   createdAt: ts("created_at").notNull(),
 })
 
-export const RUN_STATUSES = ["queued", "running", "succeeded", "failed", "cancelled"] as const
-export const RUN_TRIGGERS = ["donor.created", "patient.created", "manual", "seed"] as const
+export const RUN_STATUSES = [
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled",
+] as const
+export const RUN_TRIGGERS = [
+  "donor.created",
+  "patient.created",
+  "manual",
+  "seed",
+] as const
 
 export const matchRuns = pgTable(
   "match_runs",
@@ -126,13 +151,25 @@ export const matchRuns = pgTable(
     finishedAt: ts("finished_at"),
   },
   (t) => [
-    check("match_runs_status", sql`${t.status} in ('queued','running','succeeded','failed','cancelled')`),
-    check("match_runs_subject_kind", sql`${t.subjectKind} in ('patient','donor')`),
+    check(
+      "match_runs_status",
+      sql`${t.status} in ('queued','running','succeeded','failed','cancelled')`
+    ),
+    check(
+      "match_runs_subject_kind",
+      sql`${t.subjectKind} in ('patient','donor')`
+    ),
     index("match_runs_active_idx")
       .on(t.status, t.createdAt)
       .where(sql`${t.status} in ('queued','running')`),
-    index("match_runs_created_idx").on(t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
-    index("match_runs_subject_idx").on(t.subjectId, t.createdAt.desc().nullsFirst()),
+    index("match_runs_created_idx").on(
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("match_runs_subject_idx").on(
+      t.subjectId,
+      t.createdAt.desc().nullsFirst()
+    ),
   ]
 )
 
@@ -142,13 +179,23 @@ export const matchResults = pgTable(
     id: text("id").primaryKey(),
     runId: text("run_id").references(() => matchRuns.id),
     source: text("source").$type<"screening" | "checked">().notNull(),
-    patientId: text("patient_id").notNull().references(() => patients.id),
-    donorId: text("donor_id").notNull().references(() => donors.id),
+    patientId: text("patient_id")
+      .notNull()
+      .references(() => patients.id),
+    donorId: text("donor_id")
+      .notNull()
+      .references(() => donors.id),
     patientName: text("patient_name").notNull(),
     donorCode: text("donor_code").notNull(),
-    patientSnapshot: text("patient_snapshot").notNull().references(() => recordSnapshots.hash),
-    donorSnapshot: text("donor_snapshot").notNull().references(() => recordSnapshots.hash),
-    criteriaVersionId: text("criteria_version_id").notNull().references(() => criteriaVersions.id),
+    patientSnapshot: text("patient_snapshot")
+      .notNull()
+      .references(() => recordSnapshots.hash),
+    donorSnapshot: text("donor_snapshot")
+      .notNull()
+      .references(() => recordSnapshots.hash),
+    criteriaVersionId: text("criteria_version_id")
+      .notNull()
+      .references(() => criteriaVersions.id),
     engineVersion: text("engine_version").notNull(),
     pair: jsonb("pair").$type<PairInputs>().notNull(),
     result: jsonb("result").$type<EvaluationResult>().notNull(),
@@ -162,7 +209,10 @@ export const matchResults = pgTable(
   },
   (t) => [
     check("match_results_source", sql`${t.source} in ('screening','checked')`),
-    check("match_results_overall", sql`${t.overall} in ('pass','review','fail')`),
+    check(
+      "match_results_overall",
+      sql`${t.overall} in ('pass','review','fail')`
+    ),
     check(
       "match_results_run_source",
       sql`(${t.source} = 'screening') = (${t.runId} is not null)`
@@ -170,9 +220,20 @@ export const matchResults = pgTable(
     uniqueIndex("match_results_run_pair_uq")
       .on(t.runId, t.patientId, t.donorId)
       .where(sql`${t.runId} is not null`),
-    index("match_results_created_idx").on(t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
-    index("match_results_donor_idx").on(t.donorId, t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
-    index("match_results_patient_idx").on(t.patientId, t.createdAt.desc().nullsFirst(), t.id.desc().nullsFirst()),
+    index("match_results_created_idx").on(
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("match_results_donor_idx").on(
+      t.donorId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+    index("match_results_patient_idx").on(
+      t.patientId,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("match_results_run_idx").on(t.runId, t.overall),
   ]
 )
@@ -194,7 +255,9 @@ export const decisions = pgTable("decisions", {
 export const auditLog = pgTable(
   "audit_log",
   {
-    seq: bigint("seq", { mode: "number" }).primaryKey().generatedAlwaysAsIdentity(),
+    seq: bigint("seq", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity(),
     id: text("id").notNull().unique(),
     at: ts("at").notNull(),
     actor: text("actor").notNull(),
@@ -202,5 +265,10 @@ export const auditLog = pgTable(
     subjectId: text("subject_id").notNull(),
     summary: text("summary").notNull(),
   },
-  (t) => [index("audit_at_id_idx").on(t.at.desc().nullsFirst(), t.id.desc().nullsFirst())]
+  (t) => [
+    index("audit_at_id_idx").on(
+      t.at.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
+  ]
 )

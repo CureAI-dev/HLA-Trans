@@ -22,7 +22,9 @@ export function createDb(
     statement_timeout: opts.statementTimeoutMs,
   })
   // Without a listener, an idle-client error (e.g. Postgres restart) crashes the process.
-  pool.on("error", (error) => console.error("[db] idle client error:", error.message))
+  pool.on("error", (error) =>
+    console.error("[db] idle client error:", error.message)
+  )
   return { pool, db: drizzle({ client: pool, schema }) }
 }
 
@@ -30,6 +32,9 @@ const store = globalThis as typeof globalThis & { __hlaWebDb?: DbHandle }
 
 /** One pool per web process; the globalThis slot survives Vite HMR module reloads. */
 export function getDb(): Db {
-  store.__hlaWebDb ??= createDb(env().DATABASE_URL, { max: 10, statementTimeoutMs: 5_000 })
+  store.__hlaWebDb ??= createDb(env().DATABASE_URL, {
+    max: 10,
+    statementTimeoutMs: 5_000,
+  })
   return store.__hlaWebDb.db
 }
