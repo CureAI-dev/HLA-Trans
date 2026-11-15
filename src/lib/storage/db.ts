@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react"
 import { DEFAULT_CRITERIA, validateCriteria } from "../../domain/criteria"
 import { evaluate } from "../../domain/engine"
-import { SAMPLE_DONORS, SAMPLE_PATIENTS } from "../../domain/sample-data"
+import { DEMO_DONORS, DEMO_PATIENTS } from "../../domain/demo-data"
 import {
   criteriaSchema,
   decisionSchema,
@@ -309,14 +309,14 @@ export const actions = {
     return JSON.stringify(current(), null, 2)
   },
   loadSampleData(): void {
-    commit("data.seeded", DB_KEY, "Loaded fictional sample records", (db) => {
+    commit("data.seeded", DB_KEY, "Loaded synthetic demo records", (db) => {
       db.patients.push(
-        ...SAMPLE_PATIENTS.filter(
+        ...DEMO_PATIENTS.filter(
           (p) => !db.patients.some((existing) => existing.id === p.id)
         )
       )
       db.donors.push(
-        ...SAMPLE_DONORS.filter(
+        ...DEMO_DONORS.filter(
           (d) => !db.donors.some((existing) => existing.id === d.id)
         )
       )

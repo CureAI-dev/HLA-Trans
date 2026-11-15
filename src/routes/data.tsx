@@ -172,9 +172,9 @@ function DataPage() {
           )}
         </section>
         <section className="border bg-card p-5">
-          <h2 className="font-semibold">Fictional sample data</h2>
+          <h2 className="font-semibold">Synthetic demo data</h2>
           <p className="my-3 text-sm text-muted-foreground">
-            Add fictional candidate and donor records. Repeated loads add no
+            Add synthetic candidate and donor records. Repeated loads add no
             duplicate records and preserve existing edits.
           </p>
           <Button
@@ -182,12 +182,12 @@ function DataPage() {
             onClick={() =>
               run(
                 () => actions.loadSampleData(),
-                "Fictional sample records loaded. Existing records were preserved."
+                "Synthetic demo records loaded. Existing records were preserved."
               )
             }
           >
             <Database />
-            Load sample data
+            Load demo data
           </Button>
         </section>
         <section className="border bg-card p-5">
