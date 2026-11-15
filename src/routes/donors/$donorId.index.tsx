@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { actions, useDb, latestCriteria } from "@/lib/storage/db"
 import { DonorSummary } from "@/components/donor/donor-summary"
 import { ScreeningTable } from "@/components/donor/screening-table"
@@ -32,7 +32,7 @@ function DonorDetail() {
   if (!donor)
     return (
       <p>
-        Donor not found. <a href="/donors">Return to donors</a>
+        Donor not found. <Link to="/donors">Return to donors</Link>
       </p>
     )
   function remove() {
@@ -51,9 +51,13 @@ function DonorDetail() {
         description={`${donor.identity.donorHospital || "Hospital not recorded"} · ${donor.identity.state}`}
         actions={
           <>
-            <a href={`/donors/${donor.id}/edit`} className="border px-3 py-2">
+            <Link
+              to="/donors/$donorId/edit"
+              params={{ donorId: donor.id }}
+              className="border px-3 py-2"
+            >
               Edit donor
-            </a>
+            </Link>
             <AlertDialog>
               <AlertDialogTrigger render={<Button variant="outline" />}>
                 Delete donor
@@ -62,8 +66,8 @@ function DonorDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this donor?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    The donor record will be deleted. Existing evaluation
-                    snapshots remain available.
+                    The donor record will be deleted. Existing saved match
+                    results remain available.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { flushSync } from "react-dom"
-import { useNavigate } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
 import * as O from "@/domain/options"
 import { donorSchema, type Donor } from "@/domain/schema"
 import { actions } from "@/lib/storage/db"
@@ -850,9 +850,9 @@ export function DonorForm({ initial }: { initial: Donor }) {
         </FormSection>
         <div className="sticky bottom-0 flex flex-wrap gap-3 border bg-background p-4">
           <Button type="submit">Save donor</Button>
-          <a href="/donors" className="px-3 py-2 underline">
+          <Link to="/donors" className="px-3 py-2 underline">
             Cancel
-          </a>
+          </Link>
           <span className="py-2 text-sm text-muted-foreground">
             {form.dirty ? "Unsaved changes" : "All changes saved"}
           </span>

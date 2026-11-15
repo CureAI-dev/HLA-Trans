@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useDb } from "@/lib/storage/db"
 import { PatientForm } from "@/components/patient/patient-form"
 import { PageHeader } from "@/components/app/page-header"
@@ -16,7 +16,7 @@ function EditPatient() {
     </>
   ) : (
     <p>
-      Patient not found. <a href="/patients">Return to patients</a>
+      Patient not found. <Link to="/patients">Return to patients</Link>
     </p>
   )
 }

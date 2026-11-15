@@ -19,6 +19,9 @@ import { Route as DonorsNewRouteImport } from './routes/donors/new'
 import { Route as EvaluationsIndexRouteImport } from './routes/evaluations/index'
 import { Route as EvaluationsEvaluationIdRouteImport } from './routes/evaluations/$evaluationId'
 import { Route as EvaluationsNewRouteImport } from './routes/evaluations/new'
+import { Route as MatchesIndexRouteImport } from './routes/matches/index'
+import { Route as MatchesMatchIdRouteImport } from './routes/matches/$matchId'
+import { Route as MatchesCheckRouteImport } from './routes/matches/check'
 import { Route as PatientsIndexRouteImport } from './routes/patients/index'
 import { Route as PatientsPatientIdRouteImport } from './routes/patients/$patientId'
 import { Route as PatientsNewRouteImport } from './routes/patients/new'
@@ -77,6 +80,21 @@ const EvaluationsNewRoute = EvaluationsNewRouteImport.update({
   path: '/evaluations/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatchesIndexRoute = MatchesIndexRouteImport.update({
+  id: '/matches/',
+  path: '/matches/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchesMatchIdRoute = MatchesMatchIdRouteImport.update({
+  id: '/matches/$matchId',
+  path: '/matches/$matchId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MatchesCheckRoute = MatchesCheckRouteImport.update({
+  id: '/matches/check',
+  path: '/matches/check',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PatientsIndexRoute = PatientsIndexRouteImport.update({
   id: '/patients/',
   path: '/patients/',
@@ -122,10 +140,13 @@ export interface FileRoutesByFullPath {
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
   '/evaluations/new': typeof EvaluationsNewRoute
+  '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/matches/check': typeof MatchesCheckRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
+  '/matches/': typeof MatchesIndexRoute
   '/patients/': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -140,9 +161,12 @@ export interface FileRoutesByTo {
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
   '/evaluations/new': typeof EvaluationsNewRoute
+  '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/matches/check': typeof MatchesCheckRoute
   '/patients/new': typeof PatientsNewRoute
   '/donors': typeof DonorsIndexRoute
   '/evaluations': typeof EvaluationsIndexRoute
+  '/matches': typeof MatchesIndexRoute
   '/patients': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -159,10 +183,13 @@ export interface FileRoutesById {
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
   '/evaluations/new': typeof EvaluationsNewRoute
+  '/matches/$matchId': typeof MatchesMatchIdRoute
+  '/matches/check': typeof MatchesCheckRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
+  '/matches/': typeof MatchesIndexRoute
   '/patients/': typeof PatientsIndexRoute
   '/donors/$donorId/edit': typeof DonorsDonorIdEditRoute
   '/patients/$patientId/edit': typeof PatientsPatientIdEditRoute
@@ -180,10 +207,13 @@ export interface FileRouteTypes {
     | '/donors/new'
     | '/evaluations/$evaluationId'
     | '/evaluations/new'
+    | '/matches/$matchId'
+    | '/matches/check'
     | '/patients/$patientId'
     | '/patients/new'
     | '/donors/'
     | '/evaluations/'
+    | '/matches/'
     | '/patients/'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -198,9 +228,12 @@ export interface FileRouteTypes {
     | '/donors/new'
     | '/evaluations/$evaluationId'
     | '/evaluations/new'
+    | '/matches/$matchId'
+    | '/matches/check'
     | '/patients/new'
     | '/donors'
     | '/evaluations'
+    | '/matches'
     | '/patients'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -216,10 +249,13 @@ export interface FileRouteTypes {
     | '/donors/new'
     | '/evaluations/$evaluationId'
     | '/evaluations/new'
+    | '/matches/$matchId'
+    | '/matches/check'
     | '/patients/$patientId'
     | '/patients/new'
     | '/donors/'
     | '/evaluations/'
+    | '/matches/'
     | '/patients/'
     | '/donors/$donorId/edit'
     | '/patients/$patientId/edit'
@@ -236,10 +272,13 @@ export interface RootRouteChildren {
   DonorsNewRoute: typeof DonorsNewRoute
   EvaluationsEvaluationIdRoute: typeof EvaluationsEvaluationIdRoute
   EvaluationsNewRoute: typeof EvaluationsNewRoute
+  MatchesMatchIdRoute: typeof MatchesMatchIdRoute
+  MatchesCheckRoute: typeof MatchesCheckRoute
   PatientsPatientIdRoute: typeof PatientsPatientIdRouteWithChildren
   PatientsNewRoute: typeof PatientsNewRoute
   DonorsIndexRoute: typeof DonorsIndexRoute
   EvaluationsIndexRoute: typeof EvaluationsIndexRoute
+  MatchesIndexRoute: typeof MatchesIndexRoute
   PatientsIndexRoute: typeof PatientsIndexRoute
 }
 
@@ -313,6 +352,27 @@ declare module '@tanstack/react-router' {
       path: '/evaluations/new'
       fullPath: '/evaluations/new'
       preLoaderRoute: typeof EvaluationsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/': {
+      id: '/matches/'
+      path: '/matches'
+      fullPath: '/matches/'
+      preLoaderRoute: typeof MatchesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/$matchId': {
+      id: '/matches/$matchId'
+      path: '/matches/$matchId'
+      fullPath: '/matches/$matchId'
+      preLoaderRoute: typeof MatchesMatchIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/matches/check': {
+      id: '/matches/check'
+      path: '/matches/check'
+      fullPath: '/matches/check'
+      preLoaderRoute: typeof MatchesCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/patients/': {
@@ -403,22 +463,15 @@ const rootRouteChildren: RootRouteChildren = {
   DonorsNewRoute: DonorsNewRoute,
   EvaluationsEvaluationIdRoute: EvaluationsEvaluationIdRoute,
   EvaluationsNewRoute: EvaluationsNewRoute,
+  MatchesMatchIdRoute: MatchesMatchIdRoute,
+  MatchesCheckRoute: MatchesCheckRoute,
   PatientsPatientIdRoute: PatientsPatientIdRouteWithChildren,
   PatientsNewRoute: PatientsNewRoute,
   DonorsIndexRoute: DonorsIndexRoute,
   EvaluationsIndexRoute: EvaluationsIndexRoute,
+  MatchesIndexRoute: MatchesIndexRoute,
   PatientsIndexRoute: PatientsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

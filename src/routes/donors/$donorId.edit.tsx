@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useDb } from "@/lib/storage/db"
 import { DonorForm } from "@/components/donor/donor-form"
 import { PageHeader } from "@/components/app/page-header"
@@ -16,7 +16,7 @@ function EditDonor() {
     </>
   ) : (
     <p>
-      Donor not found. <a href="/donors">Return to donors</a>
+      Donor not found. <Link to="/donors">Return to donors</Link>
     </p>
   )
 }

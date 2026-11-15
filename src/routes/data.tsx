@@ -99,7 +99,7 @@ function DataPage() {
         <section className="border bg-card p-5">
           <h2 className="font-semibold">Export backup</h2>
           <p className="my-3 text-sm text-muted-foreground">
-            Download all records, evaluation snapshots, criteria versions, and
+            Download all records, saved match results, criteria versions, and
             audit entries as JSON. Keep backups in a secure location.
           </p>
           <Button onClick={exportBackup}>
@@ -193,7 +193,7 @@ function DataPage() {
         <section className="border bg-card p-5">
           <h2 className="font-semibold">Reset local database</h2>
           <p id="reset-help" className="my-3 text-sm text-muted-foreground">
-            Delete all candidates, donors, evaluations, and previous audit
+            Delete all candidates, donors, match results, and previous audit
             entries; restore default criteria and clear the clinician name.
             Export a backup first. Type RESET to confirm.
           </p>

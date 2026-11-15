@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { PageHeader } from "@/components/app/page-header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -32,7 +32,7 @@ function AuditPage() {
     <>
       <PageHeader
         title="Audit log"
-        description="Local record of changes, evaluations, decisions, and data operations."
+        description="Local record of changes, match results, decisions, and data operations."
       />
       <div className="mb-5 grid items-end gap-4 border bg-card p-4 sm:grid-cols-2 xl:grid-cols-5">
         <label className="space-y-2 text-sm">
@@ -146,9 +146,9 @@ function AuditPage() {
               Clear filters
             </Button>
           ) : (
-            <a href="/data" className="mt-3 inline-block underline">
+            <Link to="/data" className="mt-3 inline-block underline">
               Load fictional sample data
-            </a>
+            </Link>
           )}
         </div>
       )}

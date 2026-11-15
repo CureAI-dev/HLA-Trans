@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router"
+import type { LinkOptions } from "@tanstack/react-router"
 import type {
   EvaluationResult,
   Patient,
@@ -10,6 +12,25 @@ import { RuleCard, FindingView } from "./rule-card"
 import { SideBySide } from "./side-by-side"
 import { IschemiaBreakdown } from "./ischemia-breakdown"
 import { CROSSMATCH, PRESERVATION } from "@/domain/options"
+
+function reviewLink(
+  rule: string,
+  saved: boolean,
+  patientId: string,
+  donorId: string
+): LinkOptions | null {
+  if (rule === "logistics")
+    return saved
+      ? {
+          to: "/matches/check",
+          search: { patientId, donorId },
+          hash: "pair-inputs",
+        }
+      : null // live preview: the pair inputs are on this page
+  if (rule === "donorHeart")
+    return { to: "/donors/$donorId/edit", params: { donorId } }
+  return { to: "/patients/$patientId/edit", params: { patientId } }
+}
 
 export function ResultView({
   result,
@@ -49,7 +70,7 @@ export function ResultView({
         className="space-y-3 border p-4"
       >
         <h2 className="text-xl font-semibold">
-          {saved ? "Frozen evaluation result" : "Live evaluation preview"}
+          {saved ? "Saved match result" : "Live preview"}
         </h2>
         <StatusBadge status={result.overall} />
         <p>
@@ -72,47 +93,47 @@ export function ResultView({
         <section className="border p-4">
           <h2 className="font-semibold">Missing data ({missing.length})</h2>
           <ul className="list-inside list-disc">
-            {missing.map(({ finding, rule }) => (
-              <li key={finding.code}>
-                <a className="underline" href={`#rule-${rule}`}>
-                  {finding.title}
-                </a>{" "}
-                /{" "}
-                <a
-                  className="underline"
-                  href={
-                    rule === "logistics"
-                      ? saved
-                        ? `/evaluations/new?patientId=${encodeURIComponent(patient.id)}&donorId=${encodeURIComponent(donor.id)}#pair-inputs`
-                        : "#pair-inputs"
-                      : rule === "donorHeart"
-                        ? `/donors/${encodeURIComponent(donor.id)}/edit`
-                        : `/patients/${encodeURIComponent(patient.id)}/edit`
-                  }
-                >
-                  Review inputs
-                </a>
-                {rule !== "logistics" && (
-                  <span>
-                    {" "}
-                    /{" "}
-                    <a
-                      className="underline"
-                      href={`/donors/${encodeURIComponent(donor.id)}/edit`}
-                    >
-                      Donor record
-                    </a>{" "}
-                    /{" "}
-                    <a
-                      className="underline"
-                      href={`/patients/${encodeURIComponent(patient.id)}/edit`}
-                    >
-                      Patient record
+            {missing.map(({ finding, rule }) => {
+              const link = reviewLink(rule, saved, patient.id, donor.id)
+              return (
+                <li key={finding.code}>
+                  <a className="underline" href={`#rule-${rule}`}>
+                    {finding.title}
+                  </a>{" "}
+                  /{" "}
+                  {link ? (
+                    <Link {...link} className="underline">
+                      Review inputs
+                    </Link>
+                  ) : (
+                    <a className="underline" href="#pair-inputs">
+                      Review inputs
                     </a>
-                  </span>
-                )}
-              </li>
-            ))}
+                  )}
+                  {rule !== "logistics" && (
+                    <span>
+                      {" "}
+                      /{" "}
+                      <Link
+                        className="underline"
+                        to="/donors/$donorId/edit"
+                        params={{ donorId: donor.id }}
+                      >
+                        Donor record
+                      </Link>{" "}
+                      /{" "}
+                      <Link
+                        className="underline"
+                        to="/patients/$patientId/edit"
+                        params={{ patientId: patient.id }}
+                      >
+                        Patient record
+                      </Link>
+                    </span>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </section>
       )}

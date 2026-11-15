@@ -1,10 +1,27 @@
 import { createElement } from "react"
 import { describe, expect, it } from "vitest"
-import { renderToStaticMarkup } from "react-dom/server"
+import { renderToStaticMarkup as renderMarkup } from "react-dom/server"
+import type { ReactElement } from "react"
+import {
+  RouterContextProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRouter,
+} from "@tanstack/react-router"
 import { ScreeningTable } from "./screening-table"
 import { emptyDonor, emptyPatient } from "@/domain/factories"
 import { initialDb, latestCriteria } from "@/lib/storage/db"
 import { screenDonor } from "@/domain/engine"
+
+// ScreeningTable renders router <Link>s, which need a router in context.
+const router = createRouter({
+  routeTree: createRootRoute(),
+  history: createMemoryHistory(),
+})
+const renderToStaticMarkup = (element: ReactElement) =>
+  renderMarkup(
+    createElement(RouterContextProvider, { router, children: element })
+  )
 
 describe("donor screening presentation", () => {
   it("explains missing logistics, listing fallback and pediatric priority and prefills the pair", () => {
@@ -35,7 +52,7 @@ describe("donor screening presentation", () => {
     expect(html).toContain("from listing date")
     expect(html).toContain("patientId=")
     expect(html).toContain("donorId=")
-    expect(html).toContain("Open full evaluation")
+    expect(html).toContain("Check this pair")
   })
   it.each([
     ["missing birth date", "", "2026-01-01", "Unknown"],

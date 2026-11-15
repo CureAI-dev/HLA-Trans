@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { actions, useDb } from "@/lib/storage/db"
 import { PatientSummary } from "@/components/patient/patient-summary"
 import { PageHeader } from "@/components/app/page-header"
@@ -30,7 +30,7 @@ function PatientDetail() {
   if (!p)
     return (
       <p>
-        Patient not found. <a href="/patients">Return to patients</a>
+        Patient not found. <Link to="/patients">Return to patients</Link>
       </p>
     )
   const evaluations = db.evaluations.filter((e) => e.patientId === p.id)
@@ -50,15 +50,20 @@ function PatientDetail() {
         description={`MRN ${p.identity.mrn}`}
         actions={
           <>
-            <a className="border px-3 py-2" href={`/patients/${p.id}/edit`}>
-              Edit patient
-            </a>
-            <a
-              className="border bg-primary px-3 py-2 text-primary-foreground"
-              href={`/evaluations/new?patientId=${encodeURIComponent(p.id)}`}
+            <Link
+              className="border px-3 py-2"
+              to="/patients/$patientId/edit"
+              params={{ patientId: p.id }}
             >
-              Evaluate against a donor
-            </a>
+              Edit patient
+            </Link>
+            <Link
+              className="border bg-primary px-3 py-2 text-primary-foreground"
+              to="/matches/check"
+              search={{ patientId: p.id }}
+            >
+              Check against a donor
+            </Link>
             <AlertDialog>
               <AlertDialogTrigger render={<Button variant="outline" />}>
                 Delete patient
@@ -67,8 +72,8 @@ function PatientDetail() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete this patient?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    The candidate record will be deleted. Existing evaluation
-                    snapshots remain available.
+                    The candidate record will be deleted. Existing saved match
+                    results remain available.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -85,23 +90,27 @@ function PatientDetail() {
       {error && <p role="alert">{error}</p>}
       <section className="mb-6 border p-4">
         <h2 className="mb-3 text-lg font-semibold">
-          Evaluations involving this patient
+          Match results involving this patient
         </h2>
         {evaluations.length ? (
           <ul className="space-y-2">
             {evaluations.map((e) => (
               <li key={e.id}>
-                <a className="underline" href={`/evaluations/${e.id}`}>
+                <Link
+                  className="underline"
+                  to="/matches/$matchId"
+                  params={{ matchId: e.id }}
+                >
                   {e.donorSnapshot.identity.donorId} |{" "}
                   {new Date(e.createdAt).toLocaleDateString()}
-                </a>{" "}
+                </Link>{" "}
                 <StatusBadge status={e.result.overall} />
               </li>
             ))}
           </ul>
         ) : (
           <p>
-            No evaluations yet. Choose Evaluate against a donor to compare a
+            No match results yet. Choose Check against a donor to compare a
             pair.
           </p>
         )}

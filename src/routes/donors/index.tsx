@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { useDb } from "@/lib/storage/db"
 import { PageHeader } from "@/components/app/page-header"
 import { DonorTable } from "@/components/donor/donor-table"
@@ -11,9 +11,9 @@ function Donors() {
         title="Donors"
         description="Manage donor records and screen active candidates."
         actions={
-          <a className="border px-3 py-2" href="/donors/new">
+          <Link className="border px-3 py-2" to="/donors/new">
             Add donor
-          </a>
+          </Link>
         }
       />
       <DonorTable donors={useDb().donors} />
