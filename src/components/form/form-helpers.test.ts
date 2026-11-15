@@ -4,6 +4,7 @@ import {
   parseNumberInput,
   updateAtPath,
 } from "./form-helpers"
+import { parseIsoDate } from "@/domain/dates"
 
 describe("clinical form helpers", () => {
   it("preserves valid paste rows and reports each invalid token", () => {
@@ -36,4 +37,17 @@ it("rejects unknown antigen names while retaining allele colons", () => {
   expect(result.invalidTokens).toEqual(["garbage 10"])
   expect(result.rows.map((row) => row.antigen)).toEqual(["DPB1*04:01", "B44"])
   expect(parseAntibodyPaste("A2 8000")).toEqual(parseAntibodyPaste("A2 8000"))
+})
+
+describe("date picker frame", () => {
+  it("round-trips ISO dates across DST boundaries", () => {
+    for (const iso of ["2026-03-08", "2026-03-29", "2026-10-25", "2026-11-01", "2024-02-29"]) {
+      const d = parseIsoDate(iso)
+      expect(d).not.toBeNull()
+      if (!d) continue
+      const local = new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+      const back = new Date(Date.UTC(local.getFullYear(), local.getMonth(), local.getDate()))
+      expect(back.toISOString().slice(0, 10)).toBe(iso)
+    }
+  })
 })
