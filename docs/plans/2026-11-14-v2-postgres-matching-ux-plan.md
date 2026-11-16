@@ -6691,3 +6691,25 @@ git commit -m "chore: performance verification, bundle guard, docs for postgres 
 | §11 realistic data, seeding, legacy import | 7, 14 |
 | §12 testing | every task, 15 |
 | §14 acceptance criteria 1–11 | 1, 8, 9, 11, 5+10, 1, 12, 13, 13, 2–7, 6+15 |
+
+---
+
+## Progress
+
+**2026-11-16.** Tasks 1–15 implemented in parallel worktrees and merged to `master` (`c84b1d2..HEAD`). Ports changed to 5442/5444 (sayaratak holds 5432/5434).
+
+| Check | Result |
+|---|---|
+| typecheck, lint | pass |
+| unit tests | 519 pass |
+| db tests | 23 pass |
+| patients list search p95 | 5.8 ms (≤ 40) |
+| patients list page 3 p95 | 6.2 ms (≤ 120) |
+| matching throughput | ~895 pairs/s (≥ 500) |
+| match results list p95 | 4.1 ms (≤ 40) |
+| match detail p95 | 3.8–8.8 ms (≤ 30) |
+| client bundle: no server modules | pass |
+| first-load JS, `/patients` (from SSR HTML) | 254 KiB gzip (budget 250): **over by 4 KiB**; core entry 99.8 KiB |
+| browser budgets (navigation timing, keystroke commit, CLS) | not measured in a browser; per-section re-render verified by the forms agent |
+
+Known gap: `scripts/check-client-bundle.ts` finds no `_shell.html` after SSR was enabled and counts only one entry file, so it under-reports first-load size.
