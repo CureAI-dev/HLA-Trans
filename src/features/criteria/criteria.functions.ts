@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { criteriaSchema } from "@/domain/schema"
 import { getDb } from "@/server/db/client.server"
 import {
@@ -10,11 +10,11 @@ import {
 } from "@/server/repos/criteria.server"
 
 export const latestCriteriaFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .handler(() => latestCriteria(getDb()))
 
 export const criteriaVersionsFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .handler(() => listCriteriaVersions(getDb()))
 
 export const publishCriteriaFn = createServerFn({ method: "POST" })

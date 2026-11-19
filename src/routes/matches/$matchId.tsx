@@ -1,4 +1,8 @@
-import { createFileRoute, getRouteApi, useNavigate } from "@tanstack/react-router"
+import {
+  createFileRoute,
+  getRouteApi,
+  useNavigate,
+} from "@tanstack/react-router"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { ensureOrNotFound } from "@/lib/route-helpers"
@@ -21,7 +25,7 @@ export const Route = createFileRoute("/matches/$matchId")({
 
 function MatchResultDetail() {
   const { matchId } = Route.useParams()
-  const { prefs } = rootRoute.useRouteContext()
+  const { user } = rootRoute.useRouteContext()
   const navigate = useNavigate()
   const { data: match } = useSuspenseQuery(matchQueries.detail(matchId))
   return (
@@ -44,7 +48,7 @@ function MatchResultDetail() {
             hash: "pair-inputs",
           })
         }
-        aside={<DecisionPanel detail={match} clinician={prefs.clinician} />}
+        aside={<DecisionPanel detail={match} clinician={user?.name ?? ""} />}
       />
     </>
   )

@@ -4,6 +4,7 @@ import type { Executor } from "../db/client.server"
 import { appendAudit } from "./audit.server"
 import { latestCriteria } from "./criteria.server"
 import { after, first, parseCursor, toPage } from "./sql.server"
+import { workerScope } from "../scope.server"
 import { newId } from "@/domain/factories"
 import type { RunRow, RunStatus, RunTrigger } from "@/domain/match-types"
 import { AppError } from "@/lib/app-error"
@@ -12,6 +13,18 @@ import type { Page } from "@/lib/cursor"
 export const MAX_ATTEMPTS = 3
 export const STALE_AFTER_MS = 60_000
 export const NOTIFY_CHANNEL = "match_runs"
+
+/**
+ * Tells a worker a run is ready. Under Bun: pg_notify, delivered on COMMIT only.
+ * On Cloudflare Workers (Hyperdrive has no NOTIFY): the id is sent to the MATCH_RUNS
+ * queue when the invocation ends. If the transaction rolled back, the message is a
+ * harmless spurious wake-up, because consumers claim whatever is queued, not this id.
+ */
+async function wakeWorker(exec: Executor, runId: string): Promise<void> {
+  const scope = workerScope.getStore()
+  if (scope) scope.wake.add(runId)
+  else await exec.execute(sql`select pg_notify(${NOTIFY_CHANNEL}, ${runId})`)
+}
 
 export type EnqueueInput = {
   subjectKind: "patient" | "donor"
@@ -47,8 +60,7 @@ export async function enqueueRun(
     summary: `Queued matching for ${input.subjectLabel}`,
     at: now,
   })
-  // Delivered on COMMIT only; a rollback never wakes the worker.
-  await exec.execute(sql`select pg_notify(${NOTIFY_CHANNEL}, ${id})`)
+  await wakeWorker(exec, id)
   return id
 }
 
@@ -113,7 +125,7 @@ export async function releaseRun(exec: Executor, runId: string): Promise<void> {
   await exec.execute(
     sql`update ${matchRuns} set status = 'queued', attempts = greatest(attempts - 1, 0) where id = ${runId} and status = 'running'`
   )
-  await exec.execute(sql`select pg_notify(${NOTIFY_CHANNEL}, ${runId})`)
+  await wakeWorker(exec, runId)
 }
 
 export async function failOrRequeue(
@@ -139,7 +151,7 @@ export async function failOrRequeue(
       .update(matchRuns)
       .set({ status: "queued", error: message })
       .where(and(eq(matchRuns.id, runId), eq(matchRuns.status, "running")))
-    await exec.execute(sql`select pg_notify(${NOTIFY_CHANNEL}, ${runId})`)
+    await wakeWorker(exec, runId)
   }
 }
 
@@ -157,8 +169,7 @@ export async function reapStaleRuns(
      where status = 'running' and heartbeat_at < ${staleBefore}
     returning id, status`)
   for (const row of result.rows) {
-    if (row.status === "queued")
-      await exec.execute(sql`select pg_notify(${NOTIFY_CHANNEL}, ${row.id})`)
+    if (row.status === "queued") await wakeWorker(exec, row.id)
     else
       await appendAudit(exec, {
         actor: "System",

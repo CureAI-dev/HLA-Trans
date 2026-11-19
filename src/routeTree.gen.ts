@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuditRouteImport } from './routes/audit'
 import { Route as CriteriaRouteImport } from './routes/criteria'
 import { Route as DataRouteImport } from './routes/data'
+import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as DonorsIndexRouteImport } from './routes/donors/index'
 import { Route as DonorsDonorIdRouteImport } from './routes/donors/$donorId'
 import { Route as DonorsNewRouteImport } from './routes/donors/new'
@@ -50,6 +51,11 @@ const CriteriaRoute = CriteriaRouteImport.update({
 const DataRoute = DataRouteImport.update({
   id: '/data',
   path: '/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignInRoute = SignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DonorsIndexRoute = DonorsIndexRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/audit': typeof AuditRoute
   '/criteria': typeof CriteriaRoute
   '/data': typeof DataRoute
+  '/sign-in': typeof SignInRoute
   '/donors/$donorId': typeof DonorsDonorIdRouteWithChildren
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/audit': typeof AuditRoute
   '/criteria': typeof CriteriaRoute
   '/data': typeof DataRoute
+  '/sign-in': typeof SignInRoute
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
   '/evaluations/new': typeof EvaluationsNewRoute
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/audit': typeof AuditRoute
   '/criteria': typeof CriteriaRoute
   '/data': typeof DataRoute
+  '/sign-in': typeof SignInRoute
   '/donors/$donorId': typeof DonorsDonorIdRouteWithChildren
   '/donors/new': typeof DonorsNewRoute
   '/evaluations/$evaluationId': typeof EvaluationsEvaluationIdRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/criteria'
     | '/data'
+    | '/sign-in'
     | '/donors/$donorId'
     | '/donors/new'
     | '/evaluations/$evaluationId'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/criteria'
     | '/data'
+    | '/sign-in'
     | '/donors/new'
     | '/evaluations/$evaluationId'
     | '/evaluations/new'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/audit'
     | '/criteria'
     | '/data'
+    | '/sign-in'
     | '/donors/$donorId'
     | '/donors/new'
     | '/evaluations/$evaluationId'
@@ -292,6 +304,7 @@ export interface RootRouteChildren {
   AuditRoute: typeof AuditRoute
   CriteriaRoute: typeof CriteriaRoute
   DataRoute: typeof DataRoute
+  SignInRoute: typeof SignInRoute
   DonorsDonorIdRoute: typeof DonorsDonorIdRouteWithChildren
   DonorsNewRoute: typeof DonorsNewRoute
   EvaluationsEvaluationIdRoute: typeof EvaluationsEvaluationIdRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/data'
       fullPath: '/data'
       preLoaderRoute: typeof DataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/donors/': {
@@ -499,6 +519,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuditRoute: AuditRoute,
   CriteriaRoute: CriteriaRoute,
   DataRoute: DataRoute,
+  SignInRoute: SignInRoute,
   DonorsDonorIdRoute: DonorsDonorIdRouteWithChildren,
   DonorsNewRoute: DonorsNewRoute,
   EvaluationsEvaluationIdRoute: EvaluationsEvaluationIdRoute,

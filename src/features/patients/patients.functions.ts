@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import {
   ABO_VALUES,
   CANDIDATE_STATE_VALUES,
@@ -31,12 +31,12 @@ export type PatientListSearch = z.infer<typeof patientListSearch>
 const idInput = z.object({ id: z.string().min(1).max(64) })
 
 export const listPatientsFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(patientListSearch)
   .handler(({ data }) => listPatients(getDb(), data))
 
 export const getPatientFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(idInput)
   .handler(({ data }) => getPatient(getDb(), data.id))
 
