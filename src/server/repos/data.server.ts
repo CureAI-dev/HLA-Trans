@@ -15,7 +15,7 @@ import { patientCols } from "./patients.server"
 import { enqueueRun } from "./runs.server"
 import { putSnapshots } from "./snapshots.server"
 import { validatedDbSchema } from "@/domain/backup-schema"
-import { DEMO_DONORS, DEMO_PATIENTS } from "@/domain/demo-data"
+import { demoDonors, demoPatients } from "@/domain/demo-data"
 import { LEGACY_AUDIT_ACTION } from "@/domain/match-types"
 import type { CriteriaVersion, Donor, Patient } from "@/domain/schema"
 import { AppError } from "@/lib/app-error"
@@ -223,7 +223,10 @@ export async function exportAll(exec: Executor): Promise<BackupV2> {
       .select({ data: patients.data })
       .from(patients)
       .where(isNull(patients.deletedAt)),
-    exec.select({ data: donors.data }).from(donors).where(isNull(donors.deletedAt)),
+    exec
+      .select({ data: donors.data })
+      .from(donors)
+      .where(isNull(donors.deletedAt)),
     listCriteriaVersions(exec),
     exec
       .select({
@@ -269,10 +272,11 @@ export async function seedDemo(
 ): Promise<{ patients: number; donors: number; runs: number }> {
   return db.transaction(async (tx) => {
     await ensureInitialCriteria(tx)
-    const p = await upsertPatients(tx, DEMO_PATIENTS, null)
-    const d = await upsertDonors(tx, DEMO_DONORS, null)
+    const demoDonorList = demoDonors()
+    const p = await upsertPatients(tx, demoPatients(), null)
+    const d = await upsertDonors(tx, demoDonorList, null)
     let runs = 0
-    for (const donor of DEMO_DONORS.filter(
+    for (const donor of demoDonorList.filter(
       (x) => x.identity.state === "available"
     )) {
       await enqueueRun(tx, {
