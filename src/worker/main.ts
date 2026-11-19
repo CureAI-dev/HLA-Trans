@@ -1,13 +1,8 @@
 import { createDb } from "@/server/db/client.server"
 import { runMigrations } from "@/server/db/migrate.server"
 import { env } from "@/server/env.server"
-import { processRun } from "@/server/matching/process-run.server"
-import {
-  claimNextRun,
-  failOrRequeue,
-  NOTIFY_CHANNEL,
-  reapStaleRuns,
-} from "@/server/repos/runs.server"
+import { drainRuns } from "@/server/matching/drain.server"
+import { NOTIFY_CHANNEL, reapStaleRuns } from "@/server/repos/runs.server"
 
 const POLL_MS = 5_000
 const REAP_MS = 30_000
@@ -59,21 +54,7 @@ for (const signal of ["SIGINT", "SIGTERM"] as const)
 
 console.info("[worker] ready")
 while (!isStopping()) {
-  let id: string | null
-  while (!isStopping() && (id = await claimNextRun(db))) {
-    const started = performance.now()
-    try {
-      const status = await processRun(db, id, {
-        shouldStop: isStopping,
-      })
-      console.info(
-        `[worker] ${id} ${status} in ${Math.round(performance.now() - started)} ms`
-      )
-    } catch (error) {
-      console.error(`[worker] ${id} failed:`, error)
-      await failOrRequeue(db, id, error)
-    }
-  }
+  await drainRuns(db, isStopping)
   if (!isStopping()) await sleep(POLL_MS)
 }
 

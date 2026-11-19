@@ -5,7 +5,7 @@ export const APP_ERROR_CODES = [
   "VALIDATION",
   "NOT_FOUND",
   "CONFLICT",
-  "CLINICIAN_REQUIRED",
+  "UNAUTHENTICATED",
   "INTERNAL",
 ] as const
 export type AppErrorCode = (typeof APP_ERROR_CODES)[number]

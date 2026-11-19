@@ -3,6 +3,7 @@ import {
   Outlet,
   Scripts,
   createRootRouteWithContext,
+  redirect,
 } from "@tanstack/react-router"
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools"
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools"
@@ -12,18 +13,33 @@ import appCss from "../styles.css?url"
 import type { RouterContext } from "@/router"
 import { readPrefs } from "@/lib/prefs"
 import { matchingQueries } from "@/features/matching/matching.queries"
+import { authQueries } from "@/features/auth/auth.queries"
 import { AppShell } from "@/components/app/app-shell"
 import { NotFound } from "@/components/app/route-error"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toast"
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  // Cookie parse only: microseconds on the client, so it is fine on every navigation.
-  beforeLoad: () => ({ prefs: readPrefs() }),
+  // Prefs: cookie parse only. Session: cached by Query (5 min), so client navigations stay instant.
+  // This guard is UX only; every server function re-checks the session (readMiddleware).
+  beforeLoad: async ({ context, location }) => {
+    const prefs = readPrefs()
+    const user = await context.queryClient.ensureQueryData(
+      authQueries.session()
+    )
+    if (!user && location.pathname !== "/sign-in")
+      throw redirect({
+        to: "/sign-in",
+        search: { redirect: location.href },
+      })
+    return { prefs, user }
+  },
   // Active runs feed the header indicator and sidebar badge; include them in the SSR HTML.
   // ensureQueryData returns the cached value instantly after the first load.
   loader: ({ context }) =>
-    context.queryClient.ensureQueryData(matchingQueries.active()),
+    context.user
+      ? context.queryClient.ensureQueryData(matchingQueries.active())
+      : undefined,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -38,12 +54,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 })
 
 function RootComponent() {
+  const { user } = Route.useRouteContext()
   return (
     <TooltipProvider>
       <Toaster>
-        <AppShell>
+        {user ? (
+          <AppShell>
+            <Outlet />
+          </AppShell>
+        ) : (
           <Outlet />
-        </AppShell>
+        )}
         {import.meta.env.DEV && (
           <TanStackDevtools
             config={{ position: "bottom-right" }}

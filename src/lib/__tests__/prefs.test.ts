@@ -3,13 +3,12 @@ import { parsePrefs } from "../prefs"
 
 describe("parsePrefs", () => {
   it("defaults safely", () => {
-    expect(parsePrefs(() => undefined)).toEqual({ theme: "light", clinician: "" })
+    expect(parsePrefs(() => undefined)).toEqual({ theme: "light" })
   })
-  it("reads values and clamps the clinician name", () => {
-    const jar: Record<string, string> = { hla_theme: "dark", hla_clinician: `  ${"x".repeat(300)}  ` }
-    const prefs = parsePrefs((n) => jar[n])
-    expect(prefs.theme).toBe("dark")
-    expect(prefs.clinician).toHaveLength(200)
+  it("reads the theme", () => {
+    expect(
+      parsePrefs((n) => (n === "hla_theme" ? "dark" : undefined)).theme
+    ).toBe("dark")
   })
   it("ignores unknown theme values", () => {
     expect(parsePrefs(() => "purple").theme).toBe("light")

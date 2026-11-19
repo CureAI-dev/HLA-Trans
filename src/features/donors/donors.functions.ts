@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import {
   ABO_VALUES,
   DONATION_TYPE_VALUES,
@@ -31,12 +31,12 @@ export type DonorListSearch = z.infer<typeof donorListSearch>
 const idInput = z.object({ id: z.string().min(1).max(64) })
 
 export const listDonorsFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(donorListSearch)
   .handler(({ data }) => listDonors(getDb(), data))
 
 export const getDonorFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(idInput)
   .handler(({ data }) => getDonor(getDb(), data.id))
 

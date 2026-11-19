@@ -4,10 +4,15 @@ import type { QueryClient } from "@tanstack/react-query"
 import { routeTree } from "./routeTree.gen"
 import { createQueryClient } from "@/lib/query-client"
 import type { Prefs } from "@/lib/prefs"
+import type { SessionUser } from "@/server/auth.server"
 import { PagePending } from "@/components/app/page-skeletons"
 import { NotFound, RouteError } from "@/components/app/route-error"
 
-export type RouterContext = { queryClient: QueryClient; prefs?: Prefs }
+export type RouterContext = {
+  queryClient: QueryClient
+  prefs?: Prefs
+  user?: SessionUser | null
+}
 
 /** Called once per SSR request and once in the browser: never share a QueryClient across users. */
 export function getRouter() {

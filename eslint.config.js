@@ -52,6 +52,7 @@ export default [
       "src/hooks/use-mobile.ts",
       "src/lib/highlighter.tsx",
       "src/routeTree.gen.ts",
+      "worker-configuration.d.ts",
     ],
   },
 ]

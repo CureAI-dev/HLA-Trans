@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { getDb } from "@/server/db/client.server"
 import {
   exportAll,
@@ -10,7 +10,7 @@ import {
 } from "@/server/repos/data.server"
 
 export const exportDataFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .handler(() => exportAll(getDb()))
 
 export const importDataFn = createServerFn({ method: "POST" })

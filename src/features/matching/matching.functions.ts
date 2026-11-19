@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { getDb } from "@/server/db/client.server"
 import {
   getRun,
@@ -22,20 +22,22 @@ export type RunHistorySearch = z.infer<typeof runHistorySearch>
 const idInput = z.object({ id: z.string().min(1).max(64) })
 
 export const activeRunsFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .handler(() => listActiveRuns(getDb()))
 
 export const runHistoryFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(runHistorySearch)
   .handler(({ data }) => listRunHistory(getDb(), data))
 
 export const getRunFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(idInput)
   .handler(({ data }) => getRun(getDb(), data.id))
 
 export const cancelRunFn = createServerFn({ method: "POST" })
   .middleware([writeMiddleware])
   .validator(idInput)
-  .handler(({ data, context }) => requestCancel(getDb(), data.id, context.actor))
+  .handler(({ data, context }) =>
+    requestCancel(getDb(), data.id, context.actor)
+  )

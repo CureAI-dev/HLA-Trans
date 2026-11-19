@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
-import { errorMiddleware, writeMiddleware } from "@/features/shared/middleware"
+import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { decisionSchema, pairInputsSchema } from "@/domain/schema"
 import { getDb } from "@/server/db/client.server"
 import {
@@ -27,12 +27,12 @@ export type MatchListSearch = z.infer<typeof matchListSearch>
 const id64 = z.string().min(1).max(64)
 
 export const listMatchesFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(matchListSearch)
   .handler(({ data }) => listMatches(getDb(), data))
 
 export const getMatchFn = createServerFn({ method: "GET" })
-  .middleware([errorMiddleware])
+  .middleware([readMiddleware])
   .validator(z.object({ id: id64 }))
   .handler(({ data }) => getMatch(getDb(), data.id))
 

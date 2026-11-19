@@ -2,15 +2,13 @@ import { createIsomorphicFn } from "@tanstack/react-start"
 import { getCookie } from "@tanstack/react-start/server"
 
 export const THEME_COOKIE = "hla_theme"
-export const CLINICIAN_COOKIE = "hla_clinician"
 export type Theme = "light" | "dark"
-export type Prefs = { theme: Theme; clinician: string }
+export type Prefs = { theme: Theme }
 
 /** `get` returns already-decoded cookie values. */
 export function parsePrefs(get: (name: string) => string | undefined): Prefs {
   return {
     theme: get(THEME_COOKIE) === "dark" ? "dark" : "light",
-    clinician: (get(CLINICIAN_COOKIE) ?? "").trim().slice(0, 200),
   }
 }
 

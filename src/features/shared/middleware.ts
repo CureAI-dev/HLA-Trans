@@ -1,8 +1,7 @@
 import { createMiddleware } from "@tanstack/react-start"
-import { getCookie } from "@tanstack/react-start/server"
 import { isNotFound, isRedirect } from "@tanstack/react-router"
 import { AppError, toAppError } from "@/lib/app-error"
-import { CLINICIAN_COOKIE } from "@/lib/prefs"
+import { currentUser } from "@/server/auth.server"
 
 /** Outermost: every thrown value leaves the server as a typed AppError (or router control flow). */
 export const errorMiddleware = createMiddleware({ type: "function" }).server(
@@ -16,21 +15,14 @@ export const errorMiddleware = createMiddleware({ type: "function" }).server(
   }
 )
 
-export const actorMiddleware = createMiddleware({ type: "function" })
+/** Clinical data: every read and write needs a signed-in user (UNAUTHENTICATED otherwise). */
+export const readMiddleware = createMiddleware({ type: "function" })
   .middleware([errorMiddleware])
   .server(async ({ next }) => {
-    const actor = (getCookie(CLINICIAN_COOKIE) ?? "").trim().slice(0, 200)
-    return next({ context: { actor } })
+    const user = await currentUser()
+    if (!user) throw new AppError("UNAUTHENTICATED", "Sign in to continue.")
+    return next({ context: { user, actor: user.name } })
   })
 
-/** Writes are attributed. Without a name the UI prompts (CLINICIAN_REQUIRED). */
-export const writeMiddleware = createMiddleware({ type: "function" })
-  .middleware([actorMiddleware])
-  .server(async ({ next, context }) => {
-    if (!context.actor)
-      throw new AppError(
-        "CLINICIAN_REQUIRED",
-        "Enter your name in the header before saving changes."
-      )
-    return next()
-  })
+/** Writes are attributed to the signed-in user via `context.actor`. */
+export const writeMiddleware = readMiddleware

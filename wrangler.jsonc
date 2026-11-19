@@ -1,0 +1,19 @@
+{
+  "name": "hla-trans",
+  "main": "src/server.ts", // custom entry for queue/cron; else "@tanstack/react-start/server-entry"
+  "compatibility_date": "2026-11-19",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "45d4f9d0183642619aae8082ab7ed94d",
+      "localConnectionString": "postgres://postgres:password@localhost:5442/main",
+    },
+  ],
+  "queues": {
+    "producers": [{ "binding": "MATCH_RUNS", "queue": "match-runs" }],
+    "consumers": [{ "queue": "match-runs" }],
+  },
+  "triggers": { "crons": ["* * * * *"] },
+}

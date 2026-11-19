@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { AppSidebar } from "./app-sidebar"
-import { ClinicianControl } from "./clinician-control"
+import { UserMenu } from "./user-menu"
 import { DemoBanner } from "./demo-banner"
 import { LegacyImportBanner } from "./legacy-import-banner"
 import { ThemeToggle } from "./theme-toggle"
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-2">
             <RunIndicator />
-            <ClinicianControl />
+            <UserMenu />
             <ThemeToggle />
           </div>
         </header>
