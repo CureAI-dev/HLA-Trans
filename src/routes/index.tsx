@@ -13,7 +13,7 @@ import type { MatchRow } from "@/domain/match-types"
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(dashboardQueries.summary()),
-  head: () => ({ meta: [{ title: "Dashboard · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · Concord" }] }),
   pendingComponent: PagePending,
   component: Dashboard,
 })

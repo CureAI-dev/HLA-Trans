@@ -13,7 +13,7 @@ export const Route = createFileRoute("/criteria")({
       context.queryClient.ensureQueryData(criteriaQueries.latest()),
       context.queryClient.ensureQueryData(criteriaQueries.versions()),
     ]),
-  head: () => ({ meta: [{ title: "Criteria · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Criteria · Concord" }] }),
   pendingComponent: FormPageSkeleton,
   component: CriteriaPage,
 })

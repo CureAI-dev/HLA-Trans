@@ -36,7 +36,7 @@ export const Route = createFileRoute("/matches/")({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(matchQueries.list(deps)),
-  head: () => ({ meta: [{ title: "Match results · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Match results · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={6} />,
   component: MatchResults,
 })

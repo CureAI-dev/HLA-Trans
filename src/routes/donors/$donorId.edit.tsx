@@ -11,7 +11,7 @@ export const Route = createFileRoute("/donors/$donorId/edit")({
     ensureOrNotFound(
       context.queryClient.ensureQueryData(donorQueries.detail(params.donorId))
     ),
-  head: () => ({ meta: [{ title: "Edit donor · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Edit donor · Concord" }] }),
   pendingComponent: FormPageSkeleton,
   component: EditDonor,
 })

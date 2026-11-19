@@ -18,7 +18,7 @@ export const Route = createFileRoute("/matches/$matchId")({
     ensureOrNotFound(
       context.queryClient.ensureQueryData(matchQueries.detail(params.matchId))
     ),
-  head: () => ({ meta: [{ title: "Match result · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Match result · Concord" }] }),
   pendingComponent: ResultPageSkeleton,
   component: MatchResultDetail,
 })

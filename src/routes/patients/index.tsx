@@ -24,7 +24,7 @@ export const Route = createFileRoute("/patients/")({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(patientQueries.list(deps)),
-  head: () => ({ meta: [{ title: "Patients · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Patients · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={8} />,
   component: PatientsPage,
 })

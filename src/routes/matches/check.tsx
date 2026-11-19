@@ -35,7 +35,7 @@ export const Route = createFileRoute("/matches/check")({
       deps.donorId && qc.prefetchQuery(donorQueries.detail(deps.donorId)),
     ])
   },
-  head: () => ({ meta: [{ title: "Check a pair · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Check a pair · Concord" }] }),
   pendingComponent: FormPageSkeleton,
   component: CheckAPair,
 })

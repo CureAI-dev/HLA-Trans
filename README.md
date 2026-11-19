@@ -1,4 +1,8 @@
-# HLA-Trans
+# Concord
+
+<img src="public/concord-wordmark.svg" alt="Concord" height="64">
+
+Formerly HLA-Trans. The name is Latin *con* + *cor*, "hearts together".
 
 A demonstration of heart donor–recipient compatibility review. It captures patient and donor records, checks six rule groups with explainable PASS / REVIEW / FAIL findings, supports versioned criteria, matches every new patient or donor in the background, and saves match results and clinician decisions with snapshots and an audit trail.
 

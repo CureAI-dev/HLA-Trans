@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { ConcordMark } from "@/components/app/concord-logo"
 
 /** Only same-app paths: never redirect to another origin (e.g. `//evil.example`). */
 const safePath = z
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/sign-in")({
   beforeLoad: ({ context, search }) => {
     if (context.user) throw redirect({ to: search.redirect ?? "/" })
   },
-  head: () => ({ meta: [{ title: "Sign in · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Sign in · Concord" }] }),
   component: SignInPage,
 })
 
@@ -55,8 +56,12 @@ function SignInPage() {
     <main className="flex min-h-svh items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
+          <div className="mb-2 flex items-center gap-2 text-lg font-semibold">
+            <ConcordMark className="size-7 text-primary" />
+            Concord
+          </div>
           <CardTitle>
-            {mode === "sign-in" ? "Sign in to HLA-Trans" : "Create an account"}
+            {mode === "sign-in" ? "Sign in to Concord" : "Create an account"}
           </CardTitle>
           <CardDescription>
             {mode === "sign-in"

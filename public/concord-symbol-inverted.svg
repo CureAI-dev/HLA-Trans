@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Concord heart symbol</title>
+  <rect width="128" height="128" fill="#095d6c"/>
+  <g fill="none" stroke="#f7fbfc" stroke-width="9.6" stroke-linecap="round">
+    <path d="M51 36 C47 30 41 27 34.5 27 C24.5 27 19 35.5 19 46 C19 63 33 80 51 100"/>
+    <path d="M51 36 C47 30 41 27 34.5 27 C24.5 27 19 35.5 19 46 C19 63 33 80 51 100" transform="translate(128 0) scale(-1 1)"/>
+  </g>
+</svg>

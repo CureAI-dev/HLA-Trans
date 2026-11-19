@@ -13,7 +13,7 @@ export const Route = createFileRoute("/patients/$patientId/edit")({
         patientQueries.detail(params.patientId)
       )
     ),
-  head: () => ({ meta: [{ title: "Edit patient · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Edit patient · Concord" }] }),
   pendingComponent: FormPageSkeleton,
   component: EditPatient,
 })

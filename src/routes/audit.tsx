@@ -38,7 +38,7 @@ export const Route = createFileRoute("/audit")({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(auditQueries.list(deps)),
-  head: () => ({ meta: [{ title: "Audit log · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Audit log · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={5} />,
   component: AuditPage,
 })
