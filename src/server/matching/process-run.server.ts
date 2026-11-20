@@ -25,7 +25,7 @@ export type ProcessOptions = {
 
 const MAX_CHUNK = 50
 
-const byId =<T extends { id: string }>(a: T, b: T) =>
+const byId = <T extends { id: string }>(a: T, b: T) =>
   a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 const nameOf = (p: Patient) =>
   `${p.identity.firstName} ${p.identity.lastName}`.trim()
