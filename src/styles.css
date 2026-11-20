@@ -178,3 +178,19 @@
   60% { transform: scaleX(0.7); }
   100% { transform: scaleX(0.92); }
 }
+
+/* Sign-in: the donor and recipient halves of the mark close into one heart, once. */
+@keyframes concord-close-left {
+  from { transform: translateX(-22px) rotate(-6deg); opacity: 0; }
+}
+@keyframes concord-close-right {
+  from { transform: translateX(22px) rotate(6deg); opacity: 0; }
+}
+.concord-half-left,
+.concord-half-right {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: 1100ms cubic-bezier(0.22, 1, 0.36, 1) 150ms both;
+}
+.concord-half-left { animation-name: concord-close-left; }
+.concord-half-right { animation-name: concord-close-right; }
