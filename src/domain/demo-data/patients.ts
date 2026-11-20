@@ -305,7 +305,8 @@ const noInotropes = (p: Patient) => {
   p.hemodynamics.onInotropesDuringCath = false
 }
 
-export const DEMO_PATIENTS: Patient[] = [
+/** Built per call: Workers forbid crypto.randomUUID() and freeze Date at module scope. */
+export const demoPatients = (): Patient[] => [
   // 01 Maya Chen: VA-ECMO, status 1. Reference O recipient.
   base(0, (p) => {
     age(p, 41)

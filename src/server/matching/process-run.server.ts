@@ -23,6 +23,8 @@ export type ProcessOptions = {
   afterChunk?: (chunkIndex: number) => void
 }
 
+const MAX_CHUNK = 50
+
 const byId = <T extends { id: string }>(a: T, b: T) =>
   a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 const nameOf = (p: Patient) =>
@@ -33,7 +35,6 @@ export async function processRun(
   runId: string,
   opts: ProcessOptions = {}
 ): Promise<RunStatus> {
-  const chunkSize = opts.chunkSize ?? 50
   const now = opts.now ?? new Date() // one clock per run: ages and durations are consistent
   const run = first(
     await db.select().from(matchRuns).where(eq(matchRuns.id, runId))
@@ -74,6 +75,10 @@ export async function processRun(
     .update(matchRuns)
     .set({ total: counterparts.length, heartbeatAt: new Date() })
     .where(eq(matchRuns.id, runId))
+  // Aim for ~20 progress steps so small runs don't jump straight from 0% to 100%.
+  const chunkSize =
+    opts.chunkSize ??
+    Math.min(MAX_CHUNK, Math.max(1, Math.ceil(counterparts.length / 20)))
   const pediatricDonor =
     run.subjectKind === "donor" && isPediatricDonor(subject as Donor)
   const pair = defaultPairInputs()

@@ -1,9 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { Activity } from "lucide-react"
 import { cn } from "cn"
 import { matchingQueries } from "@/features/matching/matching.queries"
+import { ConcordMark } from "./concord-logo"
 
 type NavItem = {
   label: string
@@ -60,8 +60,8 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         className="flex items-center gap-2 border-b px-5 py-5 text-lg font-semibold"
       >
-        <Activity className="size-5 text-primary" aria-hidden="true" />
-        HLA-Trans
+        <ConcordMark className="text-primary" />
+        Concord
       </Link>
       <p className="px-5 pt-5 pb-2 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
         Heart compatibility

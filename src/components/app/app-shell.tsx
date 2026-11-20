@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="w-72 bg-sidebar p-0">
                 <SheetTitle className="sr-only">
-                  HLA-Trans navigation
+                  Concord navigation
                 </SheetTitle>
                 <AppSidebar onNavigate={() => setOpen(false)} />
               </SheetContent>

@@ -33,7 +33,7 @@ export const Route = createFileRoute("/matching/")({
       context.queryClient.ensureQueryData(matchingQueries.active()),
       context.queryClient.ensureQueryData(matchingQueries.history(deps)),
     ]),
-  head: () => ({ meta: [{ title: "Matching · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Matching · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={8} />,
   component: MatchingPage,
 })

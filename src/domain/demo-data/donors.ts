@@ -165,7 +165,8 @@ function base(i: number, overrides: (d: Donor) => void): Donor {
   return d
 }
 
-export const DEMO_DONORS: Donor[] = [
+/** Built per call: Workers forbid crypto.randomUUID() and freeze Date at module scope. */
+export const demoDonors = (): Donor[] => [
   // 01: the reference offer. Young DBD trauma donor, everything resulted and normal.
   base(0, (d) => {
     Object.assign(d.identity, { ageYears: 26, ethnicity: "white" })

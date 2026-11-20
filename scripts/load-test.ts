@@ -9,7 +9,10 @@ import { insertDonor } from "@/server/repos/donors.server"
 import { claimNextRun, enqueueRun } from "@/server/repos/runs.server"
 import { processRun } from "@/server/matching/process-run.server"
 import { getMatch, listMatches } from "@/server/repos/matches.server"
-import { DEMO_DONORS, DEMO_PATIENTS } from "@/domain/demo-data"
+import { demoDonors, demoPatients } from "@/domain/demo-data"
+
+const DEMO_PATIENTS = demoPatients()
+const DEMO_DONORS = demoDonors()
 
 // --seed-only fills the dev database (for manual UI checks while a run progresses).
 // Otherwise the run TRUNCATEs, so it targets a disposable database: PERF_DATABASE_URL first,

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/donors/")({
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(donorQueries.list(deps)),
-  head: () => ({ meta: [{ title: "Donors · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Donors · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={7} />,
   component: DonorsPage,
 })

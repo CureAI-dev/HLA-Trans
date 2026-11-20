@@ -4,8 +4,9 @@ Heart donor–recipient compatibility demo. TanStack Start (React 19) + TanStack
 
 ## Commands
 
-- Setup: `cp .env.example .env && bun install --frozen-lockfile && bun run db:up && bun run db:migrate` (`db:seed` is optional).
-- `bun run dev` starts **both** web (`:3000`) and worker. `dev:web` alone never processes match runs.
+- Setup: `cp .env.example .env`, fill in the values (it ships empty; local values and the Neon Auth settings are in the README), then `bun install --frozen-lockfile && bun run db:up && bun run db:migrate` (`db:seed` is optional).
+- `bun run dev` starts **both** web (`:3000`, inside the Workers runtime via the Cloudflare Vite plugin, DB from `localConnectionString` in `wrangler.jsonc`) and the Bun worker (DB from `DATABASE_URL`).
+- Deploy: `bun run deploy` (Cloudflare Workers, entry `src/server.ts`: fetch + `match-runs` queue consumer + 1-minute cron). Run `bun run cf-typegen` after changing bindings in `wrangler.jsonc`.
 - Every commit must pass: `bun run typecheck`, `bun run lint`, `bun run test`, `bun run test:db`.
 - Single unit test: `bunx vitest run path/to/file.test.ts`. Single DB test: `bunx vitest run --config vitest.db.config.ts path/to/x.db.test.ts` (run `bun run db:migrate:test` first).
 - `bun run check` is the **Prettier check**, not typecheck. `bun run format` writes.
@@ -27,7 +28,7 @@ Heart donor–recipient compatibility demo. TanStack Start (React 19) + TanStack
 - `src/features/<x>/`: `*.functions.ts` (thin `createServerFn`: zod validator → one repo/service call), `*.queries.ts` (key factory + `queryOptions`), `*.mutations.ts` (hooks).
   - Reads use `readMiddleware`, writes use `writeMiddleware`. Both need a signed-in user (Neon Auth via `server/auth.server.ts`, `UNAUTHENTICATED` otherwise) and give you `context.user` and `context.actor` (the user's name). Only the `features/auth` functions use bare `errorMiddleware`.
 - `src/routes/` stays thin: `validateSearch`, then a loader with `context.queryClient.ensureQueryData(...)`, then `useSuspenseQuery` in the component. `src/routeTree.gen.ts` is generated (by the Vite plugin, or `bun run generate-routes`). Never hand-edit it.
-- Creating or updating a patient/donor queues a match run **in the same transaction** (`server/services/records.server.ts`). NOTIFY fires on commit, and the worker claims runs with `FOR UPDATE SKIP LOCKED`.
+- Creating or updating a patient/donor queues a match run **in the same transaction** (`server/services/records.server.ts`). The worker is woken by `wakeWorker()` in `runs.server.ts`: NOTIFY on commit under Bun, a `MATCH_RUNS` queue message on Workers (Hyperdrive has no LISTEN/NOTIFY). Workers claim runs with `FOR UPDATE SKIP LOCKED`. On Workers, `getDb()` returns a per-invocation pool (`scope.server.ts`), so don't cache db handles across requests.
 - `src/components/ui/**` is vendored shadcn code (style `base-lyra`, Base UI, not Radix) and is not linted. Add components with the shadcn CLI.
 
 ## Invariants that are easy to break

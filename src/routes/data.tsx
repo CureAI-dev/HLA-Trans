@@ -19,7 +19,7 @@ import {
 import { deleteLegacyData, hasLegacyData } from "@/lib/legacy-import"
 
 export const Route = createFileRoute("/data")({
-  head: () => ({ meta: [{ title: "Data · HLA-Trans" }] }),
+  head: () => ({ meta: [{ title: "Data · Concord" }] }),
   pendingComponent: PagePending,
   component: DataPage,
 })

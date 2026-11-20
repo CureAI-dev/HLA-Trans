@@ -1,5 +1,5 @@
 {
-  "name": "hla-trans",
+  "name": "concord",
   "main": "src/server.ts", // custom entry for queue/cron; else "@tanstack/react-start/server-entry"
   "compatibility_date": "2026-11-19",
   "compatibility_flags": ["nodejs_compat"],

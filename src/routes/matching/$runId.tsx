@@ -47,8 +47,8 @@ export const Route = createFileRoute("/matching/$runId")({
     meta: [
       {
         title: loaderData
-          ? `Matching · ${loaderData.subjectLabel} · HLA-Trans`
-          : "Matching · HLA-Trans",
+          ? `Matching · ${loaderData.subjectLabel} · Concord`
+          : "Matching · Concord",
       },
     ],
   }),

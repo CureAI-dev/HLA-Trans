@@ -4,7 +4,10 @@ import { evaluate } from "../../engine"
 import { defaultPairInputs } from "../../factories"
 import { buildProfile } from "../../hla"
 import { donorSchema, patientSchema } from "../../schema"
-import { DEMO_DONORS, DEMO_PATIENTS, SCENARIOS, demoNow } from ".."
+import { SCENARIOS, demoDonors, demoNow, demoPatients } from ".."
+
+const DEMO_PATIENTS = demoPatients()
+const DEMO_DONORS = demoDonors()
 
 const byId = <T extends { id: string }>(xs: Array<T>) =>
   new Map(xs.map((x) => [x.id, x]))
