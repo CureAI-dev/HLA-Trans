@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm"
+import { and, gte, lt, sql } from "drizzle-orm"
 import type { AnyColumn, SQL } from "drizzle-orm"
 import { decodeCursor, encodeCursor } from "@/lib/cursor"
 import type { Cursor, Page } from "@/lib/cursor"
@@ -52,3 +52,20 @@ export function toPage<T>(
 
 /** First row or undefined. Destructuring `[row]` types as always present (no noUncheckedIndexedAccess). */
 export const first = <T>(rows: T[]): T | undefined => rows[0]
+
+/**
+ * Inclusive calendar-day range filter (YYYY-MM-DD) on a timestamp column.
+ * `to` covers the whole day, so the upper bound is the next midnight.
+ */
+export function withinDays(
+  column: AnyColumn,
+  from: string | undefined,
+  to: string | undefined
+): SQL | undefined {
+  return and(
+    from ? gte(column, new Date(`${from}T00:00:00`)) : undefined,
+    to
+      ? lt(column, new Date(new Date(`${to}T00:00:00`).getTime() + 86_400_000))
+      : undefined
+  )
+}

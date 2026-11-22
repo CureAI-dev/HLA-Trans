@@ -7,7 +7,11 @@ import { matchingQueries } from "@/features/matching/matching.queries"
 import { RunProgressCard } from "@/features/matching/components/run-progress-card"
 import { RunHistoryTable } from "@/features/matching/components/run-history-table"
 import { PageHeader } from "@/components/app/page-header"
-import { FilterSelect, ListToolbar } from "@/components/app/list-toolbar"
+import {
+  DateFilter,
+  FilterSelect,
+  ListToolbar,
+} from "@/components/app/list-toolbar"
 import { Pager } from "@/components/app/pager"
 import { EmptyState } from "@/components/app/empty-state"
 import { TablePageSkeleton } from "@/components/app/page-skeletons"
@@ -79,7 +83,11 @@ function MatchingPage() {
         </h2>
         <ListToolbar
           canReset={Boolean(
-            search.status || search.subjectKind || search.subjectId
+            search.status ||
+            search.subjectKind ||
+            search.subjectId ||
+            search.from ||
+            search.to
           )}
           onReset={() => void navigate({ search: {}, replace: true })}
         >
@@ -94,6 +102,18 @@ function MatchingPage() {
             value={search.subjectKind}
             options={SUBJECT_OPTIONS}
             onChange={(subjectKind) => setFilter({ subjectKind })}
+          />
+          <DateFilter
+            label="Queued from"
+            value={search.from}
+            max={search.to}
+            onChange={(from) => setFilter({ from })}
+          />
+          <DateFilter
+            label="Queued through"
+            value={search.to}
+            min={search.from}
+            onChange={(to) => setFilter({ to })}
           />
         </ListToolbar>
         <RunHistoryTable rows={history.items} />

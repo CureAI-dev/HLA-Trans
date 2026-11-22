@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
 import { Search, X } from "lucide-react"
+import { DatePickerField } from "@/components/form/date-picker-field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -92,7 +93,9 @@ export function FilterSelect<T extends string>({
     <Select
       items={items}
       value={value ?? ALL}
-      onValueChange={(v) => onChange(v === ALL || v === null ? undefined : (v as T))}
+      onValueChange={(v) =>
+        onChange(v === ALL || v === null ? undefined : (v as T))
+      }
     >
       <SelectTrigger aria-label={label} className="w-auto min-w-36">
         <SelectValue />
@@ -105,5 +108,36 @@ export function FilterSelect<T extends string>({
         ))}
       </SelectContent>
     </Select>
+  )
+}
+
+const isoDay = /^\d{4}-\d{2}-\d{2}$/
+
+/** Toolbar date filter: the label stays for screen readers but is hidden so the row stays one line. */
+export function DateFilter({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+}: {
+  label: string
+  value: string | undefined
+  onChange: (v: string | undefined) => void
+  min?: string
+  max?: string
+}) {
+  return (
+    <div className="w-44 [&_label]:sr-only">
+      <DatePickerField
+        label={label}
+        value={value ?? ""}
+        min={min}
+        max={max}
+        disableFuture
+        captionLayout="label"
+        onChange={(v) => onChange(isoDay.test(v) ? v : undefined)}
+      />
+    </div>
   )
 }

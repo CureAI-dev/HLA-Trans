@@ -3,7 +3,7 @@ import { criteriaVersions, matchResults, matchRuns } from "../db/schema.server"
 import type { Executor } from "../db/client.server"
 import { appendAudit } from "./audit.server"
 import { latestCriteria } from "./criteria.server"
-import { after, first, parseCursor, toPage } from "./sql.server"
+import { after, first, parseCursor, toPage, withinDays } from "./sql.server"
 import { workerScope } from "../scope.server"
 import { newId } from "@/domain/factories"
 import type { RunRow, RunStatus, RunTrigger } from "@/domain/match-types"
@@ -260,6 +260,9 @@ export type RunHistoryInput = {
   status?: RunStatus
   subjectKind?: "patient" | "donor"
   subjectId?: string
+  /** Local calendar dates (YYYY-MM-DD), inclusive, on when the run was queued. */
+  from?: string
+  to?: string
   cursor?: string
   limit?: number
 }
@@ -284,6 +287,7 @@ export async function listRunHistory(
           ? eq(matchRuns.subjectKind, input.subjectKind)
           : undefined,
         input.subjectId ? eq(matchRuns.subjectId, input.subjectId) : undefined,
+        withinDays(matchRuns.createdAt, input.from, input.to),
         cursor
           ? after(
               matchRuns.createdAt,

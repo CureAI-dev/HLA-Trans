@@ -159,9 +159,12 @@ export const matchRuns = pgTable(
       "match_runs_subject_kind",
       sql`${t.subjectKind} in ('patient','donor')`
     ),
-    index("match_runs_active_idx")
-      .on(t.status, t.createdAt)
-      .where(sql`${t.status} in ('queued','running')`),
+    // Status filter on run history (keyset by created_at, id) and the active list.
+    index("match_runs_status_created_idx").on(
+      t.status,
+      t.createdAt.desc().nullsFirst(),
+      t.id.desc().nullsFirst()
+    ),
     index("match_runs_created_idx").on(
       t.createdAt.desc().nullsFirst(),
       t.id.desc().nullsFirst()

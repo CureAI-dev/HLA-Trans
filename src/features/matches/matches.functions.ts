@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
+import { isoDay } from "@/features/shared/search"
 import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { decisionSchema, pairInputsSchema } from "@/domain/schema"
 import { getDb } from "@/server/db/client.server"
@@ -10,7 +11,6 @@ import {
   listMatches,
 } from "@/server/repos/matches.server"
 
-const isoDay = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
 export const matchListSearch = z.object({
   overall: z.enum(["pass", "review", "fail"]).optional().catch(undefined),
   decision: z.enum(["pending", "decided"]).optional().catch(undefined),

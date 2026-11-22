@@ -15,6 +15,13 @@
       "when": 1794721172510,
       "tag": "0001_extensions_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795359633395,
+      "tag": "0002_elite_captain_midlands",
+      "breakpoints": true
     }
   ]
 }

@@ -7,11 +7,14 @@ import type { MatchListSearch } from "@/features/matches/matches.functions"
 import { matchQueries } from "@/features/matches/matches.queries"
 import { PageHeader } from "@/components/app/page-header"
 import { Pager } from "@/components/app/pager"
-import { FilterSelect, ListToolbar } from "@/components/app/list-toolbar"
+import {
+  DateFilter,
+  FilterSelect,
+  ListToolbar,
+} from "@/components/app/list-toolbar"
 import { TablePageSkeleton } from "@/components/app/page-skeletons"
 import { EmptyState } from "@/components/app/empty-state"
 import { MatchTable } from "@/components/match/match-table"
-import { DatePickerField } from "@/components/form/date-picker-field"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 
@@ -29,8 +32,6 @@ const SOURCE = [
   { value: "checked", label: "Checked pair" },
 ] as const
 
-const isoDay = /^\d{4}-\d{2}-\d{2}$/
-
 export const Route = createFileRoute("/matches/")({
   validateSearch: matchListSearch,
   loaderDeps: ({ search }) => search,
@@ -40,35 +41,6 @@ export const Route = createFileRoute("/matches/")({
   pendingComponent: () => <TablePageSkeleton columns={6} />,
   component: MatchResults,
 })
-
-/** Toolbar date filter: the label stays for screen readers but is hidden so the row stays one line. */
-function DateFilter({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-}: {
-  label: string
-  value: string | undefined
-  onChange: (v: string | undefined) => void
-  min?: string
-  max?: string
-}) {
-  return (
-    <div className="w-44 [&_label]:sr-only">
-      <DatePickerField
-        label={label}
-        value={value ?? ""}
-        min={min}
-        max={max}
-        disableFuture
-        captionLayout="label"
-        onChange={(v) => onChange(isoDay.test(v) ? v : undefined)}
-      />
-    </div>
-  )
-}
 
 function MatchResults() {
   const search = Route.useSearch()
@@ -85,13 +57,13 @@ function MatchResults() {
   )
   const filtered = Boolean(
     search.overall ||
-      search.decision ||
-      search.source ||
-      search.from ||
-      search.to ||
-      search.runId ||
-      search.patientId ||
-      search.donorId
+    search.decision ||
+    search.source ||
+    search.from ||
+    search.to ||
+    search.runId ||
+    search.patientId ||
+    search.donorId
   )
   return (
     <>
@@ -108,11 +80,36 @@ function MatchResults() {
         canReset={filtered}
         onReset={() => void navigate({ search: {}, replace: true })}
       >
-        <FilterSelect label="Result" value={search.overall} options={OVERALL} onChange={(overall) => set({ overall })} />
-        <FilterSelect label="Decision" value={search.decision} options={DECISION} onChange={(decision) => set({ decision })} />
-        <FilterSelect label="Source" value={search.source} options={SOURCE} onChange={(source) => set({ source })} />
-        <DateFilter label="Saved from" value={search.from} max={search.to} onChange={(from) => set({ from })} />
-        <DateFilter label="Saved through" value={search.to} min={search.from} onChange={(to) => set({ to })} />
+        <FilterSelect
+          label="Result"
+          value={search.overall}
+          options={OVERALL}
+          onChange={(overall) => set({ overall })}
+        />
+        <FilterSelect
+          label="Decision"
+          value={search.decision}
+          options={DECISION}
+          onChange={(decision) => set({ decision })}
+        />
+        <FilterSelect
+          label="Source"
+          value={search.source}
+          options={SOURCE}
+          onChange={(source) => set({ source })}
+        />
+        <DateFilter
+          label="Saved from"
+          value={search.from}
+          max={search.to}
+          onChange={(from) => set({ from })}
+        />
+        <DateFilter
+          label="Saved through"
+          value={search.to}
+          min={search.from}
+          onChange={(to) => set({ to })}
+        />
         {search.runId && (
           <Badge variant="outline" className="h-8 gap-1.5 px-2">
             One match run
@@ -151,8 +148,12 @@ function MatchResults() {
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={data.nextCursor}
-        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined }) })}
-        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+        onFirst={() =>
+          void navigate({ search: (s) => ({ ...s, cursor: undefined }) })
+        }
+        onNext={(cursor) =>
+          void navigate({ search: (s) => ({ ...s, cursor }) })
+        }
       />
     </>
   )

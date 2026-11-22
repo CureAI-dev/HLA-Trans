@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start"
 import { z } from "zod"
+import { isoDay } from "@/features/shared/search"
 import { readMiddleware, writeMiddleware } from "@/features/shared/middleware"
 import { getDb } from "@/server/db/client.server"
 import {
@@ -16,6 +17,8 @@ export const runHistorySearch = z.object({
     .catch(undefined),
   subjectKind: z.enum(["patient", "donor"]).optional().catch(undefined),
   subjectId: z.string().max(64).optional().catch(undefined),
+  from: isoDay.optional().catch(undefined),
+  to: isoDay.optional().catch(undefined),
   cursor: z.string().max(600).optional().catch(undefined),
 })
 export type RunHistorySearch = z.infer<typeof runHistorySearch>

@@ -1,14 +1,4 @@
-import {
-  and,
-  asc,
-  desc,
-  eq,
-  gte,
-  isNotNull,
-  isNull,
-  lt,
-  sql,
-} from "drizzle-orm"
+import { and, asc, desc, eq, isNotNull, isNull, sql } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 import {
   criteriaVersions,
@@ -24,7 +14,7 @@ import { getCriteriaVersion, latestCriteria } from "./criteria.server"
 import { getDonor } from "./donors.server"
 import { getPatient } from "./patients.server"
 import { putSnapshots } from "./snapshots.server"
-import { after, first, parseCursor, toPage } from "./sql.server"
+import { after, first, parseCursor, toPage, withinDays } from "./sql.server"
 import { evaluate } from "@/domain/engine"
 import { newId } from "@/domain/factories"
 import { decisionSchema, pairInputsSchema } from "@/domain/schema"
@@ -109,15 +99,7 @@ export async function listMatches(
           : undefined,
         input.donorId ? eq(matchResults.donorId, input.donorId) : undefined,
         input.runId ? eq(matchResults.runId, input.runId) : undefined,
-        input.from
-          ? gte(matchResults.createdAt, new Date(`${input.from}T00:00:00`))
-          : undefined,
-        input.to
-          ? lt(
-              matchResults.createdAt,
-              new Date(new Date(`${input.to}T00:00:00`).getTime() + 86_400_000)
-            )
-          : undefined,
+        withinDays(matchResults.createdAt, input.from, input.to),
         cursor
           ? order === "screen"
             ? after(screenKeyC, matchResults.id, cursor, "asc")

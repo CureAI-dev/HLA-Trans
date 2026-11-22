@@ -9,6 +9,7 @@ import {
   claimNextRun,
   enqueueRun,
   getRun,
+  listRunHistory,
   reapStaleRuns,
   requestCancel,
 } from "../../repos/runs.server"
@@ -152,5 +153,40 @@ describe("match runs", () => {
       await reapStaleRuns(db)
     }
     expect((await getRun(db, runId)).status).toBe("failed")
+  })
+
+  it("filters history by status and an inclusive day range", async () => {
+    const db = testDb()
+    await ensureInitialCriteria(db)
+    const queue = async (id: string, day: string) => {
+      const runId = await enqueueRun(db, {
+        subjectKind: "donor",
+        subjectId: id,
+        subjectLabel: id,
+        trigger: "manual",
+        actor,
+      })
+      await db
+        .update(matchRuns)
+        .set({ createdAt: new Date(`${day}T10:00:00`) })
+        .where(eq(matchRuns.id, runId))
+      return runId
+    }
+    const early = await queue("don_a", "2026-11-01")
+    const mid = await queue("don_b", "2026-11-05")
+    const late = await queue("don_c", "2026-11-09")
+    await requestCancel(db, mid, actor)
+
+    const ids = async (input: Parameters<typeof listRunHistory>[1]) =>
+      (await listRunHistory(db, input)).items.map((r) => r.id)
+    expect(await ids({ from: "2026-11-05", to: "2026-11-09" })).toEqual([
+      late,
+      mid,
+    ])
+    expect(await ids({ to: "2026-11-01" })).toEqual([early])
+    expect(await ids({ status: "queued", from: "2026-11-01" })).toEqual([
+      late,
+      early,
+    ])
   })
 })
