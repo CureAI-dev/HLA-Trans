@@ -10,6 +10,7 @@ import { donorSchema } from "@/domain/schema"
 import { getDb } from "@/server/db/client.server"
 import {
   getDonor,
+  donorStats,
   listDonors,
   softDeleteDonor,
   updateDonor,
@@ -19,11 +20,15 @@ import {
   rerunForDonor,
 } from "@/server/services/records.server"
 
-export const donorListSearch = z.object({
+/** The filters shared by the list and its KPI counts (no paging or sort). */
+export const donorFilter = z.object({
   q: z.string().trim().max(100).optional().catch(undefined),
   state: z.enum(DONOR_STATE_VALUES).optional().catch(undefined),
   abo: z.enum(ABO_VALUES).optional().catch(undefined),
   donationType: z.enum(DONATION_TYPE_VALUES).optional().catch(undefined),
+})
+export type DonorFilter = z.infer<typeof donorFilter>
+export const donorListSearch = donorFilter.extend({
   sort: z.enum(["updated", "code"]).optional().catch(undefined),
   cursor: z.string().max(600).optional().catch(undefined),
 })
@@ -34,6 +39,11 @@ export const listDonorsFn = createServerFn({ method: "GET" })
   .middleware([readMiddleware])
   .validator(donorListSearch)
   .handler(({ data }) => listDonors(getDb(), data))
+
+export const donorStatsFn = createServerFn({ method: "GET" })
+  .middleware([readMiddleware])
+  .validator(donorFilter)
+  .handler(({ data }) => donorStats(getDb(), data))
 
 export const getDonorFn = createServerFn({ method: "GET" })
   .middleware([readMiddleware])

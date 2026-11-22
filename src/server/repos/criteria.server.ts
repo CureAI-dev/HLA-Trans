@@ -1,4 +1,5 @@
-import { desc, eq } from "drizzle-orm"
+import { desc, eq, sql } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { criteriaVersions } from "../db/schema.server"
 import type { Executor } from "../db/client.server"
 import { appendAudit } from "./audit.server"
@@ -44,6 +45,21 @@ export async function latestCriteria(exec: Executor): Promise<CriteriaVersion> {
   if (row) return toVersion(row)
   await ensureInitialCriteria(exec)
   return latestCriteria(exec)
+}
+
+/**
+ * One numeric criterion of the latest criteria version as a SQL scalar, so a
+ * list filter and its counts read the same threshold in one statement. Falls
+ * back to the default when no version exists yet.
+ */
+export function latestCriterion<
+  TSection extends keyof Criteria,
+  TKey extends keyof Criteria[TSection] & string,
+>(section: TSection, key: TKey): SQL<number> {
+  const fallback = DEFAULT_CRITERIA[section][key]
+  if (typeof fallback !== "number")
+    throw new Error(`Criterion ${String(section)}.${key} is not numeric.`)
+  return sql<number>`coalesce((select (${criteriaVersions.criteria} -> ${section} ->> ${key})::real from ${criteriaVersions} order by ${criteriaVersions.version} desc limit 1), ${fallback})`
 }
 
 export async function getCriteriaVersion(

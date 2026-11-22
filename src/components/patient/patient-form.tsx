@@ -99,10 +99,10 @@ const PatientDerivedRail = memo(function PatientDerivedValues({
     <div className="space-y-3">
       <h2 className="text-sm font-semibold">Derived values</h2>
       <div className="[&_output]:text-sm [&>div]:grid-cols-2! [&>div>div]:p-2">
-        <PatientDerived patient={patient} />
+        <PatientDerived patient={patient} linkFields />
       </div>
       <div className="[&_output]:text-sm [&>div]:grid-cols-2! [&>div>div]:p-2">
-        <PatientHemodynamics patient={patient} />
+        <PatientHemodynamics patient={patient} linkFields />
       </div>
     </div>
   )

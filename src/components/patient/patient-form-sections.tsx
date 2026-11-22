@@ -913,88 +913,137 @@ export const SensitizationSection = memo(function SensitizationFields({
   )
 })
 
+/** Matching outcome of a donor finding the candidate has or hasn't opted in to. */
+function OptInOutcome({
+  accepted,
+  onText,
+}: {
+  accepted: boolean
+  onText: string
+}) {
+  return (
+    <p className="text-xs text-muted-foreground">
+      Matching:{" "}
+      <span className="font-medium text-foreground">
+        {accepted ? onText : "FAIL"}
+      </span>
+    </p>
+  )
+}
+
 export const AcceptanceSection = memo(function AcceptanceFields({
   value: v,
   errors,
   set,
 }: SectionProps<PatientFormValue, "acceptance">) {
+  const optIns = [
+    {
+      key: "acceptDcd",
+      label: "Accept donation after circulatory death (DCD)",
+      hint: "On: DCD donors are judged by the DCD warm-ischemia limits instead of failing outright.",
+      onText: "DCD rules apply",
+    },
+    {
+      key: "acceptHcvNat",
+      label: "Accept HCV NAT positive",
+      hint: "Viremic HCV. Needs DAA treatment and consent (ISHLT 2020).",
+      onText: "REVIEW",
+    },
+    {
+      key: "acceptHcvAb",
+      label: "Accept HCV antibody positive",
+      hint: "Past exposure with a negative NAT. Needs NAT surveillance.",
+      onText: "REVIEW",
+    },
+    {
+      key: "acceptHbvNat",
+      label: "Accept HBV NAT positive",
+      hint: "Covers HBsAg or HBV NAT positive. Needs HBV prophylaxis (AST 2015).",
+      onText: "REVIEW",
+    },
+    {
+      key: "acceptAntiHbc",
+      label: "Accept anti-HBc positive",
+      hint: "Applies only when HBsAg and HBV NAT are both negative.",
+      onText: "REVIEW",
+    },
+    {
+      key: "acceptPhsRisk",
+      label: "Accept PHS risk criteria",
+      hint: "Donor meets PHS 2020 increased-risk criteria. Requires disclosure.",
+      onText: "REVIEW",
+    },
+  ] as const
   return (
-    <FormSection id="acceptance" title="Acceptance">
-      <div className="grid gap-4 md:grid-cols-2">
-        <NumberField
-          id="field-acceptance.maxDonorAge"
-          label="Maximum donor age"
-          value={v.maxDonorAge}
-          onChange={(value) => set("acceptance.maxDonorAge", value)}
-          error={errors.maxDonorAge}
-          unit="years"
-        />
-        <NumberField
-          id="field-acceptance.minDonorWeightKg"
-          label="Minimum donor weight"
-          value={v.minDonorWeightKg}
-          onChange={(value) => set("acceptance.minDonorWeightKg", value)}
-          error={errors.minDonorWeightKg}
-          unit="kg"
-        />
-        <NumberField
-          id="field-acceptance.maxDonorWeightKg"
-          label="Maximum donor weight"
-          value={v.maxDonorWeightKg}
-          onChange={(value) => set("acceptance.maxDonorWeightKg", value)}
-          error={errors.maxDonorWeightKg}
-          unit="kg"
-        />
-        <NumberField
-          id="field-acceptance.maxDistanceNm"
-          label="Maximum donor distance"
-          value={v.maxDistanceNm}
-          onChange={(value) => set("acceptance.maxDistanceNm", value)}
-          error={errors.maxDistanceNm}
-          unit="NM"
-        />
-        <SwitchField
-          id="field-acceptance.acceptDcd"
-          label="Accept donation after circulatory death (DCD)"
-          value={v.acceptDcd}
-          onChange={(value) => set("acceptance.acceptDcd", value)}
-          error={errors.acceptDcd}
-        />
-        <SwitchField
-          id="field-acceptance.acceptHcvNat"
-          label="Accept HCV NAT positive"
-          value={v.acceptHcvNat}
-          onChange={(value) => set("acceptance.acceptHcvNat", value)}
-          error={errors.acceptHcvNat}
-        />
-        <SwitchField
-          id="field-acceptance.acceptHcvAb"
-          label="Accept HCV antibody positive"
-          value={v.acceptHcvAb}
-          onChange={(value) => set("acceptance.acceptHcvAb", value)}
-          error={errors.acceptHcvAb}
-        />
-        <SwitchField
-          id="field-acceptance.acceptAntiHbc"
-          label="Accept anti-HBc positive"
-          value={v.acceptAntiHbc}
-          onChange={(value) => set("acceptance.acceptAntiHbc", value)}
-          error={errors.acceptAntiHbc}
-        />
-        <SwitchField
-          id="field-acceptance.acceptHbvNat"
-          label="Accept HBV NAT positive"
-          value={v.acceptHbvNat}
-          onChange={(value) => set("acceptance.acceptHbvNat", value)}
-          error={errors.acceptHbvNat}
-        />
-        <SwitchField
-          id="field-acceptance.acceptPhsRisk"
-          label="Accept PHS risk criteria"
-          value={v.acceptPhsRisk}
-          onChange={(value) => set("acceptance.acceptPhsRisk", value)}
-          error={errors.acceptPhsRisk}
-        />
+    <FormSection
+      id="acceptance"
+      title="Acceptance"
+      description="Limits this candidate has agreed to for donor offers. A donor outside any limit is a FAIL in matching, even if everything else passes. A blank number means no limit."
+    >
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium">Donor limits</h3>
+        <div className="grid gap-4 md:grid-cols-2">
+          <NumberField
+            id="field-acceptance.maxDonorAge"
+            label="Maximum donor age"
+            value={v.maxDonorAge}
+            onChange={(value) => set("acceptance.maxDonorAge", value)}
+            error={errors.maxDonorAge}
+            unit="years"
+            hint="An older donor fails. The program's own donor age criteria still apply."
+          />
+          <NumberField
+            id="field-acceptance.maxDistanceNm"
+            label="Maximum donor distance"
+            value={v.maxDistanceNm}
+            onChange={(value) => set("acceptance.maxDistanceNm", value)}
+            error={errors.maxDistanceNm}
+            unit="NM"
+            hint="A farther donor fails. If set and the transport distance is unknown, the result is REVIEW."
+          />
+          <NumberField
+            id="field-acceptance.minDonorWeightKg"
+            label="Minimum donor weight"
+            value={v.minDonorWeightKg}
+            onChange={(value) => set("acceptance.minDonorWeightKg", value)}
+            error={errors.minDonorWeightKg}
+            unit="kg"
+            hint="Checked on top of the PHM or weight-ratio size match, not instead of it."
+          />
+          <NumberField
+            id="field-acceptance.maxDonorWeightKg"
+            label="Maximum donor weight"
+            value={v.maxDonorWeightKg}
+            onChange={(value) => set("acceptance.maxDonorWeightKg", value)}
+            error={errors.maxDonorWeightKg}
+            unit="kg"
+            hint="A heavier donor fails, on top of the size match."
+          />
+        </div>
+      </div>
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium">
+          Risk opt-ins (informed consent required)
+        </h3>
+        <p className="border-l-2 border-primary bg-muted/50 px-3 py-2 text-sm">
+          Off: a donor with this finding fails. On: the donor is allowed, and an
+          infection or PHS finding goes to REVIEW under the default criteria.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {optIns.map(({ key, label, hint, onText }) => (
+            <div key={key} className="space-y-1">
+              <SwitchField
+                id={`field-acceptance.${key}`}
+                label={label}
+                value={v[key]}
+                onChange={(value) => set(`acceptance.${key}`, value)}
+                error={errors[key]}
+                hint={hint}
+              />
+              <OptInOutcome accepted={v[key]} onText={onText} />
+            </div>
+          ))}
+        </div>
       </div>
     </FormSection>
   )

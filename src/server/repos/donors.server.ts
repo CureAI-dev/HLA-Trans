@@ -1,7 +1,9 @@
-import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm"
+import { and, asc, count, desc, eq, ilike, isNull, or, sql } from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { donors } from "../db/schema.server"
 import type { Executor } from "../db/client.server"
 import { appendAudit } from "./audit.server"
+import { latestCriterion } from "./criteria.server"
 import { after, first, likeContains, parseCursor, toPage } from "./sql.server"
 import { snapshotHash } from "./snapshots.server"
 import { donorSchema } from "@/domain/schema"
@@ -11,11 +13,13 @@ import { AppError } from "@/lib/app-error"
 import type { Page } from "@/lib/cursor"
 
 export type DonorSort = "updated" | "code"
-export type DonorListInput = {
+export type DonorFilter = {
   q?: string
   state?: Donor["identity"]["state"]
   abo?: NonNullable<Donor["blood"]["abo"]>
   donationType?: Donor["donation"]["type"]
+}
+export type DonorListInput = DonorFilter & {
   sort?: DonorSort
   cursor?: string
   limit?: number
@@ -46,6 +50,74 @@ const rowSelect = {
   updatedAt: donors.updatedAt,
 }
 
+/** One WHERE for the list and its counts, so the tiles and the table cannot disagree. */
+function donorWhere(input: DonorFilter): Array<SQL | undefined> {
+  const q = input.q?.trim()
+  return [
+    isNull(donors.deletedAt),
+    input.state ? eq(donors.state, input.state) : undefined,
+    input.abo ? eq(donors.abo, input.abo) : undefined,
+    input.donationType
+      ? eq(donors.donationType, input.donationType)
+      : undefined,
+    q
+      ? or(
+          ilike(donors.donorCode, likeContains(q)),
+          ilike(donors.hospital, likeContains(q))
+        )
+      : undefined,
+  ]
+}
+
+export type DonorStats = {
+  total: number
+  available: number
+  allocated: number
+  dcd: number
+  /** Median donor age in years; null when no donor has an age. */
+  medianAge: number | null
+  /** Donors at or above the latest criteria's age review threshold. */
+  ageReview: number
+  ageReviewAbove: number
+}
+
+/** KPI counts over every donor matching the filter (not one page). */
+export async function donorStats(
+  exec: Executor,
+  input: DonorFilter
+): Promise<DonorStats> {
+  const reviewAge = latestCriterion("donor", "ageReviewAbove")
+  const [row] = await exec
+    .select({
+      total: count(),
+      available:
+        sql<number>`count(*) filter (where ${donors.state} = 'available')`.mapWith(
+          Number
+        ),
+      allocated:
+        sql<number>`count(*) filter (where ${donors.state} = 'allocated')`.mapWith(
+          Number
+        ),
+      dcd: sql<number>`count(*) filter (where ${donors.donationType} = 'dcd')`.mapWith(
+        Number
+      ),
+      medianAge: sql<
+        number | null
+      >`percentile_cont(0.5) within group (order by ${donors.ageYears})`,
+      ageReview:
+        sql<number>`count(*) filter (where ${donors.ageYears} >= ${reviewAge})`.mapWith(
+          Number
+        ),
+      ageReviewAbove: reviewAge.mapWith(Number),
+    })
+    .from(donors)
+    .where(and(...donorWhere(input)))
+  return {
+    ...row,
+    medianAge: row.medianAge === null ? null : Number(row.medianAge),
+  }
+}
+
 export async function listDonors(
   exec: Executor,
   input: DonorListInput
@@ -56,24 +128,12 @@ export async function listDonors(
   const key = sort === "code" ? donors.donorCode : donors.updatedAt
   const keyType = sort === "code" ? "text" : "timestamptz"
   const dir = sort === "code" ? "asc" : "desc"
-  const q = input.q?.trim()
   const rows = await exec
     .select(rowSelect)
     .from(donors)
     .where(
       and(
-        isNull(donors.deletedAt),
-        input.state ? eq(donors.state, input.state) : undefined,
-        input.abo ? eq(donors.abo, input.abo) : undefined,
-        input.donationType
-          ? eq(donors.donationType, input.donationType)
-          : undefined,
-        q
-          ? or(
-              ilike(donors.donorCode, likeContains(q)),
-              ilike(donors.hospital, likeContains(q))
-            )
-          : undefined,
+        ...donorWhere(input),
         cursor ? after(key, donors.id, cursor, dir, keyType) : undefined
       )
     )

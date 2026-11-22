@@ -1,7 +1,21 @@
-import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm"
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  or,
+  sql,
+} from "drizzle-orm"
+import type { SQL } from "drizzle-orm"
 import { patients } from "../db/schema.server"
 import type { Executor } from "../db/client.server"
 import { appendAudit } from "./audit.server"
+import { latestCriterion } from "./criteria.server"
 import { after, first, likeContains, parseCursor, toPage } from "./sql.server"
 import { snapshotHash } from "./snapshots.server"
 import { patientSchema } from "@/domain/schema"
@@ -11,11 +25,16 @@ import { AppError } from "@/lib/app-error"
 import type { Page } from "@/lib/cursor"
 
 export type PatientSort = "updated" | "name" | "listed"
-export type PatientListInput = {
+/** Quick filters behind the list KPI tiles. */
+export type PatientFlag = "urgent" | "mcs" | "sensitized"
+export type PatientFilter = {
   q?: string
   state?: Patient["listing"]["state"]
   abo?: NonNullable<Patient["blood"]["abo"]>
   urgency?: NonNullable<Patient["listing"]["urgencyStatus"]>
+  flag?: PatientFlag
+}
+export type PatientListInput = PatientFilter & {
   sort?: PatientSort
   cursor?: string
   limit?: number
@@ -56,6 +75,86 @@ const rowSelect = {
   sortName: patients.sortName,
 }
 
+/** Highest-urgency statuses: adult 1 and 2, pediatric 1A. */
+export const HIGH_URGENCY = ["A1", "A2", "P1A"] as const
+
+const flagCondition: Record<PatientFlag, () => SQL | undefined> = {
+  urgent: () => inArray(patients.urgencyStatus, [...HIGH_URGENCY]),
+  mcs: () => ne(patients.device, "none"),
+  sensitized: () =>
+    sql`${patients.cpra} > ${latestCriterion("immunology", "cpraSensitizedMin")}`,
+}
+
+/** One WHERE for the list and its counts, so the tiles and the table cannot disagree. */
+function patientWhere(input: PatientFilter): Array<SQL | undefined> {
+  const q = input.q?.trim()
+  return [
+    isNull(patients.deletedAt),
+    input.state ? eq(patients.listingState, input.state) : undefined,
+    input.abo ? eq(patients.abo, input.abo) : undefined,
+    input.urgency ? eq(patients.urgencyStatus, input.urgency) : undefined,
+    input.flag ? flagCondition[input.flag]() : undefined,
+    q
+      ? or(
+          ilike(patients.fullName, likeContains(q)),
+          ilike(patients.mrn, likeContains(q))
+        )
+      : undefined,
+  ]
+}
+
+export type PatientStats = {
+  total: number
+  active: number
+  highUrgency: number
+  onMcs: number
+  sensitized: number
+  /** cPRA threshold (%) from the latest criteria version. */
+  sensitizedMin: number
+  /** Median days since listing among active patients; null when none. */
+  medianWaitDays: number | null
+}
+
+/** KPI counts over every patient matching the filter (not one page). */
+export async function patientStats(
+  exec: Executor,
+  input: PatientFilter,
+  today: string = new Date().toISOString().slice(0, 10)
+): Promise<PatientStats> {
+  const cpraMin = latestCriterion("immunology", "cpraSensitizedMin")
+  const active = sql`${patients.listingState} = 'active'`
+  const [row] = await exec
+    .select({
+      total: count(),
+      active: sql<number>`count(*) filter (where ${active})`.mapWith(Number),
+      highUrgency:
+        sql<number>`count(*) filter (where ${inArray(patients.urgencyStatus, [...HIGH_URGENCY])})`.mapWith(
+          Number
+        ),
+      onMcs:
+        sql<number>`count(*) filter (where ${patients.device} <> 'none')`.mapWith(
+          Number
+        ),
+      sensitized:
+        sql<number>`count(*) filter (where ${patients.cpra} > ${cpraMin})`.mapWith(
+          Number
+        ),
+      sensitizedMin: cpraMin.mapWith(Number),
+      medianWaitDays: sql<
+        number | null
+      >`percentile_cont(0.5) within group (order by ${today}::date - ${patients.listingDate}::date) filter (where ${active})`,
+    })
+    .from(patients)
+    .where(and(...patientWhere(input)))
+  return {
+    ...row,
+    medianWaitDays:
+      row.medianWaitDays === null
+        ? null
+        : Math.round(Number(row.medianWaitDays)),
+  }
+}
+
 export async function listPatients(
   exec: Executor,
   input: PatientListInput
@@ -75,22 +174,12 @@ export async function listPatients(
     dir === "asc"
       ? [asc(key), asc(patients.id)]
       : [desc(key), desc(patients.id)]
-  const q = input.q?.trim()
   const rows = await exec
     .select(rowSelect)
     .from(patients)
     .where(
       and(
-        isNull(patients.deletedAt),
-        input.state ? eq(patients.listingState, input.state) : undefined,
-        input.abo ? eq(patients.abo, input.abo) : undefined,
-        input.urgency ? eq(patients.urgencyStatus, input.urgency) : undefined,
-        q
-          ? or(
-              ilike(patients.fullName, likeContains(q)),
-              ilike(patients.mrn, likeContains(q))
-            )
-          : undefined,
+        ...patientWhere(input),
         cursor ? after(key, patients.id, cursor, dir, keyType) : undefined
       )
     )

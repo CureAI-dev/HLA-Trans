@@ -57,7 +57,7 @@ const DonorDerivedRail = memo(function DonorDerivedValues({
     <div className="space-y-3">
       <h2 className="text-sm font-semibold">Derived values</h2>
       <div className="[&_output]:text-sm [&>div]:my-0! [&>div]:grid-cols-2! [&>div>div]:p-2">
-        <DonorDerived donor={donor} />
+        <DonorDerived donor={donor} linkFields />
       </div>
     </div>
   )

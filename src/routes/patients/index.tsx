@@ -1,11 +1,17 @@
 import { useCallback } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { useSuspenseQuery } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useSuspenseQuery,
+} from "@tanstack/react-query"
 import { Plus } from "lucide-react"
 import { patientListSearch } from "@/features/patients/patients.functions"
 import type { PatientListSearch } from "@/features/patients/patients.functions"
 import { patientQueries } from "@/features/patients/patients.queries"
 import { ABO, CANDIDATE_STATE, URGENCY_STATUS } from "@/domain/options"
+import { KpiStrip, percent } from "@/components/app/kpi-strip"
+import type { Kpi } from "@/components/app/kpi-strip"
 import { PageHeader } from "@/components/app/page-header"
 import { Pager } from "@/components/app/pager"
 import { FilterSelect, ListToolbar, SearchInput } from "@/components/app/list-toolbar"
@@ -23,7 +29,10 @@ export const Route = createFileRoute("/patients/")({
   validateSearch: patientListSearch,
   loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
-    context.queryClient.ensureQueryData(patientQueries.list(deps)),
+    Promise.all([
+      context.queryClient.ensureQueryData(patientQueries.list(deps)),
+      context.queryClient.ensureQueryData(patientQueries.stats(deps)),
+    ]),
   head: () => ({ meta: [{ title: "Patients · Concord" }] }),
   pendingComponent: () => <TablePageSkeleton columns={8} />,
   component: PatientsPage,
@@ -33,6 +42,10 @@ function PatientsPage() {
   const search = Route.useSearch()
   const navigate = Route.useNavigate()
   const { data } = useSuspenseQuery(patientQueries.list(search))
+  const stats = useQuery({
+    ...patientQueries.stats(search),
+    placeholderData: keepPreviousData,
+  })
   // Any filter change starts again from the first page.
   const set = useCallback(
     (patch: Partial<PatientListSearch>) =>
@@ -43,7 +56,51 @@ function PatientsPage() {
     [navigate]
   )
   const setQ = useCallback((q: string) => set({ q: q || undefined }), [set])
-  const filtered = Boolean(search.q || search.state || search.abo || search.urgency)
+  const filtered = Boolean(
+    search.q || search.state || search.abo || search.urgency || search.flag
+  )
+  const counts = stats.data
+  const toggleFlag = (flag: NonNullable<PatientListSearch["flag"]>) => ({
+    pressed: search.flag === flag,
+    onToggle: () => set({ flag: search.flag === flag ? undefined : flag }),
+  })
+  const kpis: Kpi[] | null = counts
+    ? [
+        { label: "Patients", value: counts.total, detail: "matching filters" },
+        {
+          label: "Active on waitlist",
+          value: counts.active,
+          detail: percent(counts.active, counts.total),
+          pressed: search.state === "active",
+          onToggle: () =>
+            set({ state: search.state === "active" ? undefined : "active" }),
+        },
+        {
+          label: "High urgency",
+          value: counts.highUrgency,
+          detail: "Adult 1–2, pediatric 1A",
+          ...toggleFlag("urgent"),
+        },
+        {
+          label: "On MCS",
+          value: counts.onMcs,
+          detail: "any support device",
+          ...toggleFlag("mcs"),
+        },
+        {
+          label: "Sensitized",
+          value: counts.sensitized,
+          detail: `cPRA above ${counts.sensitizedMin}%`,
+          ...toggleFlag("sensitized"),
+        },
+        {
+          label: "Median wait",
+          value:
+            counts.medianWaitDays === null ? "–" : `${counts.medianWaitDays} d`,
+          detail: "since listing, active only",
+        },
+      ]
+    : null
   return (
     <>
       <PageHeader
@@ -81,6 +138,11 @@ function PatientsPage() {
         />
         <FilterSelect label="Sort" value={search.sort} options={SORT} onChange={(sort) => set({ sort })} />
       </ListToolbar>
+      <KpiStrip
+        label="Patient counts for the current filters"
+        items={kpis}
+        stale={stats.isPlaceholderData}
+      />
       <PatientTable page={data} filtered={filtered} />
       <Pager
         hasCursor={Boolean(search.cursor)}

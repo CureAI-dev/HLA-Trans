@@ -11,6 +11,7 @@ import { getDb } from "@/server/db/client.server"
 import {
   getPatient,
   listPatients,
+  patientStats,
   softDeletePatient,
   updatePatient,
 } from "@/server/repos/patients.server"
@@ -19,11 +20,16 @@ import {
   rerunForPatient,
 } from "@/server/services/records.server"
 
-export const patientListSearch = z.object({
+/** The filters shared by the list and its KPI counts (no paging or sort). */
+export const patientFilter = z.object({
   q: z.string().trim().max(100).optional().catch(undefined),
   state: z.enum(CANDIDATE_STATE_VALUES).optional().catch(undefined),
   abo: z.enum(ABO_VALUES).optional().catch(undefined),
   urgency: z.enum(URGENCY_STATUS_VALUES).optional().catch(undefined),
+  flag: z.enum(["urgent", "mcs", "sensitized"]).optional().catch(undefined),
+})
+export type PatientFilter = z.infer<typeof patientFilter>
+export const patientListSearch = patientFilter.extend({
   sort: z.enum(["updated", "name", "listed"]).optional().catch(undefined),
   cursor: z.string().max(600).optional().catch(undefined),
 })
@@ -34,6 +40,11 @@ export const listPatientsFn = createServerFn({ method: "GET" })
   .middleware([readMiddleware])
   .validator(patientListSearch)
   .handler(({ data }) => listPatients(getDb(), data))
+
+export const patientStatsFn = createServerFn({ method: "GET" })
+  .middleware([readMiddleware])
+  .validator(patientFilter)
+  .handler(({ data }) => patientStats(getDb(), data))
 
 export const getPatientFn = createServerFn({ method: "GET" })
   .middleware([readMiddleware])
