@@ -156,10 +156,11 @@ export const HEART_DIAGNOSIS = [
   { value: "1202", label: "Valvular heart disease", group: "Other cardiac" },
   { value: "1204", label: "Cancer", group: "Other cardiac" },
   { value: "1208", label: "Arrhythmogenic RV dysplasia/cardiomyopathy", group: "Other cardiac" },
-  { value: "1209", label: "Muscular dystrophy", group: "Other cardiac" },
+  { value: "1209", label: "Muscular dystrophy: other, specify", group: "Other cardiac" },
   { value: "1497", label: "Cardiac disease, other", group: "Other cardiac" },
+  { value: "1498", label: "Heart: other, specify", group: "Other cardiac" },
   { value: "1203", label: "Congenital: prior surgery unknown", group: "Congenital heart disease" },
-  { value: "1205", label: "Congenital: hypoplastic left heart syndrome", group: "Congenital heart disease" },
+  { value: "1205", label: "Congenital: hypoplastic left heart syndrome, unoperated", group: "Congenital heart disease" },
   { value: "1206", label: "Congenital: without surgery", group: "Congenital heart disease" },
   { value: "1207", label: "Congenital: with surgery", group: "Congenital heart disease" },
 ] as const satisfies ReadonlyArray<Option>

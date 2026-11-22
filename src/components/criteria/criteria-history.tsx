@@ -7,6 +7,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { CriteriaDiff } from "./criteria-diff"
+import { LocalTime } from "@/components/app/local-time"
 
 export function CriteriaHistory({ versions }: { versions: CriteriaVersion[] }) {
   const sorted = [...versions].sort((a, b) => b.version - a.version)
@@ -41,7 +42,7 @@ export function CriteriaHistory({ versions }: { versions: CriteriaVersion[] }) {
                   dateTime={version.createdAt}
                   suppressHydrationWarning
                 >
-                  {new Date(version.createdAt).toLocaleString()}
+                  <LocalTime value={version.createdAt} />
                 </time>
               </span>
             </AccordionTrigger>

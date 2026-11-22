@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo } from "react"
 import { CircleAlert } from "lucide-react"
-import { getAtPath, isBlank } from "@/components/record/record-spec"
+import { getAtPath, isUnrecorded } from "@/components/record/record-spec"
 import type { RecordSection } from "@/components/record/record-spec"
 import {
   Progress,
@@ -44,7 +44,8 @@ export function useHashScroll() {
 }
 
 /**
- * Per-section missing/error counts plus overall completeness. Switches are
+ * Per-section missing/error counts plus overall completeness ("Unknown" and
+ * serology "Not done" count as missing). Switches are
  * excluded: a boolean always holds a value, so it cannot show "not recorded".
  */
 export function useFormCompleteness(
@@ -59,7 +60,7 @@ export function useFormCompleteness(
     for (const s of sections) {
       const fields = s.fields.filter((f) => f.format !== "bool")
       const missing = fields.filter((f) =>
-        isBlank(getAtPath(value, f.path))
+        isUnrecorded(f.path, getAtPath(value, f.path))
       ).length
       status[s.id] = {
         missing,

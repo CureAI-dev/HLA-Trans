@@ -5,6 +5,7 @@ import type { Page } from "@/lib/cursor"
 import { DONATION_TYPE, DONOR_STATE, labelOf } from "@/domain/options"
 import { EmptyState } from "@/components/app/empty-state"
 import { Button } from "@/components/ui/button"
+import { LocalTime, DATE_ONLY } from "@/components/app/local-time"
 
 export function DonorTable({
   page,
@@ -31,7 +32,11 @@ export function DonorTable({
               <Plus aria-hidden="true" />
               Add donor
             </Button>
-            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/data" />}
+            >
               Load demo dataset
             </Button>
           </>
@@ -75,12 +80,15 @@ export function DonorTable({
               <td className="p-3">{row.hospital || "Not recorded"}</td>
               <td className="p-3">{row.ageYears ?? "Not recorded"}</td>
               <td className="p-3">{row.abo ?? "Not recorded"}</td>
-              <td className="p-3" title={labelOf(DONATION_TYPE, row.donationType)}>
+              <td
+                className="p-3"
+                title={labelOf(DONATION_TYPE, row.donationType)}
+              >
                 {row.donationType.toUpperCase()}
               </td>
               <td className="p-3">
                 <time dateTime={row.updatedAt} suppressHydrationWarning>
-                  {new Date(row.updatedAt).toLocaleDateString()}
+                  <LocalTime value={row.updatedAt} options={DATE_ONLY} />
                 </time>
               </td>
             </tr>

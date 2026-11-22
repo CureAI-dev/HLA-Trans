@@ -10,6 +10,7 @@ import { TablePageSkeleton } from "@/components/app/page-skeletons"
 import { EmptyState } from "@/components/app/empty-state"
 import type { AuditAction } from "@/domain/match-types"
 import { Button } from "@/components/ui/button"
+import { LocalTime } from "@/components/app/local-time"
 
 /** Every action the API writes, with readable labels for the filter. */
 const ACTIONS = [
@@ -31,7 +32,8 @@ const ACTIONS = [
   { value: "data.reset", label: "Database reset" },
 ] as const satisfies ReadonlyArray<{ value: AuditAction; label: string }>
 type ActionValue = (typeof ACTIONS)[number]["value"]
-const actionLabel = (a: string) => ACTIONS.find((x) => x.value === a)?.label ?? a
+const actionLabel = (a: string) =>
+  ACTIONS.find((x) => x.value === a)?.label ?? a
 
 export const Route = createFileRoute("/audit")({
   validateSearch: auditSearch,
@@ -59,9 +61,15 @@ function AuditPage() {
       >
         <FilterSelect
           label="Action"
-          value={ACTIONS.some((a) => a.value === search.action) ? (search.action as ActionValue) : undefined}
+          value={
+            ACTIONS.some((a) => a.value === search.action)
+              ? (search.action as ActionValue)
+              : undefined
+          }
           options={ACTIONS}
-          onChange={(action) => void navigate({ search: { action }, replace: true })}
+          onChange={(action) =>
+            void navigate({ search: { action }, replace: true })
+          }
         />
       </ListToolbar>
       <p className="mb-3 text-sm">Newest first. Times use your local time.</p>
@@ -83,13 +91,15 @@ function AuditPage() {
                 <tr className="border-t" key={e.id}>
                   <td className="p-3 whitespace-nowrap">
                     <time dateTime={e.at} suppressHydrationWarning>
-                      {new Date(e.at).toLocaleString()}
+                      <LocalTime value={e.at} />
                     </time>
                   </td>
                   <td className="p-3">{e.actor}</td>
                   <td className="p-3">
                     {actionLabel(e.action)}
-                    <span className="block font-mono text-xs text-muted-foreground">{e.action}</span>
+                    <span className="block font-mono text-xs text-muted-foreground">
+                      {e.action}
+                    </span>
                   </td>
                   <td className="max-w-64 p-3 break-words">{e.subjectId}</td>
                   <td className="p-3">{e.summary}</td>
@@ -110,7 +120,11 @@ function AuditPage() {
           title="No audit entries yet"
           description="Changes, match results, decisions and data operations are recorded here."
           action={
-            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/data" />}
+            >
               Load demo dataset
             </Button>
           }
@@ -119,8 +133,12 @@ function AuditPage() {
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={data.nextCursor}
-        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined }) })}
-        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+        onFirst={() =>
+          void navigate({ search: (s) => ({ ...s, cursor: undefined }) })
+        }
+        onNext={(cursor) =>
+          void navigate({ search: (s) => ({ ...s, cursor }) })
+        }
       />
     </>
   )

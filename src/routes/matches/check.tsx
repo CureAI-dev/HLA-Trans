@@ -72,6 +72,11 @@ function CheckAPair() {
     ...donorQueries.detail(donorId),
     enabled: Boolean(donorId),
   })
+  // Same queries as the picker's unfiltered lists, so these share its cache.
+  const patientList = useQuery(patientQueries.list({ sort: "name" }))
+  const donorList = useQuery(donorQueries.list({ sort: "code" }))
+  const noRecords =
+    patientList.data?.items.length === 0 || donorList.data?.items.length === 0
   const patient = patientId ? patientQuery.data?.record : undefined
   const donor = donorId ? donorQuery.data?.record : undefined
 
@@ -126,17 +131,19 @@ function CheckAPair() {
         onPatientChange={setPatientId}
         onDonorChange={setDonorId}
       />
-      <p className="text-sm text-muted-foreground">
-        No records yet? Add{" "}
-        <Link className="underline" to="/patients/new">
-          a patient
-        </Link>{" "}
-        and{" "}
-        <Link className="underline" to="/donors/new">
-          a donor
-        </Link>{" "}
-        first.
-      </p>
+      {noRecords && (
+        <p className="text-sm text-muted-foreground">
+          No records yet? Add{" "}
+          <Link className="underline" to="/patients/new">
+            a patient
+          </Link>{" "}
+          and{" "}
+          <Link className="underline" to="/donors/new">
+            a donor
+          </Link>{" "}
+          first.
+        </p>
+      )}
       {(patientQuery.isError || donorQuery.isError) && (
         <p role="alert" className="text-sm text-fail">
           A selected record no longer exists. Choose an available record.

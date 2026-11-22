@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/app/status"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { dashboardQueries } from "@/features/dashboard/dashboard.queries"
 import type { MatchRow } from "@/domain/match-types"
+import { LocalTime } from "@/components/app/local-time"
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
@@ -44,7 +45,7 @@ function MatchList({
                 dateTime={e.createdAt}
                 suppressHydrationWarning
               >
-                {new Date(e.createdAt).toLocaleString()}
+                <LocalTime value={e.createdAt} />
               </time>
             </span>
             <StatusBadge status={e.overall} />
@@ -59,7 +60,11 @@ function MatchList({
         title={empty}
         description={hint}
         action={
-          <Button variant="outline" nativeButton={false} render={<Link to="/matches/check" />}>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={<Link to="/matches/check" />}
+          >
             Check a pair
           </Button>
         }
@@ -80,31 +85,44 @@ function Dashboard() {
             <Button nativeButton={false} render={<Link to="/matches/check" />}>
               Check a pair
             </Button>
-            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/data" />}
+            >
               Manage data
             </Button>
           </>
         }
       />
-      {data.activePatients === 0 && data.availableDonors === 0 && !recent.length && (
-        <div className="mb-6">
-          <EmptyState
-            icon={<Database />}
-            title="The database is empty"
-            description="Add patients and donors, or load the synthetic demo dataset to explore matching."
-            action={
-              <>
-                <Button nativeButton={false} render={<Link to="/patients/new" />}>
-                  Add patient
-                </Button>
-                <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
-                  Load demo dataset
-                </Button>
-              </>
-            }
-          />
-        </div>
-      )}
+      {data.activePatients === 0 &&
+        data.availableDonors === 0 &&
+        !recent.length && (
+          <div className="mb-6">
+            <EmptyState
+              icon={<Database />}
+              title="The database is empty"
+              description="Add patients and donors, or load the synthetic demo dataset to explore matching."
+              action={
+                <>
+                  <Button
+                    nativeButton={false}
+                    render={<Link to="/patients/new" />}
+                  >
+                    Add patient
+                  </Button>
+                  <Button
+                    variant="outline"
+                    nativeButton={false}
+                    render={<Link to="/data" />}
+                  >
+                    Load demo dataset
+                  </Button>
+                </>
+              }
+            />
+          </div>
+        )}
       <div className="grid gap-4 sm:grid-cols-3">
         {(
           [
@@ -168,9 +186,7 @@ function Dashboard() {
             className="space-y-3"
           >
             {(["pass", "review", "fail"] as const).map((status) => {
-              const count = recent.filter(
-                (e) => e.overall === status
-              ).length
+              const count = recent.filter((e) => e.overall === status).length
               return (
                 <div key={status}>
                   <div className="mb-1 flex justify-between">

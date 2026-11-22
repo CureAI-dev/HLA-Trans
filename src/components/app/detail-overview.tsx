@@ -7,7 +7,12 @@ import { CircleCheck, Info, OctagonX, Pencil, RefreshCw, TriangleAlert } from "l
 import { cn } from "cn"
 import type { RiskFlag } from "@/domain/risk-flags"
 import type { RunRow } from "@/domain/match-types"
-import { formatRecordValue, getAtPath, isBlank } from "@/components/record/record-spec"
+import {
+  formatRecordValue,
+  getAtPath,
+  isBlank,
+  isUnrecorded,
+} from "@/components/record/record-spec"
 import type { RecordField, RecordSection } from "@/components/record/record-spec"
 import { matchingKeys, matchingQueries } from "@/features/matching/matching.queries"
 import { matchKeys } from "@/features/matches/matches.queries"
@@ -15,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Spinner } from "@/components/ui/spinner"
+import { LocalTime, MEDIUM_DATE_TIME } from "@/components/app/local-time"
 
 export function OverviewCard({
   title,
@@ -148,7 +154,9 @@ export function CompletenessCard({
   const all = sections
     .flatMap((section) => section.fields.map((field) => ({ field, section })))
     .filter(({ field }) => relevant(field.path))
-  const missing = all.filter(({ field }) => isBlank(getAtPath(record, field.path)))
+  const missing = all.filter(({ field }) =>
+    isUnrecorded(field.path, getAtPath(record, field.path))
+  )
   const rank = (path: string) => {
     const i = priority.indexOf(path)
     return i === -1 ? priority.length : i
@@ -201,7 +209,6 @@ const STATUS: Record<RunRow["status"], string> = {
   failed: "Failed",
   cancelled: "Cancelled",
 }
-const when = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" })
 const isLive = (r: RunRow) => r.status === "queued" || r.status === "running"
 
 /** Newest match run for a record, live while it runs, with Open and Rerun. */
@@ -278,7 +285,7 @@ export function LatestRunCard({
           <p className="text-xs text-muted-foreground">
             {run.finishedAt ? "Finished " : "Started "}
             <time dateTime={run.finishedAt ?? run.createdAt} suppressHydrationWarning>
-              {when.format(new Date(run.finishedAt ?? run.createdAt))}
+              <LocalTime value={run.finishedAt ?? run.createdAt} options={MEDIUM_DATE_TIME} />
             </time>{" "}
             by {run.createdBy}
           </p>
