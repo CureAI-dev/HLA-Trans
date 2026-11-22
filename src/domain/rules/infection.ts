@@ -16,7 +16,7 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
     status: Outcome | "info",
     title: string,
     detail: string,
-    source = "Heart compatibility spec section 6.4"
+    source = "Center practice"
   ) =>
     findings.push(
       finding({
@@ -28,13 +28,13 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         source,
       })
     )
-  const missing = (code: string, title: string) =>
+  const missing = (code: string, title: string, source = "OPTN 2.10") =>
     findings.push(
       missingFinding(
         `infection.missing.${code}`,
         title,
         "Required clinical information is not recorded.",
-        "Heart compatibility spec section 6.4"
+        source
       )
     )
   for (const { value, label } of DONOR_TESTS) {
@@ -48,7 +48,8 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         `indeterminate.${value}`,
         "review",
         `${label} indeterminate`,
-        "Resolve indeterminate donor testing before acceptance."
+        "Resolve indeterminate donor testing before acceptance.",
+        "OPTN 2.10"
       )
   }
   // OPTN 2.10.6: WNV NAT for donors recovered 1 July–31 October. Referral date stands in for recovery date.
@@ -72,14 +73,18 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
     donor.history.bornInChagasEndemicCountry === "unknown" &&
     tests.chagas === "not_done"
   )
-    missing("chagasEndemicBirth", "Chagas screening indication unknown")
+    missing(
+      "chagasEndemicBirth",
+      "Chagas screening indication unknown",
+      "OPTN 2.10.5"
+    )
   if (!infection.sampleDrawnWithin96h)
     add(
       "sampleTiming",
       "review",
       "Sample timing requires review",
       "Donor sample is not confirmed drawn within 96 hours.",
-      "OPTN 2.9"
+      "OPTN 2.10"
     )
   const positive = (key: keyof typeof tests) => tests[key] === "positive"
   if (
@@ -87,7 +92,7 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
     (patient.serology.hiv === "not_done" ||
       patient.serology.hiv === "indeterminate")
   )
-    missing("recipient.hiv", "Recipient HIV status unresolved")
+    missing("recipient.hiv", "Recipient HIV status unresolved", "OPTN 15.7.A")
   if (positive("hivAbAg") || positive("hivNat"))
     add(
       "hiv",
@@ -96,28 +101,31 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         : config.hivDonorOutcome,
       "Donor HIV positive",
       "HIV-positive organ use requires an HIV-positive recipient enrolled in a research protocol.",
-      "OPTN 15.7 / HOPE"
+      "OPTN 15.7.A, 15.7.D (HOPE Act research protocol)"
     )
   if (positive("hcvNat"))
     add(
       "hcvNat",
       patient.acceptance.acceptHcvNat ? config.hcvNatOutcome : "fail",
       "HCV NAT positive",
-      "DAA treatment and informed consent required."
+      "DAA treatment and informed consent required.",
+      "ISHLT cardiothoracic HCV consensus (Aslam 2020)"
     )
   if (positive("antiHcv") && tests.hcvNat === "negative")
     add(
       "hcvAbOnly",
       patient.acceptance.acceptHcvAb ? config.hcvAbOnlyOutcome : "fail",
       "Anti-HCV positive, NAT negative",
-      "Recipient acceptance and NAT surveillance required."
+      "Recipient acceptance and NAT surveillance required.",
+      "ISHLT cardiothoracic HCV consensus (Aslam 2020)"
     )
   if (positive("hbsAg") || positive("hbvNat"))
     add(
       "hbv",
       patient.acceptance.acceptHbvNat ? config.hbsAgOrHbvNatOutcome : "fail",
       "HBsAg or HBV NAT positive",
-      "HBV prophylaxis and consent required."
+      "HBV prophylaxis and consent required.",
+      "AST HBV donor consensus (Huprikar 2015)"
     )
   if (
     positive("antiHbc") &&
@@ -128,22 +136,38 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
       "antiHbcOnly",
       patient.acceptance.acceptAntiHbc ? config.antiHbcOnlyOutcome : "fail",
       "Isolated anti-HBc positive",
-      "Recipient acceptance and surveillance required."
+      "Recipient acceptance and surveillance required.",
+      "AST HBV donor consensus (Huprikar 2015)"
     )
-  for (const [key, label, outcome] of [
-    ["cmvIgG", "CMV", config.cmvHighRiskOutcome],
-    ["ebvIgG", "EBV", config.ebvHighRiskOutcome],
-    ["toxoIgG", "Toxoplasma", config.toxoHighRiskOutcome],
+  for (const [key, label, outcome, riskSource] of [
+    ["cmvIgG", "CMV", config.cmvHighRiskOutcome, "CMV consensus (Kotton 2025)"],
+    [
+      "ebvIgG",
+      "EBV",
+      config.ebvHighRiskOutcome,
+      "AST EBV/PTLD guideline (Allen 2019)",
+    ],
+    [
+      "toxoIgG",
+      "Toxoplasma",
+      config.toxoHighRiskOutcome,
+      "Heart D+/R- transmission 50-75% without prophylaxis",
+    ],
   ] as const) {
     const recipient = patient.serology[key]
     if (recipient === "not_done")
-      missing(`recipient.${key}`, `Recipient ${label} not done`)
+      missing(
+        `recipient.${key}`,
+        `Recipient ${label} not done`,
+        "Recipient pre-transplant screening"
+      )
     else if (recipient === "indeterminate")
       add(
         `recipient.${key}`,
         "review",
         `Recipient ${label} indeterminate`,
-        "Resolve recipient serostatus to determine mismatch risk."
+        "Resolve recipient serostatus to determine mismatch risk.",
+        riskSource
       )
     if (positive(key) && recipient === "negative")
       add(
@@ -152,7 +176,8 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         `${label} D+/R-negative`,
         label === "EBV"
           ? "PTLD risk: viral load surveillance required."
-          : "High risk mismatch: prophylaxis required."
+          : "High risk mismatch: prophylaxis required.",
+        riskSource
       )
     else if (
       key === "cmvIgG" &&
@@ -165,14 +190,23 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         "CMV risk",
         recipient === "positive"
           ? "Intermediate risk: recipient seropositive."
-          : "Low risk: donor and recipient seronegative."
+          : "Low risk: donor and recipient seronegative.",
+        riskSource
       )
   }
-  for (const [key, outcome] of [
-    ["chagas", config.chagasOutcome],
-    ["strongyloides", config.strongyloidesOutcome],
-    ["syphilis", config.syphilisOutcome],
-    ["wnv", config.wnvOutcome],
+  for (const [key, outcome, positiveSource] of [
+    [
+      "chagas",
+      config.chagasOutcome,
+      "Chagas in Transplant Working Group (Chin-Hong 2011)",
+    ],
+    [
+      "strongyloides",
+      config.strongyloidesOutcome,
+      "AST parasites guideline (La Hoz 2019)",
+    ],
+    ["syphilis", config.syphilisOutcome, "Center practice"],
+    ["wnv", config.wnvOutcome, "ISHLT donor heart selection (Copeland 2023)"],
   ] as const)
     if (positive(key))
       add(
@@ -181,7 +215,8 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         `Donor ${key} positive`,
         key === "strongyloides"
           ? "Treat recipient with ivermectin."
-          : "Transplant infectious disease review required."
+          : "Transplant infectious disease review required.",
+        positiveSource
       )
   if (positive("sarsCov2"))
     add(
@@ -191,7 +226,7 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
       "Assess active infection with transplant infectious disease specialists."
     )
   if (infection.bloodCulturePositive === "unknown")
-    missing("bloodCulture", "Blood culture status unknown")
+    missing("bloodCulture", "Blood culture status unknown", "OPTN 2.10.1")
   else if (infection.bloodCulturePositive === "yes")
     add(
       "bacteremia",
@@ -199,7 +234,8 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
       "Positive blood culture",
       infection.bloodCultureTargetedTherapy
         ? "Targeted antimicrobial therapy recorded."
-        : "Targeted antimicrobial therapy required."
+        : "Targeted antimicrobial therapy required.",
+      "ISHLT donor heart selection (Copeland 2023)"
     )
   if (infection.cnsInfection === "unknown")
     missing("cnsInfection", "CNS infection status unknown")
@@ -227,7 +263,8 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
       "negative",
       "pass",
       "Infection screen negative",
-      "Required donor tests complete; no infection risk identified."
+      "Required donor tests complete; no infection risk identified.",
+      "OPTN 2.10"
     )
   return ruleResult("infection", findings)
 }
