@@ -5,6 +5,8 @@ import type { Finding } from "../schema"
 import type { RuleContext } from "./context"
 import { finding, missingFinding, ruleResult } from "./findings"
 
+const TABLE_6_4 = "OPTN 6.6.A, Table 6-4"
+
 export function aboCompatible(donor: Abo, recipient: Abo): boolean {
   return donor === recipient || donor === "O" || recipient === "AB"
 }
@@ -29,10 +31,18 @@ export function evaluateAbo(ctx: RuleContext) {
     status: Finding["status"],
     title: string,
     detail: string,
-    evidence = ""
+    evidence = "",
+    findingSource = source
   ) =>
     findings.push(
-      finding({ code: `abo.${code}`, status, title, detail, evidence, source })
+      finding({
+        code: `abo.${code}`,
+        status,
+        title,
+        detail,
+        evidence,
+        source: findingSource,
+      })
     )
   if (p.subtype !== "none" || d.subtype !== "none")
     add(
@@ -40,7 +50,8 @@ export function evaluateAbo(ctx: RuleContext) {
       "info",
       "ABO subtypes",
       "Heart allocation does not use ABO subtypes.",
-      `Recipient ${p.subtype}; donor ${d.subtype}`
+      `Recipient ${p.subtype}; donor ${d.subtype}`,
+      TABLE_6_4
     )
   if (p.abo === null || d.abo === null) {
     findings.push(
@@ -62,7 +73,7 @@ export function evaluateAbo(ctx: RuleContext) {
         detail:
           "Both blood types must be verified by two independently reported samples.",
         evidence: `Recipient ${p.verifiedTwoSamples}; donor ${d.verifiedTwoSamples}`,
-        source: "OPTN 3.3",
+        source: "OPTN 3.3.A–B (candidate), 2.7.A–C (donor)",
       })
     )
   if (aboCompatible(d.abo, p.abo)) {
@@ -71,7 +82,8 @@ export function evaluateAbo(ctx: RuleContext) {
       "pass",
       p.abo === d.abo ? "Identical blood types" : "Compatible blood types",
       "Donor blood type is compatible with the recipient.",
-      `${d.abo} → ${p.abo}`
+      `${d.abo} → ${p.abo}`,
+      TABLE_6_4
     )
     if (p.abo !== d.abo)
       add(
@@ -79,7 +91,8 @@ export function evaluateAbo(ctx: RuleContext) {
         "info",
         "Blood type priority",
         `OPTN blood type priority: ${aboPriority(d.abo, p.abo)}.`,
-        `${d.abo} → ${p.abo}`
+        `${d.abo} → ${p.abo}`,
+        TABLE_6_4
       )
     return ruleResult("abo", findings)
   }

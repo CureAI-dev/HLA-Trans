@@ -12,11 +12,7 @@ import { formatDuration, STATUS_LABEL, TRIGGER_LABEL } from "../run-labels"
 import type { RunRow } from "@/domain/match-types"
 import { EmptyState } from "@/components/app/empty-state"
 import { Badge } from "@/components/ui/badge"
-
-const fmt = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
-})
+import { LocalTime, MEDIUM_DATE_TIME } from "@/components/app/local-time"
 
 const STATUS: Record<
   RunRow["status"],
@@ -101,7 +97,14 @@ export function RunHistoryTable({ rows }: { rows: ReadonlyArray<RunRow> }) {
               <td className="p-3 tabular-nums">{runDuration(run)}</td>
               <td className="p-3">{run.createdBy}</td>
               <td className="p-3 whitespace-nowrap">
-                {run.finishedAt ? fmt.format(new Date(run.finishedAt)) : "—"}
+                {run.finishedAt ? (
+                  <LocalTime
+                    value={run.finishedAt}
+                    options={MEDIUM_DATE_TIME}
+                  />
+                ) : (
+                  "—"
+                )}
               </td>
             </tr>
           ))}

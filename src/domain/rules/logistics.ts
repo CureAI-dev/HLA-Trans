@@ -68,14 +68,14 @@ export function evaluateLogistics(ctx: RuleContext): RuleResult {
     )
     if (
       donor.identity.ageYears !== null &&
-      donor.identity.ageYears > c.olderDonorAge &&
+      donor.identity.ageYears >= c.olderDonorAge &&
       estimate.totalMinutes > c.ischemicPassMaxMinutes
     )
       add(
         "olderDonor",
         "review",
         "Older donor with prolonged total time",
-        `Avoid total time above ${c.ischemicPassMaxMinutes} min with donor age above ${c.olderDonorAge} years.`,
+        `Avoid total time above ${c.ischemicPassMaxMinutes} min with donor age ${c.olderDonorAge} years or older.`,
         `Donor ${donor.identity.ageYears} years; ${estimate.totalMinutes} min total`
       )
   }

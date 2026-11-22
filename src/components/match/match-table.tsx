@@ -4,11 +4,7 @@ import type { MatchRow } from "@/domain/match-types"
 import { StatusBadge } from "@/components/app/status"
 import { EmptyState } from "@/components/app/empty-state"
 import { Badge } from "@/components/ui/badge"
-
-const fmt = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
-})
+import { LocalTime, MEDIUM_DATE_TIME } from "@/components/app/local-time"
 
 const VERDICT: Record<NonNullable<MatchRow["decision"]>, string> = {
   accept: "Accepted",
@@ -100,7 +96,7 @@ export function MatchTable({
               </td>
               <td className="p-3 whitespace-nowrap text-muted-foreground">
                 <time dateTime={r.createdAt} suppressHydrationWarning>
-                  {fmt.format(new Date(r.createdAt))}
+                  <LocalTime value={r.createdAt} options={MEDIUM_DATE_TIME} />
                 </time>
               </td>
             </tr>

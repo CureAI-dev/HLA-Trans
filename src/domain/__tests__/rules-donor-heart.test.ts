@@ -747,3 +747,20 @@ describe("diabetes coronary screening", () => {
     ).toBe(false)
   })
 })
+
+describe("donor age boundary (Copeland 2023: 45 and over)", () => {
+  it("reviews a 45-year-old donor and passes a 44-year-old", () => {
+    for (const [age, status] of [
+      [44, "pass"],
+      [45, "review"],
+    ] as const) {
+      const ctx = context()
+      ctx.donor.identity.ageYears = age
+      ctx.donor.coronary.angiography = "normal"
+      const f = evaluateDonorHeart(ctx).findings.find(
+        (x) => x.code === "donorHeart.age"
+      )
+      expect(f?.status).toBe(status)
+    }
+  })
+})

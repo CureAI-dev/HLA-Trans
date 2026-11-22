@@ -18,7 +18,7 @@ import type {
   Patient,
 } from "./schema"
 
-export const ENGINE_VERSION = "1.0.0"
+export const ENGINE_VERSION = "1.1.0"
 
 export function evaluate(input: {
   patient: Patient
@@ -109,6 +109,30 @@ export function isPediatricDonor(donor: Donor): boolean {
   return donor.identity.ageYears !== null && donor.identity.ageYears < 18
 }
 
+/**
+ * Blood type priority for screening. OPTN 6.6.B.ii: an eligible intended
+ * ABO-incompatible candidate is primary if under 1 year at the match run,
+ * otherwise secondary. Eligibility is the ABO rule's own verdict: no FAIL and
+ * no missing data in that group.
+ */
+export function screeningAboPriority(
+  donor: Donor,
+  patient: Patient,
+  result: EvaluationResult,
+  now: Date
+): ScreenRow["aboPriority"] {
+  if (donor.blood.abo === null || patient.blood.abo === null)
+    return "incompatible"
+  const priority = aboPriority(donor.blood.abo, patient.blood.abo)
+  if (priority !== "incompatible") return priority
+  const abo = result.rules.find((r) => r.rule === "abo")
+  if (!abo || abo.findings.some((f) => f.status === "fail" || f.missing))
+    return "incompatible"
+  const age = ageInYears(patient.identity.dateOfBirth, now)
+  if (age === null) return "incompatible"
+  return age < 1 ? "primary" : "secondary"
+}
+
 /** One screening row: the pair evaluated with default (unrecorded) pair inputs. */
 export function screenRow(
   donor: Donor,
@@ -117,19 +141,17 @@ export function screenRow(
   now: Date
 ): ScreenRow {
   const duration = daysAtStatus(patient, now)
+  const result = evaluate({
+    patient,
+    donor,
+    criteria,
+    pair: defaultPairInputs(),
+    now,
+  })
   return {
     patient,
-    result: evaluate({
-      patient,
-      donor,
-      criteria,
-      pair: defaultPairInputs(),
-      now,
-    }),
-    aboPriority:
-      donor.blood.abo === null || patient.blood.abo === null
-        ? "incompatible"
-        : aboPriority(donor.blood.abo, patient.blood.abo),
+    result,
+    aboPriority: screeningAboPriority(donor, patient, result, now),
     isPediatricCandidate: isPediatricCandidate(patient, now),
     daysAtStatus: duration.days,
     daysAtStatusFromListing: duration.fromListing,

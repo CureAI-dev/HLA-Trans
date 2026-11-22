@@ -14,6 +14,7 @@ import { MissingDataTable } from "./missing-data-table"
 import { SideBySide } from "./side-by-side"
 import { IschemiaBreakdown } from "./ischemia-breakdown"
 import { PairInputsSummary } from "./pair-inputs-summary"
+import { LocalTime } from "@/components/app/local-time"
 
 export type ResultInput = Pick<
   MatchDetail,
@@ -63,7 +64,7 @@ export function ResultView({
       <>
         Saved{" "}
         <time dateTime={detail.createdAt} suppressHydrationWarning>
-          {new Date(detail.createdAt).toLocaleString()}
+          <LocalTime value={detail.createdAt} />
         </time>{" "}
         by {detail.createdBy || "Unspecified clinician"}. Records, pair inputs
         and criteria are frozen.
@@ -117,9 +118,7 @@ export function ResultView({
           {result.blockers.length > 0 && (
             <Alert variant="destructive">
               <OctagonX aria-hidden="true" />
-              <AlertTitle>
-                Blockers ({result.blockers.length})
-              </AlertTitle>
+              <AlertTitle>Blockers ({result.blockers.length})</AlertTitle>
               <AlertDescription>
                 <ul className="w-full">
                   {result.blockers.map((f) => (

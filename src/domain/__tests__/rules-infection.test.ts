@@ -158,3 +158,23 @@ test("HIV positive donor with missing recipient HIV also flags missing informati
     })
   )
 })
+test("WNV not done is missing when referral falls 1 July to 31 October (OPTN 2.10.6)", () => {
+  for (const [date, flagged] of [
+    ["2026-07-01", true],
+    ["2026-10-31", true],
+    ["2026-06-30", false],
+    ["2026-11-01", false],
+    ["", false],
+  ] as const) {
+    const c = context()
+    c.donor.infection.serology.wnv = "not_done"
+    c.donor.identity.referralDate = date
+    const codes = evaluateInfection(c).findings.map((f) => f.code)
+    expect(codes.includes("infection.missing.wnv")).toBe(flagged)
+  }
+})
+test("WNV negative in season adds no finding", () => {
+  const c = context()
+  c.donor.identity.referralDate = "2026-08-15"
+  expect(evaluateInfection(c).status).toBe("pass")
+})

@@ -180,7 +180,7 @@ export const patientSchema = z.object({
   blood: z.object({
     abo: z.enum(ABO_VALUES).nullable(),
     subtype: z.enum(ABO_SUBTYPE_VALUES),
-    /** OPTN 3.3: two samples on separate occasions, reported independently. */
+    /** OPTN 3.3.A–B (candidate), 2.7.A–C (donor): two samples on separate occasions, reported independently. */
     verifiedTwoSamples: z.boolean(),
     /** Pediatric intended ABO-incompatible acceptance (OPTN 6.6.B). */
     acceptsIncompatible: z.boolean(),

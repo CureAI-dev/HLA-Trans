@@ -45,6 +45,16 @@ export function serologyFields(prefix: string, tests: ReadonlyArray<Option>): Re
   return tests.map((t) => ({ path: `${prefix}.${t.value}`, label: t.label, options: SEROLOGY }))
 }
 
+/**
+ * Not yet answered, for completeness counts: blank, "Unknown", or a serology
+ * test still "Not done". Other "Not done" values (e.g. angiography) are real
+ * answers. Display still uses isBlank, so "Unknown" is shown as entered.
+ */
+export function isUnrecorded(path: string, v: unknown): boolean {
+  if (isBlank(v) || v === "unknown") return true
+  return v === "not_done" && path.includes("serology")
+}
+
 /** Blank = nothing entered. `false` and `0` are recorded values, not blanks. */
 export function isBlank(v: unknown): boolean {
   if (v === null || v === undefined) return true

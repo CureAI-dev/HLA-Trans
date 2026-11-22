@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { DecisionForm } from "./decision-form"
+import { LocalTime } from "@/components/app/local-time"
 
 function DecisionCard({ decision: d }: { decision: Decision }) {
   const rows: Array<[string, React.ReactNode]> = [
@@ -19,7 +20,7 @@ function DecisionCard({ decision: d }: { decision: Decision }) {
     [
       "Decided",
       <time dateTime={d.decidedAt} suppressHydrationWarning>
-        {new Date(d.decidedAt).toLocaleString()}
+        <LocalTime value={d.decidedAt} />
       </time>,
     ],
     [
@@ -83,7 +84,10 @@ export function DecisionPanel({
             render={
               <Link
                 to="/matches/check"
-                search={{ patientId: detail.patientId, donorId: detail.donorId }}
+                search={{
+                  patientId: detail.patientId,
+                  donorId: detail.donorId,
+                }}
                 hash="pair-inputs"
               />
             }

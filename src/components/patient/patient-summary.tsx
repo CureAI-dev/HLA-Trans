@@ -6,6 +6,11 @@ const display = (value: number | null | undefined) =>
   value == null ? null : C.round(value)
 export function PatientDerived({ patient: p }: { patient: Patient }) {
   const phm = C.patientPhm(p)
+  const age = C.patientAge(p)
+  const phmHint =
+    age !== null && age < 18
+      ? "Reed 2014; extrapolated for children"
+      : "Reed 2014"
   const value = C.bmi(p.body.heightCm, p.body.weightKg)
   return (
     <div className="col-span-full grid gap-3 sm:grid-cols-3">
@@ -31,7 +36,7 @@ export function PatientDerived({ patient: p }: { patient: Patient }) {
           label={`Predicted heart mass (${key.toUpperCase()})`}
           value={display(phm?.[key])}
           unit="g"
-          hint="Reed 2014; extrapolated for children"
+          hint={phmHint}
         />
       ))}
     </div>
