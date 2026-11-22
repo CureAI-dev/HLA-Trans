@@ -57,14 +57,14 @@ export function evaluateDonorHeart(ctx: RuleContext): RuleResult {
       (patientLimit !== null && age > patientLimit) ||
       (c.ageFailAbove !== null && age > c.ageFailAbove)
         ? "fail"
-        : age > c.ageReviewAbove
+        : age >= c.ageReviewAbove
           ? "review"
           : "pass"
     add(
       "age",
       status,
       "Donor age",
-      `Patient maximum: ${patientLimit ?? "none"}; review above ${c.ageReviewAbove}; fail above ${c.ageFailAbove ?? "no upper limit"}. CAD screening is needed above the review threshold.`,
+      `Patient maximum: ${patientLimit ?? "none"}; review at ${c.ageReviewAbove} or older; fail above ${c.ageFailAbove ?? "no upper limit"}. CAD screening is needed from the review age.`,
       `${age} years`
     )
   }

@@ -497,7 +497,7 @@ export const DONOR_TESTS = [
   { value: "toxoIgG", label: "Toxoplasma IgG", group: "Required (OPTN 2.9)" },
   { value: "strongyloides", label: "Strongyloides antibody", group: "Required (OPTN 2.9)" },
   { value: "chagas", label: "T. cruzi (Chagas) antibody", group: "Required if born in endemic country" },
-  { value: "wnv", label: "West Nile virus NAT", group: "Optional" },
+  { value: "wnv", label: "West Nile virus NAT", group: "Required 1 July to 31 October (OPTN 2.10.6)" },
   { value: "sarsCov2", label: "SARS-CoV-2 NAT", group: "Optional" },
 ] as const satisfies ReadonlyArray<Option>
 export type DonorTest = (typeof DONOR_TESTS)[number]["value"]

@@ -130,3 +130,13 @@ test("redo and explant additions and configurable limits affect outcome", () => 
   ctx.criteria.logistics.ischemicReviewMaxMinutes = 300
   expect(evaluateLogistics(ctx).status).toBe("fail")
 })
+
+test.each([
+  [44, false],
+  [45, true],
+])("older donor (%i y) with total over 240 min flagged: %s", (age, flagged) => {
+  const c = context(250)
+  c.donor.identity.ageYears = age
+  const codes = evaluateLogistics(c).findings.map((f) => f.code)
+  expect(codes.includes("logistics.olderDonor")).toBe(flagged)
+})

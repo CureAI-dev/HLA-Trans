@@ -1,4 +1,5 @@
-﻿import { DONOR_TESTS, DONOR_TESTS_ALWAYS_REQUIRED } from "../options"
+import { DONOR_TESTS, DONOR_TESTS_ALWAYS_REQUIRED } from "../options"
+import { parseIsoDate } from "../dates"
 import type { Finding, Outcome, RuleResult } from "../schema"
 import type { RuleContext } from "./context"
 import { finding, missingFinding, ruleResult } from "./findings"
@@ -50,6 +51,23 @@ export function evaluateInfection(ctx: RuleContext): RuleResult {
         "Resolve indeterminate donor testing before acceptance."
       )
   }
+  // OPTN 2.10.6: WNV NAT for donors recovered 1 July–31 October. Referral date stands in for recovery date.
+  const referral = parseIsoDate(donor.identity.referralDate)
+  const referralMonth = referral === null ? null : referral.getUTCMonth()
+  if (
+    referralMonth !== null &&
+    referralMonth >= 6 &&
+    referralMonth <= 9 &&
+    tests.wnv === "not_done"
+  )
+    findings.push(
+      missingFinding(
+        "infection.missing.wnv",
+        "West Nile virus NAT not done",
+        "Required for donors recovered between 1 July and 31 October (referral date used as the recovery date).",
+        "OPTN 2.10.6"
+      )
+    )
   if (
     donor.history.bornInChagasEndemicCountry === "unknown" &&
     tests.chagas === "not_done"

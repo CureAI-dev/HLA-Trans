@@ -102,6 +102,21 @@ describe("virtual crossmatch (donorCarries)", () => {
     expect(donorCarries("A*01:01", p).reactivity).toBe("none")
   })
 
+  test("Bw4 is carried by HLA-A antigens A9, A23, A24, A2403, A25, A32 (WHO)", () => {
+    const p = buildProfile(typing({ A: ["A24", "A2"], B: ["B7", "B8"] }))
+    expect(p.bw4).toBe(true)
+    expect(donorCarries("Bw4", p).reactivity).toBe("definite")
+    expect(buildProfile(typing({ A: ["A*32:01", "A2"], B: ["B7", "B8"] })).bw4).toBe(true)
+  })
+
+  test("Bw4 negative only when A and B are both resolved", () => {
+    expect(buildProfile(typing({ A: ["A1", "A2"], B: ["B7", "B8"] })).bw4).toBe(false)
+    expect(buildProfile(typing({ B: ["B7", "B8"] })).bw4).toBeNull()
+    expect(buildProfile(typing({ A: ["A19", "A2"], B: ["B7", "B8"] })).bw4).toBeNull()
+    expect(buildProfile(typing({ A: ["A10", "A2"], B: ["B7", "B8"] })).bw4).toBeNull()
+    expect(buildProfile(typing({ A: ["A1", "A2"], B: ["B7", "B8"] })).bw6).toBe(true)
+  })
+
   test("Bw6 negative only when B is fully resolved", () => {
     expect(buildProfile(typing({ B: ["B44", "B57"] })).bw6).toBe(false)
     expect(buildProfile(typing({ B: ["B15", "B44"] })).bw6).toBeNull()
@@ -128,7 +143,7 @@ describe("profile", () => {
   })
 
   test.each(["B2708", "B*27:08"])("specific Bw assignment wins for %s", (value) => {
-    const p = buildProfile(typing({ B: [value, ""] }))
+    const p = buildProfile(typing({ A: ["A1", "A2"], B: [value, ""] }))
     expect(p.bw4).toBe(false)
     expect(p.bw6).toBe(true)
   })

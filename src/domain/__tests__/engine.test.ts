@@ -5,6 +5,7 @@ import {
   daysAtStatus,
   evaluate,
   isPediatricCandidate,
+  screenRow,
   screenDonor,
 } from "../engine"
 import { DONOR_TEST_VALUES } from "../options"
@@ -100,7 +101,7 @@ test("complete fixture passes all rules and validates the result contract", () =
   const result = run()
   expect(result.overall).toBe("pass")
   expect(result.rules).toHaveLength(6)
-  expect(result.engineVersion).toBe("1.0.0")
+  expect(result.engineVersion).toBe("1.1.0")
   expect(evaluationResultSchema.safeParse(result).success).toBe(true)
 })
 
@@ -267,4 +268,49 @@ test("200 active patients screen in under 1000ms without mutating input order", 
   )
   expect(performance.now() - start).toBeLessThan(1000)
   expect(patients.map((p) => p.id)).toEqual(ids)
+})
+
+test("eligible ABO-incompatible children get OPTN 6.6.B.ii screening priority", () => {
+  const at = new Date("2026-11-14T00:00:00Z")
+  const d = donor({ blood: { abo: "A", verifiedTwoSamples: true } })
+  const base = () =>
+    patient({
+      listing: { state: "active", listingDate: "" },
+      blood: {
+        abo: "B",
+        verifiedTwoSamples: true,
+        acceptsIncompatible: true,
+        antiATiter: 8,
+        titerDate: "2026-11-04",
+      },
+    })
+  const infant = base()
+  infant.identity.dateOfBirth = "2026-05-14"
+  expect(screenRow(d, infant, DEFAULT_CRITERIA, at).aboPriority).toBe("primary")
+
+  const child = base()
+  child.identity.dateOfBirth = "2021-11-14"
+  expect(screenRow(d, child, DEFAULT_CRITERIA, at).aboPriority).toBe(
+    "secondary"
+  )
+
+  const missingTiter = base()
+  missingTiter.identity.dateOfBirth = "2021-11-14"
+  missingTiter.blood.antiATiter = null
+  expect(screenRow(d, missingTiter, DEFAULT_CRITERIA, at).aboPriority).toBe(
+    "incompatible"
+  )
+
+  const notOptedIn = base()
+  notOptedIn.identity.dateOfBirth = "2026-05-14"
+  notOptedIn.blood.acceptsIncompatible = false
+  expect(screenRow(d, notOptedIn, DEFAULT_CRITERIA, at).aboPriority).toBe(
+    "incompatible"
+  )
+
+  const adult = base()
+  adult.identity.dateOfBirth = "1980-01-01"
+  expect(screenRow(d, adult, DEFAULT_CRITERIA, at).aboPriority).toBe(
+    "incompatible"
+  )
 })

@@ -146,6 +146,10 @@ const BW4_B = new Set([
   "B5", "B5102", "B5103", "B13", "B17", "B27", "B37", "B38", "B44", "B47",
   "B49", "B51", "B52", "B53", "B57", "B58", "B59", "B63", "B77",
 ])
+/** WHO: HLA-A antigens that carry the Bw4 epitope. */
+const BW4_A = new Set(["A9", "A23", "A24", "A2403", "A25", "A32"])
+/** A broads with both Bw4 and non-Bw4 splits: typing only to the broad cannot exclude Bw4. */
+const A_BW4_AMBIGUOUS = new Set(["A10", "A19"])
 const BW6_B = new Set([
   "B7", "B703", "B8", "B14", "B18", "B22", "B2708", "B35", "B39", "B3901",
   "B3902", "B40", "B4005", "B41", "B42", "B45", "B46", "B48", "B50", "B54",
@@ -440,6 +444,7 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
   const invalid: DonorProfile["invalid"] = []
   const nullAlleles: Array<string> = []
   const bOriginal: Array<string | null> = []
+  const aOriginal: Array<string | null> = []
 
   const loci: ReadonlyArray<HlaLocus> = [
     "A", "B", "C", "DRB1", "DRB345", "DQA1", "DQB1", "DPA1", "DPB1",
@@ -465,6 +470,7 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
         }
         const fam = families[spec.family]
         if (spec.family === "B") bOriginal.push(spec.serologic)
+        if (spec.family === "A") aOriginal.push(spec.serologic)
         fam.typed = true
         fam.groups.add(`${spec.gene}*${spec.group}`)
         if (spec.protein) fam.alleles.add(spec.name)
@@ -478,6 +484,7 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
 
       const fam = families[spec.family]
       if (spec.family === "B") bOriginal.push(spec.antigen)
+      if (spec.family === "A") aOriginal.push(spec.antigen)
       const drGene = { DR51: "DRB5", DR52: "DRB3", DR53: "DRB4" }[spec.antigen]
       if (drGene) fam.typedGenes.add(drGene)
       fam.typed = true
@@ -491,25 +498,31 @@ export function buildProfile(typing: HlaTyping): DonorProfile {
     if (!fam.typed) fam.highResolution = false
   }
 
-  // Bw4/Bw6: explicit typing wins; otherwise derive from B antigens.
+  // Bw4/Bw6: explicit typing wins; otherwise derive from B antigens (Bw4 also from A antigens, WHO).
   // The first assignment is the most specific; ancestors must not override it.
   const bAssignments = bOriginal.map((antigen) => antigen === null ? undefined
     : withAncestors(antigen).find((a) => BW4_B.has(a) || BW6_B.has(a)))
-  const derivedBw4 = bAssignments.some((a) => a !== undefined && BW4_B.has(a))
+  const derivedBw4 =
+    bAssignments.some((a) => a !== undefined && BW4_B.has(a)) ||
+    aOriginal.some((a) => a !== null && BW4_A.has(a))
   const derivedBw6 = bAssignments.some((a) => a !== undefined && BW6_B.has(a))
   const bResolved = families.B.typed && bAssignments.every((a) => a !== undefined)
+  // Bw4 is only excluded when HLA-A is also typed to a level that rules it out.
+  const aResolved =
+    families.A.typed &&
+    aOriginal.every((a) => a !== null && !A_BW4_AMBIGUOUS.has(a))
 
-  const bw = (explicit: HlaTyping["bw4"], derived: boolean): boolean | null => {
+  const bw = (explicit: HlaTyping["bw4"], derived: boolean, resolved: boolean): boolean | null => {
     if (explicit === "yes") return true
     if (explicit === "no") return false
     if (derived) return true
-    return bResolved ? false : null
+    return resolved ? false : null
   }
 
   return {
     families,
-    bw4: bw(typing.bw4, derivedBw4),
-    bw6: bw(typing.bw6, derivedBw6),
+    bw4: bw(typing.bw4, derivedBw4, bResolved && aResolved),
+    bw6: bw(typing.bw6, derivedBw6, bResolved),
     invalid,
     nullAlleles,
   }

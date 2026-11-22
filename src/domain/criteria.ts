@@ -164,7 +164,7 @@ export const CRITERIA_FIELDS: ReadonlyArray<CriteriaField> = [
   { kind: "outcome", section: "infection", key: "bacteremiaOutcome", label: "Donor positive blood culture", source: `${COPELAND}: acceptable with targeted antibiotics` },
   { kind: "outcome", section: "infection", key: "phsRiskOutcome", label: "Donor meets PHS risk criteria", source: "PHS 2020 guideline: disclosure required" },
 
-  { kind: "number", section: "donor", key: "ageReviewAbove", label: "Donor age: review above", unit: "years", step: 1, source: `${COPELAND}: <45 recommended` },
+  { kind: "number", section: "donor", key: "ageReviewAbove", label: "Donor age: review at or above", unit: "years", step: 1, source: `${COPELAND}: <45 recommended; ≥45 needs coronary screening` },
   { kind: "number", section: "donor", key: "ageFailAbove", label: "Donor age: fail above (blank = no limit)", unit: "years", step: 1, nullable: true, source: `${COPELAND}: no upper age limit` },
   { kind: "number", section: "donor", key: "lvefPassMin", label: "LVEF: pass at or above", unit: "%", step: 1, source: "LVEF 40–50% treated as extended criteria" },
   { kind: "number", section: "donor", key: "lvefReviewMin", label: "LVEF: review at or above (fail below)", unit: "%", step: 1, source: `${COPELAND}: LVEF <45% needs stress or repeat echo` },
@@ -189,7 +189,7 @@ export const CRITERIA_FIELDS: ReadonlyArray<CriteriaField> = [
 
   { kind: "number", section: "logistics", key: "ischemicPassMaxMinutes", label: "Ischemic time: pass up to", unit: "min", step: 5, source: `${COPELAND}: target ≤4 h` },
   { kind: "number", section: "logistics", key: "ischemicReviewMaxMinutes", label: "Ischemic time: review up to (fail above)", unit: "min", step: 5, source: "Center practice; >6 h only with machine perfusion" },
-  { kind: "number", section: "logistics", key: "olderDonorAge", label: "Donor age above which >4 h is avoided", unit: "years", step: 1, source: `${COPELAND}: avoid >4 h with older donors` },
+  { kind: "number", section: "logistics", key: "olderDonorAge", label: "Donor age at or above which >4 h is avoided", unit: "years", step: 1, source: `${COPELAND}: ≥45 only with ischemic time <4 h` },
   { kind: "number", section: "logistics", key: "dcdFwitPassMaxMinutes", label: "DCD functional warm ischemia: pass up to", unit: "min", step: 1, source: "OCS DCD Heart Trial (≤30 min)" },
   { kind: "number", section: "logistics", key: "dcdFwitReviewMaxMinutes", label: "DCD functional warm ischemia: review up to", unit: "min", step: 1, source: "Up to 45 min tolerated with TA-NRP" },
   { kind: "number", section: "logistics", key: "redoSternotomyExtraMinutes", label: "Extra implant time for redo sternotomy", unit: "min", step: 5, source: CENTER },
