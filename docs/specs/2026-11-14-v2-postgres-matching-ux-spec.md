@@ -430,7 +430,7 @@ Implemented in `compose.yaml` (project `hla-trans`): Postgres 18.3, database `ma
 - **Errors:** each route has an `errorComponent` with the message and a **Retry** button (`router.invalidate()` plus the query reset boundary). Records that do not exist call `throw notFound()` in the loader and render a proper not-found view.
 
 ### 7.3 Lists: patients, donors, match results, runs (item 3)
-- **Filter toolbar:** one row, left-aligned. Search input (`max-w-sm`, debounced 200 ms), then compact `Select`s (auto width) for state, ABO, urgency or verdict, then a **Reset** ghost button that only appears when a filter is active. It wraps on narrow screens. No more four-column grid.
+- **Filter toolbar:** one row, left-aligned. Search input (`max-w-sm`, runs on Enter or its search button, never while typing), then compact `Select`s (auto width) for state, ABO, urgency or verdict, then a **Reset** ghost button that only appears when a filter is active. It wraps on narrow screens. No more four-column grid.
 - **Filters, sort and page are URL search params**, validated with zod (`fallback` for bad values). This makes them shareable, preserved on back navigation, and part of the query key.
 - **Server-side filtering and keyset pagination**, 50 rows per page. List queries select summary columns only, never full `jsonb` records.
 - **Primary page action:** `Add donor` / `Add patient` use the **default** button variant with a `Plus` icon, at the right of the page header.

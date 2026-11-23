@@ -1,9 +1,14 @@
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import type { ReactNode } from "react"
 import { Search, X } from "lucide-react"
 import { DatePickerField } from "@/components/form/date-picker-field"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group"
 import {
   Select,
   SelectContent,
@@ -21,11 +26,19 @@ export function ListToolbar({
   canReset: boolean
   onReset: () => void
 }) {
+  // Remounting the controls on reset also drops search text that was never submitted.
+  const [resets, setResets] = useState(0)
   return (
     <div role="search" className="mb-4 flex flex-wrap items-center gap-2">
-      {children}
+      <Fragment key={resets}>{children}</Fragment>
       {canReset && (
-        <Button variant="ghost" onClick={onReset}>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setResets((n) => n + 1)
+            onReset()
+          }}
+        >
           <X aria-hidden="true" /> Reset
         </Button>
       )}
@@ -33,10 +46,7 @@ export function ListToolbar({
   )
 }
 
-/**
- * Local state for instant typing; pushes to the URL 200 ms after the last keystroke.
- * `onChange` must be stable (useCallback) for the debounce effect.
- */
+/** Typing stays local; the search runs on Enter or the search button. */
 export function SearchInput({
   value,
   onChange,
@@ -50,25 +60,32 @@ export function SearchInput({
 }) {
   const [draft, setDraft] = useState(value)
   useEffect(() => setDraft(value), [value])
-  useEffect(() => {
-    if (draft === value) return
-    const timer = setTimeout(() => onChange(draft), 200)
-    return () => clearTimeout(timer)
-  }, [draft, value, onChange])
   return (
-    <div className="relative w-full max-w-sm">
-      <Search
-        className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground"
-        aria-hidden="true"
-      />
-      <Input
-        aria-label={label}
-        placeholder={placeholder}
-        value={draft}
-        onChange={(e) => setDraft(e.target.value)}
-        className="pl-8"
-      />
-    </div>
+    <form
+      className="w-full max-w-sm"
+      onSubmit={(e) => {
+        e.preventDefault()
+        const next = draft.trim()
+        setDraft(next)
+        if (next !== value) onChange(next)
+      }}
+    >
+      <InputGroup>
+        <InputGroupInput
+          aria-label={label}
+          placeholder={placeholder}
+          enterKeyHint="search"
+          maxLength={100}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton type="submit" size="icon-xs" aria-label="Search">
+            <Search aria-hidden="true" />
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+    </form>
   )
 }
 
