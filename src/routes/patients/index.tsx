@@ -14,7 +14,11 @@ import { KpiStrip, percent } from "@/components/app/kpi-strip"
 import type { Kpi } from "@/components/app/kpi-strip"
 import { PageHeader } from "@/components/app/page-header"
 import { Pager } from "@/components/app/pager"
-import { FilterSelect, ListToolbar, SearchInput } from "@/components/app/list-toolbar"
+import {
+  FilterSelect,
+  ListToolbar,
+  SearchInput,
+} from "@/components/app/list-toolbar"
 import { TablePageSkeleton } from "@/components/app/page-skeletons"
 import { PatientTable } from "@/components/patient/patient-table"
 import { Button } from "@/components/ui/button"
@@ -123,32 +127,50 @@ function PatientsPage() {
           value={search.q ?? ""}
           onChange={setQ}
         />
-        <FilterSelect
-          label="Status"
-          value={search.state}
-          options={CANDIDATE_STATE}
-          onChange={(state) => set({ state })}
-        />
-        <FilterSelect label="ABO" value={search.abo} options={ABO} onChange={(abo) => set({ abo })} />
-        <FilterSelect
-          label="Urgency"
-          value={search.urgency}
-          options={URGENCY_STATUS}
-          onChange={(urgency) => set({ urgency })}
-        />
-        <FilterSelect label="Sort" value={search.sort} options={SORT} onChange={(sort) => set({ sort })} />
+        <div data-guide="list-filters" className="flex flex-wrap gap-2">
+          <FilterSelect
+            label="Status"
+            value={search.state}
+            options={CANDIDATE_STATE}
+            onChange={(state) => set({ state })}
+          />
+          <FilterSelect
+            label="ABO"
+            value={search.abo}
+            options={ABO}
+            onChange={(abo) => set({ abo })}
+          />
+          <FilterSelect
+            label="Urgency"
+            value={search.urgency}
+            options={URGENCY_STATUS}
+            onChange={(urgency) => set({ urgency })}
+          />
+          <FilterSelect
+            label="Sort"
+            value={search.sort}
+            options={SORT}
+            onChange={(sort) => set({ sort })}
+          />
+        </div>
       </ListToolbar>
       <KpiStrip
         label="Patient counts for the current filters"
         items={kpis}
         stale={stats.isPlaceholderData}
       />
-      <PatientTable page={data} filtered={filtered} />
+      <div data-guide="list-table">
+        <PatientTable page={data} filtered={filtered} />
+      </div>
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={data.nextCursor}
-        onFirst={() => void navigate({ search: (s) => ({ ...s, cursor: undefined }) })}
-        onNext={(cursor) => void navigate({ search: (s) => ({ ...s, cursor }) })}
+        onFirst={() =>
+          void navigate({ search: (s) => ({ ...s, cursor: undefined }) })
+        }
+        onNext={(cursor) =>
+          void navigate({ search: (s) => ({ ...s, cursor }) })
+        }
       />
     </>
   )

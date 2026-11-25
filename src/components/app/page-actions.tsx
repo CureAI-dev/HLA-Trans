@@ -1,4 +1,5 @@
 import { useState } from "react"
+import type { ComponentProps } from "react"
 import { Link } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
 import { MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react"
@@ -40,6 +41,7 @@ export function RecordActions({
   rerunPending,
   onDelete,
   deletePending,
+  menu,
 }: {
   editLink: LinkOptions
   checkLink: LinkOptions
@@ -49,28 +51,56 @@ export function RecordActions({
   /** Resolves on success; the dialog stays open (and pending) until then. */
   onDelete: () => Promise<void>
   deletePending: boolean
+  /** Controls the More menu (practice screens keep it open). */
+  menu?: Pick<
+    ComponentProps<typeof DropdownMenu>,
+    "open" | "onOpenChange" | "modal"
+  >
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   return (
     <>
-      <Button nativeButton={false} render={<Link {...editLink} />}>
+      <Button
+        nativeButton={false}
+        render={<Link {...editLink} />}
+        data-guide="record-edit"
+      >
         <Pencil aria-hidden="true" /> Edit {entityLabel}
       </Button>
-      <Button variant="outline" nativeButton={false} render={<Link {...checkLink} />}>
+      <Button
+        variant="outline"
+        nativeButton={false}
+        render={<Link {...checkLink} />}
+      >
         Check a pair
       </Button>
-      <DropdownMenu>
+      <DropdownMenu {...menu}>
         <DropdownMenuTrigger
-          render={<Button variant="outline" size="icon" aria-label="More actions" />}
+          render={
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="More actions"
+              data-guide="record-more"
+            />
+          }
         >
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={onRerun} disabled={rerunPending}>
+          <DropdownMenuItem
+            onClick={onRerun}
+            disabled={rerunPending}
+            data-guide="record-rerun"
+          >
             <RefreshCw aria-hidden="true" /> Rerun matching
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)}>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setConfirmOpen(true)}
+            data-guide="record-delete"
+          >
             <Trash2 aria-hidden="true" /> Delete {entityLabel}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -88,7 +118,9 @@ export function RecordActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletePending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletePending}>
+              Cancel
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={deletePending}
@@ -99,7 +131,8 @@ export function RecordActions({
                 )
               }
             >
-              {deletePending && <Spinner aria-hidden="true" />} Delete {entityLabel}
+              {deletePending && <Spinner aria-hidden="true" />} Delete{" "}
+              {entityLabel}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

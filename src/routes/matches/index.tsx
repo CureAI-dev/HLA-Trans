@@ -80,36 +80,38 @@ function MatchResults() {
         canReset={filtered}
         onReset={() => void navigate({ search: {}, replace: true })}
       >
-        <FilterSelect
-          label="Result"
-          value={search.overall}
-          options={OVERALL}
-          onChange={(overall) => set({ overall })}
-        />
-        <FilterSelect
-          label="Decision"
-          value={search.decision}
-          options={DECISION}
-          onChange={(decision) => set({ decision })}
-        />
-        <FilterSelect
-          label="Source"
-          value={search.source}
-          options={SOURCE}
-          onChange={(source) => set({ source })}
-        />
-        <DateFilter
-          label="Saved from"
-          value={search.from}
-          max={search.to}
-          onChange={(from) => set({ from })}
-        />
-        <DateFilter
-          label="Saved through"
-          value={search.to}
-          min={search.from}
-          onChange={(to) => set({ to })}
-        />
+        <div data-guide="match-filters" className="flex flex-wrap gap-2">
+          <FilterSelect
+            label="Result"
+            value={search.overall}
+            options={OVERALL}
+            onChange={(overall) => set({ overall })}
+          />
+          <FilterSelect
+            label="Decision"
+            value={search.decision}
+            options={DECISION}
+            onChange={(decision) => set({ decision })}
+          />
+          <FilterSelect
+            label="Source"
+            value={search.source}
+            options={SOURCE}
+            onChange={(source) => set({ source })}
+          />
+          <DateFilter
+            label="Saved from"
+            value={search.from}
+            max={search.to}
+            onChange={(from) => set({ from })}
+          />
+          <DateFilter
+            label="Saved through"
+            value={search.to}
+            min={search.from}
+            onChange={(to) => set({ to })}
+          />
+        </div>
         {search.runId && (
           <Badge variant="outline" className="h-8 gap-1.5 px-2">
             One match run

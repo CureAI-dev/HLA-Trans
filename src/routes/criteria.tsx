@@ -28,7 +28,10 @@ function CriteriaPage() {
         title="Criteria"
         description="Manage the thresholds and finding outcomes used for new match results."
       />
-      <p className="mb-6 border bg-muted p-4 text-sm">
+      <p
+        data-guide="criteria-note"
+        className="mb-6 border bg-muted p-4 text-sm"
+      >
         Changing criteria does not change past match results. Saved results
         computed with older criteria are marked out of date.
       </p>

@@ -15,7 +15,10 @@ export function SerologyGrid<T extends string>({
   errors,
 }: SerologyGridProps<T>) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      data-guide="serology"
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+    >
       {tests.map((test) => (
         <SelectField
           key={test.value}

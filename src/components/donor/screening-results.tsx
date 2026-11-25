@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Users } from "lucide-react"
 import type { MatchRow } from "@/domain/match-types"
 import { StatusBadge } from "@/components/app/status"
@@ -25,25 +26,46 @@ export function ScreeningResults({
 }) {
   return (
     <section className="space-y-3" aria-label="Candidate screening results">
-      <p role="note" className="border bg-muted/40 p-3 text-sm">
+      <p
+        role="note"
+        data-guide="screening-note"
+        className="border bg-muted/40 p-3 text-sm"
+      >
         Screening order, not OPTN allocation. Distance circles are not applied.
         Logistics are not assessed until pair inputs are entered.
         <span className="mt-1 block text-xs text-muted-foreground">
           Screening uses the criteria of the match run
-          {criteriaVersion !== undefined && ` (v${criteriaVersion})`} and default
-          pair inputs. Missing transport and procedure times produce REVIEW;
-          enter pair inputs in Check a pair to assess logistics.
+          {criteriaVersion !== undefined && ` (v${criteriaVersion})`} and
+          default pair inputs. Missing transport and procedure times produce
+          REVIEW; enter pair inputs in Check a pair to assess logistics.
         </span>
       </p>
       {rows.length === 0 ? (
-        <EmptyState icon={<Users />} title="No screening results" description={emptyText} />
+        <EmptyState
+          icon={<Users />}
+          title="No screening results"
+          description={emptyText}
+        />
       ) : (
-        <div className="overflow-x-auto border">
+        <ScrollArea
+          orientation="horizontal"
+          data-guide="screening-table"
+          className="border"
+        >
           <table className="w-full text-left text-sm">
-            <caption className="sr-only">Candidate screening results, in screening order</caption>
+            <caption className="sr-only">
+              Candidate screening results, in screening order
+            </caption>
             <thead className="bg-muted text-xs text-muted-foreground uppercase">
               <tr>
-                {["Rank", "Patient", "Result", "Blockers", "Missing", "Action"].map((h) => (
+                {[
+                  "Rank",
+                  "Patient",
+                  "Result",
+                  "Blockers",
+                  "Missing",
+                  "Action",
+                ].map((h) => (
                   <th key={h} scope="col" className="p-3 font-medium">
                     {h}
                   </th>
@@ -63,7 +85,10 @@ export function ScreeningResults({
                       {row.patientName}
                     </Link>
                   </td>
-                  <td className="p-3">
+                  <td
+                    className="p-3"
+                    data-guide={index === 0 ? "screening-result" : undefined}
+                  >
                     <Link
                       to="/matches/$matchId"
                       params={{ matchId: row.id }}
@@ -71,12 +96,27 @@ export function ScreeningResults({
                       className="inline-flex items-center gap-2 focus-visible:outline-2"
                     >
                       <StatusBadge status={row.overall} />
-                      {row.outOfDate && <Badge variant="outline">Out of date</Badge>}
+                      {row.outOfDate && (
+                        <Badge variant="outline">Out of date</Badge>
+                      )}
                     </Link>
                   </td>
-                  <td className="p-3 tabular-nums">{row.blockerCount}</td>
-                  <td className="p-3 tabular-nums">{row.missingCount}</td>
-                  <td className="p-3">
+                  <td
+                    className="p-3 tabular-nums"
+                    data-guide={index === 0 ? "screening-blockers" : undefined}
+                  >
+                    {row.blockerCount}
+                  </td>
+                  <td
+                    className="p-3 tabular-nums"
+                    data-guide={index === 0 ? "screening-missing" : undefined}
+                  >
+                    {row.missingCount}
+                  </td>
+                  <td
+                    className="p-3"
+                    data-guide={index === 0 ? "screening-check" : undefined}
+                  >
                     <Link
                       className="underline-offset-4 hover:underline"
                       to="/matches/check"
@@ -89,7 +129,7 @@ export function ScreeningResults({
               ))}
             </tbody>
           </table>
-        </div>
+        </ScrollArea>
       )}
     </section>
   )

@@ -34,6 +34,7 @@ export function ListToolbar({
       {canReset && (
         <Button
           variant="ghost"
+          data-guide="list-reset"
           onClick={() => {
             setResets((n) => n + 1)
             onReset()
@@ -62,6 +63,7 @@ export function SearchInput({
   useEffect(() => setDraft(value), [value])
   return (
     <form
+      data-guide="list-search"
       className="w-full max-w-sm"
       onSubmit={(e) => {
         e.preventDefault()

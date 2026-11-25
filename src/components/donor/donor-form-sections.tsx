@@ -427,7 +427,7 @@ export const HistorySection = memo(function HistoryFields({
           onChange={(value) => set("history.bornInChagasEndemicCountry", value)}
           error={errors.bornInChagasEndemicCountry}
         />
-        <fieldset className="space-y-3 md:col-span-2">
+        <fieldset data-guide="phs-criteria" className="space-y-3 md:col-span-2">
           <legend className="font-semibold">
             PHS 2020 risk criteria (last 30 days)
           </legend>
@@ -528,7 +528,7 @@ export const HemodynamicsSection = memo(function HemodynamicsFields({
           error={errors.temperatureC}
           unit="°C"
         />
-        <div className="md:col-span-2">
+        <div data-guide="vasoactives" className="md:col-span-2">
           <VasoactiveList
             value={v.vasoactives}
             onChange={(value) => set("hemodynamics.vasoactives", value)}

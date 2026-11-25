@@ -25,7 +25,9 @@ export const Route = createFileRoute("/data")({
 })
 
 const failed = (e: unknown) =>
-  e instanceof Error ? e.message : "The operation failed. Saved data was not changed."
+  e instanceof Error
+    ? e.message
+    : "The operation failed. Saved data was not changed."
 
 function DataPage() {
   const qc = useQueryClient()
@@ -161,7 +163,7 @@ function DataPage() {
         </p>
       )}
       <div className="grid gap-5 lg:grid-cols-2">
-        <section className="border bg-card p-5">
+        <section data-guide="data-export" className="border bg-card p-5">
           <h2 className="font-semibold">Export</h2>
           <p className="my-3 text-sm text-muted-foreground">
             Download current patient and donor records, the criteria history and
@@ -179,12 +181,12 @@ function DataPage() {
             Export JSON
           </Button>
         </section>
-        <section className="border bg-card p-5">
+        <section data-guide="data-import" className="border bg-card p-5">
           <h2 className="font-semibold">Import backup</h2>
           <p id="import-help" className="my-3 text-sm text-muted-foreground">
-            Choose a backup from the previous browser-based version (v1
-            format). Records are added to the shared database; existing
-            records with the same id are never overwritten.
+            Choose a backup from the previous browser-based version (v1 format).
+            Records are added to the shared database; existing records with the
+            same id are never overwritten.
           </p>
           <label className="block space-y-2 text-sm">
             Backup JSON file
@@ -241,7 +243,7 @@ function DataPage() {
             </div>
           )}
         </section>
-        <section className="border bg-card p-5">
+        <section data-guide="data-demo" className="border bg-card p-5">
           <h2 className="font-semibold">Synthetic demo data</h2>
           <p className="my-3 text-sm text-muted-foreground">
             Add synthetic candidate and donor records and start matching for
@@ -260,7 +262,7 @@ function DataPage() {
             Load demo dataset
           </Button>
         </section>
-        <section className="border bg-card p-5">
+        <section data-guide="data-reset" className="border bg-card p-5">
           <h2 className="font-semibold">Reset database</h2>
           <p id="reset-help" className="my-3 text-sm text-muted-foreground">
             Delete all patients, donors, match runs, match results, decisions

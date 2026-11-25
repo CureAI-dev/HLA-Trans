@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState } from "react"
+import { Suspense, lazy, useDeferredValue, useMemo, useState } from "react"
 import { flushSync } from "react-dom"
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router"
 import { z } from "zod"
@@ -19,7 +19,16 @@ import { PairPicker } from "@/components/match/pair-picker"
 import { PairInputsForm } from "@/components/match/pair-inputs-form"
 import { ResultView } from "@/components/match/result-view"
 
+// Loads the demo records, so it stays out of the normal page.
+const PracticeCheck = lazy(
+  () => import("@/features/guide/components/practice-check")
+)
+
 const searchSchema = z.object({
+  /** Tutorial: demo records, nothing is saved. */
+  practice: z.boolean().optional().catch(undefined),
+  /** Practice only: start with the suggested values (a resumed tutorial). */
+  filled: z.boolean().optional().catch(undefined),
   patientId: z.string().optional().catch(undefined),
   donorId: z.string().optional().catch(undefined),
 })
@@ -27,6 +36,7 @@ export const Route = createFileRoute("/matches/check")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   loader: async ({ context, deps }) => {
+    if (deps.practice) return
     const qc = context.queryClient
     // Prefetch (never throws): a stale id shows an inline message, not an error page.
     await Promise.all([
@@ -37,8 +47,20 @@ export const Route = createFileRoute("/matches/check")({
   },
   head: () => ({ meta: [{ title: "Check a pair · Concord" }] }),
   pendingComponent: FormPageSkeleton,
-  component: CheckAPair,
+  component: CheckRoute,
 })
+
+function CheckRoute() {
+  const { practice, filled } = Route.useSearch()
+  // Practice and real work never share form state.
+  return practice ? (
+    <Suspense fallback={<FormPageSkeleton />}>
+      <PracticeCheck filled={filled ?? false} />
+    </Suspense>
+  ) : (
+    <CheckAPair />
+  )
+}
 
 const DEFAULT_PAIR = JSON.stringify(defaultPairInputs())
 
@@ -161,6 +183,7 @@ function CheckAPair() {
           <SubmitButton
             type="button"
             className="w-full"
+            data-guide="pair-save"
             pending={check.isPending}
             disabled={!parsed.success || !patient || !donor}
             onClick={() => void save()}

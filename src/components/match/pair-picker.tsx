@@ -179,7 +179,11 @@ export function PairPicker({
     donorQueries.list({ q: donorQ || undefined, sort: "code" })
   )
   return (
-    <section id="pair-picker" className="grid gap-4 border p-4 md:grid-cols-2">
+    <section
+      id="pair-picker"
+      data-guide="pair-picker"
+      className="grid gap-4 border p-4 md:grid-cols-2"
+    >
       <Picker
         label="Patient"
         selected={selection(

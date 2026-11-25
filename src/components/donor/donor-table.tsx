@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { HeartPulse, Plus } from "lucide-react"
 import type { DonorRow } from "@/domain/match-types"
 import type { Page } from "@/lib/cursor"
@@ -44,7 +45,7 @@ export function DonorTable({
       />
     )
   return (
-    <div className="overflow-x-auto border">
+    <ScrollArea orientation="horizontal" className="border">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Donor records</caption>
         <thead className="bg-muted">
@@ -95,6 +96,6 @@ export function DonorTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   )
 }

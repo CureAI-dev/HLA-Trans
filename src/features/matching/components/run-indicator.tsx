@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { Loader2 } from "lucide-react"
 import { matchingQueries } from "../matching.queries"
+import { useGuide } from "@/features/guide/guide-store"
 import { RunProgressCard } from "./run-progress-card"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,12 +17,26 @@ const SHOWN = 5
 /** Header control; hidden when nothing is running. Shares the polled `active` query. */
 export function RunIndicator() {
   const { data: runs = [] } = useQuery(matchingQueries.active())
-  if (!runs.length) return null
+  const sample = useGuide((s) => s.sampleRun)
+  if (!runs.length)
+    // A tutorial explains this button; show what it looks like.
+    return sample ? (
+      <Button variant="outline" size="sm" data-guide="run-indicator">
+        <Loader2 className="animate-spin" aria-hidden="true" />1 matching
+      </Button>
+    ) : null
   const label = `${runs.length} matching ${runs.length === 1 ? "run" : "runs"} in progress`
   return (
     <Popover>
       <PopoverTrigger
-        render={<Button variant="outline" size="sm" aria-label={label} />}
+        render={
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={label}
+            data-guide="run-indicator"
+          />
+        }
       >
         <Loader2 className="animate-spin" aria-hidden="true" />
         <span className="tabular-nums">{runs.length}</span> matching

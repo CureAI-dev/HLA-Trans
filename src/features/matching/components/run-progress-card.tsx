@@ -69,6 +69,7 @@ export function RunProgressCard({
             size="sm"
             variant="ghost"
             disabled={cancel.isPending || run.cancelRequested}
+            data-guide="run-cancel"
             onClick={() => cancel.mutate(run.id)}
           >
             Cancel

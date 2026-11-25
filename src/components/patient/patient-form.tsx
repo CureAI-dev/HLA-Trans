@@ -111,10 +111,13 @@ const PatientDerivedRail = memo(function PatientDerivedValues({
 export function PatientForm({
   initial,
   version,
+  practice = false,
 }: {
   initial: Patient
   /** Present when editing: the optimistic-concurrency version the edit started from. */
   version?: number
+  /** Tutorial: nothing is saved and leaving asks nothing. */
+  practice?: boolean
 }) {
   const form = useFormState(toFormValue(initial), patientFormSchema)
   const p = form.value
@@ -131,7 +134,7 @@ export function PatientForm({
 
   async function save(event: React.FormEvent) {
     event.preventDefault()
-    if (saving) return
+    if (saving || practice) return
     setSaveError("")
     if (!form.validate()) {
       setSaveError("Please correct the marked fields before saving.")
@@ -197,7 +200,9 @@ export function PatientForm({
 
   const actions = (
     <>
-      <SubmitButton pending={saving}>Save patient</SubmitButton>
+      <SubmitButton pending={saving} disabled={practice}>
+        {practice ? "Practice: saving is off" : "Save patient"}
+      </SubmitButton>
       <Button
         variant="outline"
         nativeButton={false}
@@ -242,7 +247,7 @@ export function PatientForm({
 
   return (
     <form onSubmit={(event) => void save(event)} noValidate>
-      <UnsavedGuard when={form.dirty && !saving} />
+      <UnsavedGuard when={form.dirty && !saving && !practice} />
       <FormLayout
         sections={patientSections}
         status={completeness.status}

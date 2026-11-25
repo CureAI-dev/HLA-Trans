@@ -2,7 +2,9 @@ import { Link, useRouterState } from "@tanstack/react-router"
 import type { LinkOptions } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { cn } from "cn"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { matchingQueries } from "@/features/matching/matching.queries"
+import { GuideCard } from "@/features/guide/components/guide-card"
 import { ConcordMark } from "./concord-logo"
 
 type NavItem = {
@@ -15,38 +17,62 @@ type NavItem = {
 const under = (base: string) => (pathname: string) =>
   pathname === base || pathname.startsWith(`${base}/`)
 
-const items: ReadonlyArray<NavItem> = [
-  { label: "Dashboard", link: { to: "/" }, isActive: (p) => p === "/" },
-  {
-    label: "Patients",
-    link: { to: "/patients" },
-    isActive: under("/patients"),
-  },
-  { label: "Donors", link: { to: "/donors" }, isActive: under("/donors") },
-  {
-    label: "Matching",
-    link: { to: "/matching" },
-    isActive: under("/matching"),
-    liveCount: true,
-  },
-  {
-    label: "Match results",
-    link: { to: "/matches" },
-    isActive: (p) => under("/matches")(p) && p !== "/matches/check",
-  },
-  {
-    label: "Check a pair",
-    link: { to: "/matches/check" },
-    isActive: (p) => p === "/matches/check",
-  },
-  {
-    label: "Criteria",
-    link: { to: "/criteria" },
-    isActive: under("/criteria"),
-  },
-  { label: "Audit log", link: { to: "/audit" }, isActive: under("/audit") },
-  { label: "Data", link: { to: "/data" }, isActive: under("/data") },
-]
+const groups: ReadonlyArray<{ guide: string; items: ReadonlyArray<NavItem> }> =
+  [
+    {
+      guide: "nav-records",
+      items: [
+        { label: "Dashboard", link: { to: "/" }, isActive: (p) => p === "/" },
+        {
+          label: "Patients",
+          link: { to: "/patients" },
+          isActive: under("/patients"),
+        },
+        {
+          label: "Donors",
+          link: { to: "/donors" },
+          isActive: under("/donors"),
+        },
+      ],
+    },
+    {
+      guide: "nav-matching",
+      items: [
+        {
+          label: "Matching",
+          link: { to: "/matching" },
+          isActive: under("/matching"),
+          liveCount: true,
+        },
+        {
+          label: "Match results",
+          link: { to: "/matches" },
+          isActive: (p) => under("/matches")(p) && p !== "/matches/check",
+        },
+        {
+          label: "Check a pair",
+          link: { to: "/matches/check" },
+          isActive: (p) => p === "/matches/check",
+        },
+      ],
+    },
+    {
+      guide: "nav-settings",
+      items: [
+        {
+          label: "Criteria",
+          link: { to: "/criteria" },
+          isActive: under("/criteria"),
+        },
+        {
+          label: "Audit log",
+          link: { to: "/audit" },
+          isActive: under("/audit"),
+        },
+        { label: "Data", link: { to: "/data" }, isActive: under("/data") },
+      ],
+    },
+  ]
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
@@ -54,7 +80,7 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { data: activeRuns } = useQuery(matchingQueries.active())
   const activeCount = activeRuns?.length ?? 0
   return (
-    <div className="flex h-full flex-col">
+    <ScrollArea className="h-full" contentClassName="flex min-h-full flex-col">
       <Link
         to="/"
         onClick={onNavigate}
@@ -67,35 +93,42 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
         Heart compatibility
       </p>
       <nav aria-label="Main navigation" className="space-y-1 px-3">
-        {items.map((item) => {
-          const active = item.isActive(pathname)
-          return (
-            <Link
-              key={item.label}
-              {...item.link}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 text-sm hover:bg-sidebar-accent",
-                active && "border-primary bg-sidebar-accent font-semibold"
-              )}
-            >
-              {item.label}
-              {item.liveCount && activeCount > 0 && (
-                <span className="ml-auto min-w-5 bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground tabular-nums">
-                  {activeCount}
-                  <span className="sr-only"> running</span>
-                </span>
-              )}
-            </Link>
-          )
-        })}
+        {groups.map((group) => (
+          <div key={group.guide} data-guide={group.guide} className="space-y-1">
+            {group.items.map((item) => {
+              const active = item.isActive(pathname)
+              return (
+                <Link
+                  key={item.label}
+                  {...item.link}
+                  onClick={onNavigate}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "flex items-center gap-3 border-l-2 border-transparent px-3 py-2.5 text-sm hover:bg-sidebar-accent",
+                    active && "border-primary bg-sidebar-accent font-semibold"
+                  )}
+                >
+                  {item.label}
+                  {item.liveCount && activeCount > 0 && (
+                    <span className="ml-auto min-w-5 bg-primary px-1.5 py-0.5 text-center text-[10px] font-semibold text-primary-foreground tabular-nums">
+                      {activeCount}
+                      <span className="sr-only"> running</span>
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
       </nav>
-      <p className="mt-auto border-t p-5 text-xs leading-relaxed text-muted-foreground">
+      <div className="mt-auto">
+        <GuideCard onOpen={onNavigate} />
+      </div>
+      <p className="border-t p-5 text-xs leading-relaxed text-muted-foreground">
         Clinical review workspace
         <br />
         Shared PostgreSQL database
       </p>
-    </div>
+    </ScrollArea>
   )
 }

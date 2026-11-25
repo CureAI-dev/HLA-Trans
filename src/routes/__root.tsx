@@ -70,7 +70,7 @@ function RootComponent() {
     <TooltipProvider>
       <Toaster>
         {user ? (
-          <AppShell>
+          <AppShell userId={user.id}>
             <Outlet />
           </AppShell>
         ) : (

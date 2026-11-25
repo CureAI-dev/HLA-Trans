@@ -82,7 +82,11 @@ function Dashboard() {
         description="Review candidates, donors, and saved match results."
         actions={
           <>
-            <Button nativeButton={false} render={<Link to="/matches/check" />}>
+            <Button
+              nativeButton={false}
+              render={<Link to="/matches/check" />}
+              data-guide="dashboard-check"
+            >
               Check a pair
             </Button>
             <Button
@@ -123,7 +127,7 @@ function Dashboard() {
             />
           </div>
         )}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div data-guide="dashboard-counts" className="grid gap-4 sm:grid-cols-3">
         {(
           [
             {
@@ -166,7 +170,7 @@ function Dashboard() {
             hint="Results saved with Check a pair wait here for a clinician decision."
           />
         </section>
-        <section className="border bg-card">
+        <section data-guide="dashboard-recent" className="border bg-card">
           <h2 className="border-b p-4 font-semibold">Recent match results</h2>
           <MatchList
             records={recent}

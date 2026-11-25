@@ -59,7 +59,11 @@ function MatchingPage() {
         title="Matching"
         description="Background screening runs. Saving a patient or donor starts one automatically. Screening order is not OPTN allocation."
       />
-      <section aria-labelledby="active-runs" className="mb-8">
+      <section
+        aria-labelledby="active-runs"
+        data-guide="runs-active"
+        className="mb-8"
+      >
         <h2 id="active-runs" className="mb-3 text-sm font-semibold">
           Active ({active.length})
         </h2>
@@ -91,30 +95,32 @@ function MatchingPage() {
           )}
           onReset={() => void navigate({ search: {}, replace: true })}
         >
-          <FilterSelect
-            label="Status"
-            value={search.status}
-            options={STATUS_OPTIONS}
-            onChange={(status) => setFilter({ status })}
-          />
-          <FilterSelect
-            label="Subject"
-            value={search.subjectKind}
-            options={SUBJECT_OPTIONS}
-            onChange={(subjectKind) => setFilter({ subjectKind })}
-          />
-          <DateFilter
-            label="Queued from"
-            value={search.from}
-            max={search.to}
-            onChange={(from) => setFilter({ from })}
-          />
-          <DateFilter
-            label="Queued through"
-            value={search.to}
-            min={search.from}
-            onChange={(to) => setFilter({ to })}
-          />
+          <div data-guide="run-filters" className="flex flex-wrap gap-2">
+            <FilterSelect
+              label="Status"
+              value={search.status}
+              options={STATUS_OPTIONS}
+              onChange={(status) => setFilter({ status })}
+            />
+            <FilterSelect
+              label="Subject"
+              value={search.subjectKind}
+              options={SUBJECT_OPTIONS}
+              onChange={(subjectKind) => setFilter({ subjectKind })}
+            />
+            <DateFilter
+              label="Queued from"
+              value={search.from}
+              max={search.to}
+              onChange={(from) => setFilter({ from })}
+            />
+            <DateFilter
+              label="Queued through"
+              value={search.to}
+              min={search.from}
+              onChange={(to) => setFilter({ to })}
+            />
+          </div>
         </ListToolbar>
         <RunHistoryTable rows={history.items} />
         <Pager

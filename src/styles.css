@@ -164,13 +164,30 @@
     font-feature-settings: "tnum" 1;
     font-variant-numeric: tabular-nums;
   }
+  /* The outline fades in: it is always there, transparent until the element has keyboard focus. */
+  :where(a, button, summary, [role="button"], [role="tab"], [role="link"]) {
+    outline: 2px solid transparent;
+    outline-offset: 0;
+    transition: outline-color 200ms ease, outline-offset 200ms ease;
+  }
   :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+  /* A focused container (dialog, scroll area, main) is not a control: no ring around the page. */
+  [role="dialog"]:focus-visible, [role="alertdialog"]:focus-visible, main:focus-visible { outline: none; }
+  /* Scrolling uses the shadcn ScrollArea. This covers what cannot sit inside one, such as a textarea. */
+  * { scrollbar-width: thin; scrollbar-color: var(--input) transparent; }
   [id^="rule-"] { scroll-margin-top: 1rem; }
   .hla-string { font-family: var(--font-mono); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+@keyframes guide-beat {
+  0%, 100% { transform: none; }
+  18% { transform: scale(1.12); }
+  36% { transform: scale(0.98); }
+  54% { transform: scale(1.08); }
 }
 
 @keyframes hla-progress {
