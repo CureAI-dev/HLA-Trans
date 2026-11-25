@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Finding, RuleId } from "@/domain/schema"
 import { missingFieldTarget } from "@/domain/missing-fields"
 import { RULE_TITLES } from "./rule-card"
@@ -44,15 +45,18 @@ export function MissingDataTable({
 }) {
   if (!items.length) return null
   return (
-    <section aria-labelledby="missing-data" className="border bg-card">
+    <section
+      aria-labelledby="missing-data"
+      data-guide="missing-data"
+      className="border bg-card"
+    >
       <h2
         id="missing-data"
         className="border-b bg-muted px-4 py-2 text-sm font-semibold"
       >
-        Missing data ({items.length}): these findings stay REVIEW until
-        recorded
+        Missing data ({items.length}): these findings stay REVIEW until recorded
       </h2>
-      <div className="overflow-x-auto">
+      <ScrollArea orientation="horizontal">
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground">
             <tr>
@@ -111,7 +115,7 @@ export function MissingDataTable({
             })}
           </tbody>
         </table>
-      </div>
+      </ScrollArea>
     </section>
   )
 }

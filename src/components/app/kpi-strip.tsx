@@ -41,6 +41,7 @@ export function KpiStrip({
   return (
     <section
       aria-label={label}
+      data-guide="list-counts"
       aria-busy={stale}
       className={cn(grid, "transition-opacity", stale && "opacity-60")}
     >

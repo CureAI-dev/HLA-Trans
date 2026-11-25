@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react"
 import { Link } from "@tanstack/react-router"
 import type { MatchDetail } from "@/domain/match-types"
 import type { Decision } from "@/domain/schema"
@@ -61,9 +62,12 @@ function DecisionCard({ decision: d }: { decision: Decision }) {
 export function DecisionPanel({
   detail,
   clinician,
+  practice,
 }: {
   detail: MatchDetail
   clinician: string
+  /** Practice screen: nothing is saved. */
+  practice?: ComponentProps<typeof DecisionForm>["practice"]
 }) {
   if (detail.decision) return <DecisionCard decision={detail.decision} />
   if (detail.source === "screening")
@@ -103,7 +107,12 @@ export function DecisionPanel({
         <CardTitle>Record clinician decision</CardTitle>
       </CardHeader>
       <CardContent>
-        <DecisionForm key={detail.id} match={detail} clinician={clinician} />
+        <DecisionForm
+          key={detail.id}
+          match={detail}
+          clinician={clinician}
+          practice={practice}
+        />
       </CardContent>
     </Card>
   )

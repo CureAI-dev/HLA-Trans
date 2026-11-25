@@ -34,13 +34,16 @@ export function VerdictBar({
   return (
     <section
       aria-label="Overall result"
+      data-guide="verdict"
       className={cn(
         "sticky top-0 z-20 mb-6 border-b bg-background/95 py-3 backdrop-blur",
         bleed ? "-mx-4 px-4 lg:-mx-6 lg:px-6" : "border-x border-t px-4"
       )}
     >
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <StatusBadge status={overall} className="text-sm" />
+        <span data-guide="verdict-overall" className="inline-flex">
+          <StatusBadge status={overall} className="text-sm" />
+        </span>
         <h2 className="text-lg font-semibold">
           {patientName}{" "}
           <span aria-label="with" className="text-muted-foreground">
@@ -52,18 +55,27 @@ export function VerdictBar({
           {sourceLabel} · criteria v{criteriaVersion} · engine {engineVersion}
         </span>
         {outOfDate && (
-          <Badge variant="outline" className="text-caution">
+          <Badge
+            variant="outline"
+            className="text-caution"
+            data-guide="result-out-of-date"
+          >
             Out of date: records or criteria changed
           </Badge>
         )}
       </div>
-      <nav aria-label="Rule groups" className="mt-3 flex flex-wrap gap-2">
+      <nav
+        aria-label="Rule groups"
+        data-guide="checks"
+        className="mt-3 flex flex-wrap gap-2"
+      >
         {rules.map((r) => {
           const missing = r.findings.some((f) => f.missing)
           return (
             <button
               key={r.rule}
               type="button"
+              data-guide={`check-${r.rule}`}
               onClick={() => onRule(r.rule)}
               className="inline-flex items-center gap-1.5 border bg-card px-2.5 py-1 text-xs hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring"
             >
@@ -72,15 +84,17 @@ export function VerdictBar({
               <span className="sr-only">: {r.status.toUpperCase()}</span>
               {missing && (
                 <span className="text-unknown" title="Missing data">
-                  ?
-                  <span className="sr-only"> missing data</span>
+                  ?<span className="sr-only"> missing data</span>
                 </span>
               )}
             </button>
           )
         })}
       </nav>
-      <p className="mt-2 text-xs text-muted-foreground">
+      <p
+        data-guide="result-frozen"
+        className="mt-2 text-xs text-muted-foreground"
+      >
         The app advises; the clinician makes the final decision.
         {meta && <> {meta}</>}
       </p>

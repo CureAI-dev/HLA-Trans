@@ -23,7 +23,10 @@ export function AntibodyTable({ value, onChange, errors }: AntibodyTableProps) {
     onChange(value.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-2">
+      <div
+        data-guide="antibody-paste"
+        className="flex flex-wrap items-end gap-2"
+      >
         <TextField
           label="Paste antibodies"
           hint="Example: A2 8000, B44:3500; DQ7 1200"

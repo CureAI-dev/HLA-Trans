@@ -14,13 +14,16 @@ import { useDecideMatch } from "@/features/matches/matches.mutations"
 export function DecisionForm({
   match,
   clinician,
+  practice,
 }: {
   match: MatchDetail
   clinician: string
+  /** Practice screen: nothing is saved. */
+  practice?: { verdict?: Decision["verdict"] }
 }) {
   const decide = useDecideMatch(match.id)
   const [draft, setDraft] = useState<Omit<Decision, "decidedAt">>({
-    verdict: "defer",
+    verdict: practice?.verdict ?? "defer",
     reasons: [],
     clinician,
     rationale: "",
@@ -41,6 +44,7 @@ export function DecisionForm({
       className="space-y-4"
       onSubmit={(event) => {
         event.preventDefault()
+        if (practice) return
         setError("")
         if (!draft.clinician.trim() || !draft.rationale.trim()) {
           setError("Clinician and rationale are required.")
@@ -58,26 +62,32 @@ export function DecisionForm({
         decide.mutate(draft, {
           onSuccess: () => flushSync(() => setSaved(true)),
           onError: (e) =>
-            setError(e instanceof Error ? e.message : "Unable to save decision"),
+            setError(
+              e instanceof Error ? e.message : "Unable to save decision"
+            ),
         })
       }}
     >
-      <UnsavedGuard when={dirty && !decide.isPending} />
+      <UnsavedGuard when={dirty && !decide.isPending && !practice} />
       <p className="text-sm text-muted-foreground">
         This decision is final and cannot be edited after saving.
       </p>
-      <SelectField
-        label="Decision"
-        value={draft.verdict}
-        options={DECISION_VERDICT}
-        onChange={(v) => setDraft({ ...draft, verdict: v })}
-      />
-      <TextField
-        label="Deciding clinician (required)"
-        value={draft.clinician}
-        onChange={(v) => setDraft({ ...draft, clinician: v })}
-      />
-      <label className="block text-sm">
+      <div data-guide="decision-verdict">
+        <SelectField
+          label="Decision"
+          value={draft.verdict}
+          options={DECISION_VERDICT}
+          onChange={(v) => setDraft({ ...draft, verdict: v })}
+        />
+      </div>
+      <div data-guide="decision-clinician">
+        <TextField
+          label="Deciding clinician (required)"
+          value={draft.clinician}
+          onChange={(v) => setDraft({ ...draft, clinician: v })}
+        />
+      </div>
+      <label data-guide="decision-rationale" className="block text-sm">
         Rationale (required)
         <Textarea
           className="mt-2 min-h-28"
@@ -87,8 +97,10 @@ export function DecisionForm({
         />
       </label>
       {draft.verdict === "decline" && (
-        <fieldset className="space-y-2 text-sm">
-          <legend className="mb-1">Decline reasons (choose at least one)</legend>
+        <fieldset data-guide="decision-reasons" className="space-y-2 text-sm">
+          <legend className="mb-1">
+            Decline reasons (choose at least one)
+          </legend>
           {DECLINE_REASON.map((o) => (
             <label className="flex items-center gap-2" key={o.value}>
               <Checkbox
@@ -108,7 +120,10 @@ export function DecisionForm({
         </fieldset>
       )}
       {requiresAck && (
-        <label className="flex items-start gap-2 text-sm">
+        <label
+          data-guide="decision-acknowledge"
+          className="flex items-start gap-2 text-sm"
+        >
           <Checkbox
             className="mt-0.5"
             checked={draft.acknowledgedFindings}
@@ -124,8 +139,13 @@ export function DecisionForm({
           {error}
         </p>
       )}
-      <SubmitButton pending={decide.isPending} className="w-full">
-        Save final decision
+      <SubmitButton
+        pending={decide.isPending}
+        disabled={Boolean(practice)}
+        data-guide="decision-save"
+        className="w-full"
+      >
+        {practice ? "Practice: saving is off" : "Save final decision"}
       </SubmitButton>
     </form>
   )

@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { History } from "lucide-react"
 import type { MatchRow } from "@/domain/match-types"
 import { StatusBadge } from "@/components/app/status"
@@ -33,7 +34,7 @@ export function MatchTable({
       />
     )
   return (
-    <div className="overflow-x-auto border">
+    <ScrollArea orientation="horizontal" className="border">
       <table className="w-full text-left text-sm">
         <thead className="bg-muted text-xs text-muted-foreground uppercase">
           <tr>
@@ -48,8 +49,12 @@ export function MatchTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r.id} className="border-t hover:bg-muted/50">
+          {rows.map((r, i) => (
+            <tr
+              key={r.id}
+              data-guide={i === 0 ? "match-row" : undefined}
+              className="border-t hover:bg-muted/50"
+            >
               <td className="p-3">
                 <Link
                   to="/matches/$matchId"
@@ -57,7 +62,11 @@ export function MatchTable({
                   className="inline-flex items-center gap-2 focus-visible:outline-2"
                 >
                   <StatusBadge status={r.overall} />
-                  {r.outOfDate && <Badge variant="outline">Out of date</Badge>}
+                  {r.outOfDate && (
+                    <Badge variant="outline" data-guide="match-out-of-date">
+                      Out of date
+                    </Badge>
+                  )}
                 </Link>
               </td>
               {showPatient && (
@@ -103,6 +112,6 @@ export function MatchTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   )
 }

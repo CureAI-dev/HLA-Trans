@@ -32,19 +32,21 @@ export function ResultView({
   mode,
   onPairFix,
   aside,
+  initialTab = "findings",
 }: {
   detail: ResultInput
   mode: "saved" | "preview"
   onPairFix: () => void
   /** Right-hand column (decision panel), pinned at xl. */
   aside?: ReactNode
+  initialTab?: string
 }) {
   const { result, patient, donor } = detail
   // FAIL and REVIEW rules start open; PASS rules start collapsed.
   const [open, setOpen] = useState<RuleId[]>(() =>
     result.rules.filter((r) => r.status !== "pass").map((r) => r.rule)
   )
-  const [tab, setTab] = useState("findings")
+  const [tab, setTab] = useState(initialTab)
   const missing = result.rules.flatMap((r) =>
     r.findings
       .filter((f) => f.missing)
@@ -98,7 +100,7 @@ export function ResultView({
       >
         <div className="min-w-0 space-y-5">
           {detail.outOfDate && (
-            <Alert>
+            <Alert data-guide="result-check-again">
               <TriangleAlert aria-hidden="true" className="text-caution" />
               <AlertTitle>Out of date</AlertTitle>
               <AlertDescription>
@@ -135,9 +137,11 @@ export function ResultView({
             onPairFix={onPairFix}
           />
           <Tabs value={tab} onValueChange={(v) => setTab(String(v))}>
-            <TabsList>
+            <TabsList data-guide="result-tabs">
               <TabsTrigger value="findings">Findings</TabsTrigger>
-              <TabsTrigger value="compare">Patient vs donor</TabsTrigger>
+              <TabsTrigger value="compare" data-guide="tab-compare">
+                Patient vs donor
+              </TabsTrigger>
               <TabsTrigger value="logistics">
                 Pair inputs &amp; ischemia
               </TabsTrigger>
@@ -173,6 +177,7 @@ export function ResultView({
         {aside && (
           <aside
             aria-label="Decision"
+            data-guide="decision"
             className="xl:sticky xl:top-40 xl:self-start"
           >
             {aside}

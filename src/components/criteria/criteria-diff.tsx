@@ -1,4 +1,5 @@
 import { CRITERIA_FIELDS, OUTCOME_LABEL } from "@/domain/criteria"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { Criteria } from "@/domain/schema"
 
 export function criteriaChanges(before: Criteria, after: Criteria) {
@@ -29,7 +30,7 @@ export function CriteriaDiff({
   const changes = criteriaChanges(before, after)
   if (!changes.length) return <p>No field changes.</p>
   return (
-    <div className="overflow-x-auto">
+    <ScrollArea orientation="horizontal">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Criteria field changes</caption>
         <thead>
@@ -54,6 +55,6 @@ export function CriteriaDiff({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   )
 }

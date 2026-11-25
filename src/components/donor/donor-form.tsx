@@ -66,10 +66,13 @@ const DonorDerivedRail = memo(function DonorDerivedValues({
 export function DonorForm({
   initial,
   version,
+  practice = false,
 }: {
   initial: Donor
   /** Present when editing: the optimistic-concurrency version the edit started from. */
   version?: number
+  /** Tutorial: nothing is saved and leaving asks nothing. */
+  practice?: boolean
 }) {
   const form = useFormState(initial, donorSchema)
   const p = form.value
@@ -86,7 +89,7 @@ export function DonorForm({
 
   async function save(event: React.FormEvent) {
     event.preventDefault()
-    if (saving) return
+    if (saving || practice) return
     setSaveError("")
     if (!form.validate()) {
       setSaveError("Please correct the marked fields before saving.")
@@ -139,7 +142,9 @@ export function DonorForm({
 
   const actions = (
     <>
-      <SubmitButton pending={saving}>Save donor</SubmitButton>
+      <SubmitButton pending={saving} disabled={practice}>
+        {practice ? "Practice: saving is off" : "Save donor"}
+      </SubmitButton>
       <Button
         variant="outline"
         nativeButton={false}
@@ -180,7 +185,7 @@ export function DonorForm({
 
   return (
     <form onSubmit={(event) => void save(event)} noValidate>
-      <UnsavedGuard when={form.dirty && !saving} />
+      <UnsavedGuard when={form.dirty && !saving && !practice} />
       <FormLayout
         sections={donorSections}
         status={completeness.status}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { APP_SCROLL_ID } from "@/lib/app-scroll"
 
 /**
  * One IntersectionObserver for all sections: O(1) work per scroll frame, no scroll listeners.
@@ -21,7 +22,10 @@ export function useScrollSpy(ids: ReadonlyArray<string>): string | null {
           .at(0)
         if (top) setActive(top[0])
       },
-      { rootMargin: "-80px 0px -60% 0px" }
+      {
+        root: document.getElementById(APP_SCROLL_ID),
+        rootMargin: "-80px 0px -60% 0px",
+      }
     )
     for (const id of ids) {
       const el = document.getElementById(id)

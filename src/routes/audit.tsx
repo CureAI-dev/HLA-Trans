@@ -1,4 +1,5 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseQuery } from "@tanstack/react-query"
 import { ScrollText } from "lucide-react"
 import { auditSearch } from "@/features/audit/audit.functions"
@@ -72,64 +73,72 @@ function AuditPage() {
           }
         />
       </ListToolbar>
-      <p className="mb-3 text-sm">Newest first. Times use your local time.</p>
-      {data.items.length ? (
-        <div className="overflow-x-auto border">
-          <table className="w-full text-left text-sm">
-            <caption className="sr-only">Audit entries, newest first</caption>
-            <thead className="bg-muted">
-              <tr>
-                {["Time", "Actor", "Action", "Subject", "Summary"].map((h) => (
-                  <th key={h} scope="col" className="p-3">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {data.items.map((e) => (
-                <tr className="border-t" key={e.id}>
-                  <td className="p-3 whitespace-nowrap">
-                    <time dateTime={e.at} suppressHydrationWarning>
-                      <LocalTime value={e.at} />
-                    </time>
-                  </td>
-                  <td className="p-3">{e.actor}</td>
-                  <td className="p-3">
-                    {actionLabel(e.action)}
-                    <span className="block font-mono text-xs text-muted-foreground">
-                      {e.action}
-                    </span>
-                  </td>
-                  <td className="max-w-64 p-3 break-words">{e.subjectId}</td>
-                  <td className="p-3">{e.summary}</td>
+      <div data-guide="audit-list">
+        <p className="mb-3 text-sm">Newest first. Times use your local time.</p>
+        {data.items.length ? (
+          <ScrollArea orientation="horizontal" className="border">
+            <table className="w-full text-left text-sm">
+              <caption className="sr-only">Audit entries, newest first</caption>
+              <thead className="bg-muted">
+                <tr>
+                  {["Time", "Actor", "Action", "Subject", "Summary"].map(
+                    (h) => (
+                      <th key={h} scope="col" className="p-3">
+                        {h}
+                      </th>
+                    )
+                  )}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : search.action ? (
-        <EmptyState
-          icon={<ScrollText />}
-          title="No entries for this action"
-          description="Reset the filter to see every audit entry."
-        />
-      ) : (
-        <EmptyState
-          icon={<ScrollText />}
-          title="No audit entries yet"
-          description="Changes, match results, decisions and data operations are recorded here."
-          action={
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={<Link to="/data" />}
-            >
-              Load demo dataset
-            </Button>
-          }
-        />
-      )}
+              </thead>
+              <tbody>
+                {data.items.map((e, i) => (
+                  <tr
+                    className="border-t"
+                    key={e.id}
+                    data-guide={i === 0 ? "audit-row" : undefined}
+                  >
+                    <td className="p-3 whitespace-nowrap">
+                      <time dateTime={e.at} suppressHydrationWarning>
+                        <LocalTime value={e.at} />
+                      </time>
+                    </td>
+                    <td className="p-3">{e.actor}</td>
+                    <td className="p-3">
+                      {actionLabel(e.action)}
+                      <span className="block font-mono text-xs text-muted-foreground">
+                        {e.action}
+                      </span>
+                    </td>
+                    <td className="max-w-64 p-3 break-words">{e.subjectId}</td>
+                    <td className="p-3">{e.summary}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ScrollArea>
+        ) : search.action ? (
+          <EmptyState
+            icon={<ScrollText />}
+            title="No entries for this action"
+            description="Reset the filter to see every audit entry."
+          />
+        ) : (
+          <EmptyState
+            icon={<ScrollText />}
+            title="No audit entries yet"
+            description="Changes, match results, decisions and data operations are recorded here."
+            action={
+              <Button
+                variant="outline"
+                nativeButton={false}
+                render={<Link to="/data" />}
+              >
+                Load demo dataset
+              </Button>
+            }
+          />
+        )}
+      </div>
       <Pager
         hasCursor={Boolean(search.cursor)}
         nextCursor={data.nextCursor}

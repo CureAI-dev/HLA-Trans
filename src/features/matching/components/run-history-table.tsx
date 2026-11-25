@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Ban,
   CheckCircle2,
@@ -55,7 +56,7 @@ export function RunHistoryTable({ rows }: { rows: ReadonlyArray<RunRow> }) {
       />
     )
   return (
-    <div className="overflow-x-auto border">
+    <ScrollArea orientation="horizontal" className="border">
       <table className="w-full text-left text-sm">
         <thead className="bg-muted text-xs text-muted-foreground uppercase">
           <tr>
@@ -70,9 +71,16 @@ export function RunHistoryTable({ rows }: { rows: ReadonlyArray<RunRow> }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((run) => (
-            <tr key={run.id} className="border-t hover:bg-muted/50">
-              <td className="p-3">
+          {rows.map((run, i) => (
+            <tr
+              key={run.id}
+              data-guide={i === 0 ? "run-row" : undefined}
+              className="border-t hover:bg-muted/50"
+            >
+              <td
+                className="p-3"
+                data-guide={run.status === "failed" ? "run-failed" : undefined}
+              >
                 <RunStatusBadge status={run.status} />
               </td>
               <td className="p-3">
@@ -89,7 +97,10 @@ export function RunHistoryTable({ rows }: { rows: ReadonlyArray<RunRow> }) {
               </td>
               <td className="p-3">{TRIGGER_LABEL[run.trigger]}</td>
               <td className="p-3 tabular-nums">v{run.criteriaVersion}</td>
-              <td className="p-3 whitespace-nowrap tabular-nums">
+              <td
+                className="p-3 whitespace-nowrap tabular-nums"
+                data-guide={i === 0 ? "run-results" : undefined}
+              >
                 <span title="Pass · Review · Fail">
                   {run.passCount} · {run.reviewCount} · {run.failCount}
                 </span>
@@ -110,6 +121,6 @@ export function RunHistoryTable({ rows }: { rows: ReadonlyArray<RunRow> }) {
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   )
 }

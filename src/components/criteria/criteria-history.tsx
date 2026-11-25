@@ -13,7 +13,11 @@ export function CriteriaHistory({ versions }: { versions: CriteriaVersion[] }) {
   const sorted = [...versions].sort((a, b) => b.version - a.version)
   const [open, setOpen] = useState<string[]>([])
   return (
-    <section aria-labelledby="criteria-history" className="mt-8 space-y-4">
+    <section
+      aria-labelledby="criteria-history"
+      data-guide="criteria-history"
+      className="mt-8 space-y-4"
+    >
       <h2 id="criteria-history" className="text-xl font-semibold">
         Published history
       </h2>

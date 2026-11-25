@@ -7,6 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { useScrollSpy } from "./use-scroll-spy"
 
 export type SectionStatus = { errors: number; missing: number }
@@ -47,48 +48,54 @@ export function FormLayout({
     <div className="grid gap-6 xl:grid-cols-[220px_minmax(0,768px)_300px] xl:justify-center">
       <nav
         aria-label="Form sections"
-        className="-mx-4 overflow-x-auto px-4 xl:sticky xl:top-20 xl:mx-0 xl:max-h-[calc(100vh-6rem)] xl:self-start xl:overflow-y-auto xl:px-0"
+        data-guide="form-sections"
+        className="-mx-4 min-w-0 px-4 xl:sticky xl:top-20 xl:mx-0 xl:self-start xl:px-0"
       >
-        <ol className="flex gap-1 xl:flex-col">
-          {sections.map((s) => {
-            const st = status[s.id] ?? { errors: 0, missing: 0 }
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() =>
-                    document
-                      .getElementById(s.id)
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                  }
-                  aria-current={active === s.id ? "location" : undefined}
-                  className={cn(
-                    "flex w-full items-center gap-2 border-l-2 border-transparent px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-muted",
-                    active === s.id && "border-primary bg-muted font-medium"
-                  )}
-                >
-                  {st.errors ? (
-                    <CircleAlert
-                      className="size-3.5 shrink-0 text-destructive"
-                      aria-label={`${st.errors} ${st.errors === 1 ? "error" : "errors"}`}
-                    />
-                  ) : st.missing ? (
-                    <CircleDashed
-                      className="size-3.5 shrink-0 text-muted-foreground"
-                      aria-label={`${st.missing} not recorded`}
-                    />
-                  ) : (
-                    <Check
-                      className="size-3.5 shrink-0 text-muted-foreground"
-                      aria-label="Complete"
-                    />
-                  )}
-                  {s.title}
-                </button>
-              </li>
-            )
-          })}
-        </ol>
+        <ScrollArea
+          orientation={xl ? "vertical" : "horizontal"}
+          className="xl:max-h-[calc(100dvh-6rem)]"
+        >
+          <ol className="flex gap-1 xl:flex-col">
+            {sections.map((s) => {
+              const st = status[s.id] ?? { errors: 0, missing: 0 }
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document
+                        .getElementById(s.id)
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
+                    aria-current={active === s.id ? "location" : undefined}
+                    className={cn(
+                      "flex w-full items-center gap-2 border-l-2 border-transparent px-3 py-1.5 text-left text-sm whitespace-nowrap hover:bg-muted",
+                      active === s.id && "border-primary bg-muted font-medium"
+                    )}
+                  >
+                    {st.errors ? (
+                      <CircleAlert
+                        className="size-3.5 shrink-0 text-destructive"
+                        aria-label={`${st.errors} ${st.errors === 1 ? "error" : "errors"}`}
+                      />
+                    ) : st.missing ? (
+                      <CircleDashed
+                        className="size-3.5 shrink-0 text-muted-foreground"
+                        aria-label={`${st.missing} not recorded`}
+                      />
+                    ) : (
+                      <Check
+                        className="size-3.5 shrink-0 text-muted-foreground"
+                        aria-label="Complete"
+                      />
+                    )}
+                    {s.title}
+                  </button>
+                </li>
+              )
+            })}
+          </ol>
+        </ScrollArea>
       </nav>
       <div className="min-w-0 space-y-6">
         {!xl && (
@@ -108,18 +115,27 @@ export function FormLayout({
         {children}
       </div>
       {xl ? (
-        <aside
-          aria-label="Form summary"
-          className="sticky top-20 max-h-[calc(100vh-6rem)] self-start overflow-y-auto"
-        >
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2">{actions}</div>
+        <aside aria-label="Form summary" className="sticky top-20 self-start">
+          <ScrollArea
+            className="max-h-[calc(100dvh-6rem)]"
+            viewportProps={{ className: "data-has-overflow-y:pr-3.5" }}
+            contentClassName="space-y-4"
+          >
+            <div
+              data-guide="form-actions"
+              className="flex flex-wrap items-center gap-2"
+            >
+              {actions}
+            </div>
             {rail}
-          </div>
+          </ScrollArea>
         </aside>
       ) : (
         /* Below xl: sticky action bar so Save is always reachable. */
-        <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-background/95 p-3 backdrop-blur">
+        <div
+          data-guide="form-actions"
+          className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-2 border-t bg-background/95 p-3 backdrop-blur"
+        >
           {actions}
         </div>
       )}

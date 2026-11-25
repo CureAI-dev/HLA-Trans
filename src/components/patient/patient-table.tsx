@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Plus, Users } from "lucide-react"
 import type { PatientRow } from "@/domain/match-types"
 import type { Page } from "@/lib/cursor"
@@ -37,7 +38,11 @@ export function PatientTable({
               <Plus aria-hidden="true" />
               Add patient
             </Button>
-            <Button variant="outline" nativeButton={false} render={<Link to="/data" />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link to="/data" />}
+            >
               Load demo dataset
             </Button>
           </>
@@ -45,7 +50,7 @@ export function PatientTable({
       />
     )
   return (
-    <div className="overflow-x-auto border">
+    <ScrollArea orientation="horizontal" className="border">
       <table className="w-full text-left text-sm">
         <caption className="sr-only">Patient records</caption>
         <thead className="bg-muted">
@@ -95,6 +100,6 @@ export function PatientTable({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   )
 }

@@ -1,5 +1,6 @@
 import { createRouter } from "@tanstack/react-router"
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query"
+import { APP_SCROLL_ID } from "@/lib/app-scroll"
 import type { QueryClient } from "@tanstack/react-query"
 import { routeTree } from "./routeTree.gen"
 import { createQueryClient } from "@/lib/query-client"
@@ -21,6 +22,8 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
+    // Pages scroll inside the app frame (AppShell), not in the window.
+    scrollToTopSelectors: [`#${APP_SCROLL_ID}`],
     defaultPreload: "intent",
     // Query owns freshness; the router always asks it.
     defaultPreloadStaleTime: 0,

@@ -14,6 +14,7 @@ import {
   TextField,
 } from "@/components/form"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { SubmitButton } from "@/components/app/submit-button"
 import { UnsavedGuard } from "@/components/form/unsaved-guard"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -167,10 +168,15 @@ export function CriteriaForm({
         >
           <TabsList
             aria-label="Criteria sections"
+            data-guide="criteria-tabs"
             className="h-auto! max-w-full flex-wrap justify-start"
           >
             {CRITERIA_SECTIONS.map((item) => (
-              <TabsTrigger key={item.id} value={item.id}>
+              <TabsTrigger
+                key={item.id}
+                value={item.id}
+                data-guide={`criteria-tab-${item.id}`}
+              >
                 {item.title}
                 {attempted &&
                 Object.keys(errors).some((path) =>
@@ -186,7 +192,10 @@ export function CriteriaForm({
               <p className="my-4 text-sm text-muted-foreground">
                 {item.description}
               </p>
-              <div className="grid gap-5 md:grid-cols-2">
+              <div
+                data-guide="criteria-fields"
+                className="grid gap-5 md:grid-cols-2"
+              >
                 {CRITERIA_FIELDS.filter(
                   (field) => field.section === item.id
                 ).map((field) => {
@@ -242,12 +251,16 @@ export function CriteriaForm({
             </TabsContent>
           ))}
         </Tabs>
-        <TextField
-          label="Change note (required)"
-          value={note}
-          onChange={setNote}
-          error={attempted && !note.trim() ? "Enter a change note." : undefined}
-        />
+        <div data-guide="criteria-change-note">
+          <TextField
+            label="Change note (required)"
+            value={note}
+            onChange={setNote}
+            error={
+              attempted && !note.trim() ? "Enter a change note." : undefined
+            }
+          />
+        </div>
         {attempted && Object.keys(errors).length > 0 && (
           <p role="alert">
             Correct the highlighted criteria before publishing.
@@ -255,7 +268,11 @@ export function CriteriaForm({
         )}
         {failure && <p role="alert">{failure}</p>}
         {message && <p role="status">{message}</p>}
-        <SubmitButton pending={publishing} pendingLabel="Publishing…">
+        <SubmitButton
+          pending={publishing}
+          pendingLabel="Publishing…"
+          data-guide="criteria-publish"
+        >
           Review and publish
         </SubmitButton>
       </form>
@@ -265,7 +282,7 @@ export function CriteriaForm({
           if (!open) setPending(null)
         }}
       >
-        <AlertDialogContent className="max-h-[85vh] overflow-auto sm:max-w-2xl!">
+        <AlertDialogContent className="max-h-[85vh] grid-rows-[auto_auto_minmax(0,1fr)_auto] sm:max-w-2xl!">
           <AlertDialogTitle>
             Publish criteria version {current.version + 1}?
           </AlertDialogTitle>
@@ -273,12 +290,17 @@ export function CriteriaForm({
             Review each change before publishing. Changing criteria does not
             change past match results.
           </AlertDialogDescription>
-          {pending && (
-            <CriteriaDiff before={current.criteria} after={pending} />
-          )}
-          <p className="text-sm whitespace-pre-wrap">
-            Change note: {note.trim()}
-          </p>
+          <ScrollArea
+            viewportProps={{ className: "data-has-overflow-y:pr-3.5" }}
+            contentClassName="space-y-4"
+          >
+            {pending && (
+              <CriteriaDiff before={current.criteria} after={pending} />
+            )}
+            <p className="text-sm whitespace-pre-wrap">
+              Change note: {note.trim()}
+            </p>
+          </ScrollArea>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => void confirm()}>

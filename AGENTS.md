@@ -29,6 +29,8 @@ Heart donor–recipient compatibility demo. TanStack Start (React 19) + TanStack
   - Reads use `readMiddleware`, writes use `writeMiddleware`. Both need a signed-in user (Neon Auth via `server/auth.server.ts`, `UNAUTHENTICATED` otherwise) and give you `context.user` and `context.actor` (the user's name). Only the `features/auth` functions use bare `errorMiddleware`.
 - `src/routes/` stays thin: `validateSearch`, then a loader with `context.queryClient.ensureQueryData(...)`, then `useSuspenseQuery` in the component. `src/routeTree.gen.ts` is generated (by the Vite plugin, or `bun run generate-routes`). Never hand-edit it.
 - Creating or updating a patient/donor queues a match run **in the same transaction** (`server/services/records.server.ts`). The worker is woken by `wakeWorker()` in `runs.server.ts`: NOTIFY on commit under Bun, a `MATCH_RUNS` queue message on Workers (Hyperdrive has no LISTEN/NOTIFY). Workers claim runs with `FOR UPDATE SKIP LOCKED`. On Workers, `getDb()` returns a per-invocation pool (`scope.server.ts`), so don't cache db handles across requests.
+- Pages scroll inside the app frame (`ScrollArea` with id `app-scroll` in `AppShell`), not in the window. Use `ScrollArea` for anything that scrolls; never rely on a browser scrollbar or `window.scrollY`.
+- `src/features/guide/`: in-app tutorials on driver.js. Steps are data in `tutorials/*.ts`; they point at `data-guide="…"` attributes or stable ids (a test checks that each target exists). Screens that need a record use `?practice=true` or `/practice/$screen` with demo records. A tutorial step must never save, delete, publish or reset. Only the sidebar card and `GuideRoot` are in the initial bundle.
 - `src/components/ui/**` is vendored shadcn code (style `base-lyra`, Base UI, not Radix) and is not linted. Add components with the shadcn CLI.
 
 ## Invariants that are easy to break
@@ -40,7 +42,7 @@ Heart donor–recipient compatibility demo. TanStack Start (React 19) + TanStack
 - The server always recomputes engine results and never stores a result sent by the client. Decisions are only allowed on `source = 'checked'` results.
 - Safety rule: missing or unknown clinical input produces REVIEW (`missing: true`), never PASS. See v1 spec §3 in `docs/specs/`.
 - Internal links use `<Link>` / `navigate()`. ESLint rejects raw `<a href="/...">`.
-- UI copy: "Match result", "Match run", "Matching", "Check a pair". The word "evaluation" must not appear in user-visible text (domain type names like `EvaluationResult` are fine, and `/evaluations/*` routes only redirect). Demo data must never contain "Fictional".
+- UI copy: "Match result", "Match run", "Matching", "Check a pair". The word "evaluation" must not appear in user-visible text (domain type names like `EvaluationResult` are fine, and `/evaluations/*` routes only redirect). Demo data must never contain "Fictional". Tutorial text uses easy words and full sentences (spec `2026-11-23-guide-tutorials-spec.md` §3).
 
 ## Style
 

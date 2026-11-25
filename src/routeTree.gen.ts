@@ -28,6 +28,7 @@ import { Route as MatchingRunIdRouteImport } from './routes/matching/$runId'
 import { Route as PatientsIndexRouteImport } from './routes/patients/index'
 import { Route as PatientsPatientIdRouteImport } from './routes/patients/$patientId'
 import { Route as PatientsNewRouteImport } from './routes/patients/new'
+import { Route as PracticeScreenRouteImport } from './routes/practice/$screen'
 import { Route as DonorsDonorIdIndexRouteImport } from './routes/donors/$donorId.index'
 import { Route as DonorsDonorIdEditRouteImport } from './routes/donors/$donorId.edit'
 import { Route as PatientsPatientIdIndexRouteImport } from './routes/patients/$patientId.index'
@@ -128,6 +129,11 @@ const PatientsNewRoute = PatientsNewRouteImport.update({
   path: '/patients/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PracticeScreenRoute = PracticeScreenRouteImport.update({
+  id: '/practice/$screen',
+  path: '/practice/$screen',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DonorsDonorIdIndexRoute = DonorsDonorIdIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
+  '/practice/$screen': typeof PracticeScreenRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
   '/matches/': typeof MatchesIndexRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/matches/check': typeof MatchesCheckRoute
   '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/new': typeof PatientsNewRoute
+  '/practice/$screen': typeof PracticeScreenRoute
   '/donors': typeof DonorsIndexRoute
   '/evaluations': typeof EvaluationsIndexRoute
   '/matches': typeof MatchesIndexRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/matching/$runId': typeof MatchingRunIdRoute
   '/patients/$patientId': typeof PatientsPatientIdRouteWithChildren
   '/patients/new': typeof PatientsNewRoute
+  '/practice/$screen': typeof PracticeScreenRoute
   '/donors/': typeof DonorsIndexRoute
   '/evaluations/': typeof EvaluationsIndexRoute
   '/matches/': typeof MatchesIndexRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/matching/$runId'
     | '/patients/$patientId'
     | '/patients/new'
+    | '/practice/$screen'
     | '/donors/'
     | '/evaluations/'
     | '/matches/'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/matches/check'
     | '/matching/$runId'
     | '/patients/new'
+    | '/practice/$screen'
     | '/donors'
     | '/evaluations'
     | '/matches'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/matching/$runId'
     | '/patients/$patientId'
     | '/patients/new'
+    | '/practice/$screen'
     | '/donors/'
     | '/evaluations/'
     | '/matches/'
@@ -314,6 +326,7 @@ export interface RootRouteChildren {
   MatchingRunIdRoute: typeof MatchingRunIdRoute
   PatientsPatientIdRoute: typeof PatientsPatientIdRouteWithChildren
   PatientsNewRoute: typeof PatientsNewRoute
+  PracticeScreenRoute: typeof PracticeScreenRoute
   DonorsIndexRoute: typeof DonorsIndexRoute
   EvaluationsIndexRoute: typeof EvaluationsIndexRoute
   MatchesIndexRoute: typeof MatchesIndexRoute
@@ -456,6 +469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PatientsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/practice/$screen': {
+      id: '/practice/$screen'
+      path: '/practice/$screen'
+      fullPath: '/practice/$screen'
+      preLoaderRoute: typeof PracticeScreenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/donors/$donorId/': {
       id: '/donors/$donorId/'
       path: '/'
@@ -529,6 +549,7 @@ const rootRouteChildren: RootRouteChildren = {
   MatchingRunIdRoute: MatchingRunIdRoute,
   PatientsPatientIdRoute: PatientsPatientIdRouteWithChildren,
   PatientsNewRoute: PatientsNewRoute,
+  PracticeScreenRoute: PracticeScreenRoute,
   DonorsIndexRoute: DonorsIndexRoute,
   EvaluationsIndexRoute: EvaluationsIndexRoute,
   MatchesIndexRoute: MatchesIndexRoute,
